@@ -10,7 +10,8 @@ func API(e *gin.Engine) {
 	{
 		proService := product.NewService()
 		v1.GET("/products", proService.GetProducts)
-		v1.GET("/products/:uuid", proService.GetProductByID)
 		v1.POST("/products", proService.CreateProduct)
+		v1.GET("/products/:uuid", proService.GetProductByID)
+		v1.PUT("/products/:uuid", proService.UpdateProduct)
 	}
 }
