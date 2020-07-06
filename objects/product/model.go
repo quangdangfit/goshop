@@ -24,7 +24,7 @@ type ProductResponse struct {
 }
 
 type ProductRequest struct {
-	Name        string `json:"name,omitempty" bson:"name,omitempty"`
+	Name        string `json:"name,omitempty" bson:"name,omitempty" validate:"required"`
 	Description string `json:"description,omitempty" bson:"description,omitempty"`
-	CategUUID   string `json:"categ_uuid,omitempty" bson:"categ_uuid,omitempty"`
+	CategUUID   string `json:"categ_uuid,omitempty" bson:"categ_uuid,omitempty" validate:"required"`
 }

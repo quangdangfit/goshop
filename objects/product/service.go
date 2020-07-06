@@ -2,6 +2,7 @@ package product
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
 	"goshop/utils"
@@ -28,7 +29,7 @@ func (s *service) GetProductByID(c *gin.Context) {
 
 	product, err := s.repo.GetProductByID(productId)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Failed to get product: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
@@ -47,7 +48,7 @@ func (s *service) GetProducts(c *gin.Context) {
 
 	products, err := s.repo.GetProducts(active)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Failed to get products: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
@@ -59,14 +60,23 @@ func (s *service) GetProducts(c *gin.Context) {
 
 func (s *service) CreateProduct(c *gin.Context) {
 	var reqBody ProductRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
+	if err := c.Bind(&reqBody); err != nil {
+		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	validate := validator.New()
+	err := validate.Struct(reqBody)
+	if err != nil {
+		logger.Error("Request body is invalid: ", err.Error())
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
 
 	products, err := s.repo.CreateProduct(&reqBody)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Failed to create product", err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
@@ -80,13 +90,14 @@ func (s *service) UpdateProduct(c *gin.Context) {
 	uuid := c.Param("uuid")
 	var reqBody ProductRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	products, err := s.repo.UpdateProduct(uuid, &reqBody)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Failed to update product: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
