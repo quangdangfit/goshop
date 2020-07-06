@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"gitlab.com/quangdangfit/gocommon/utils/logger"
 	"goshop/migrations"
 	"goshop/routers"
-	"lib/utils/logger"
 	"net/http"
 	"os"
 	"os/signal"
