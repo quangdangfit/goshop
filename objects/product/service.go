@@ -39,7 +39,13 @@ func (s *service) GetProductByID(c *gin.Context) {
 }
 
 func (s *service) GetProducts(c *gin.Context) {
-	products, err := s.repo.GetProducts()
+	activeParam := c.Query("active")
+	active := true
+	if activeParam == "false" {
+		active = false
+	}
+
+	products, err := s.repo.GetProducts(active)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
