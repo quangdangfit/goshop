@@ -1,0 +1,6 @@
+database:
+  host: localhost:27017
+  name: database
+  env: native
+  user: ######
+  password: ######
