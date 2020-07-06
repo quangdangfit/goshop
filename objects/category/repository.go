@@ -2,11 +2,9 @@ package category
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"github.com/jinzhu/gorm"
 	"goshop/dbs"
-	"goshop/utils"
 )
 
 type Repository interface {
@@ -14,8 +12,6 @@ type Repository interface {
 	GetCategoryByID(uuid string) (*Category, error)
 	CreateCategory(req *CategoryRequest) (*Category, error)
 	UpdateCategory(uuid string, req *CategoryRequest) (*Category, error)
-
-	beforeCreate(category *Category)
 }
 
 type repo struct {
@@ -48,7 +44,6 @@ func (r *repo) CreateCategory(req *CategoryRequest) (*Category, error) {
 	var category Category
 	copier.Copy(&category, &req)
 
-	r.beforeCreate(&category)
 	r.db.Create(&category)
 
 	return &category, nil
@@ -64,9 +59,4 @@ func (r *repo) UpdateCategory(uuid string, req *CategoryRequest) (*Category, err
 	r.db.Save(&category)
 
 	return &category, nil
-}
-
-func (r *repo) beforeCreate(category *Category) {
-	category.UUID = uuid.New().String()
-	category.Code = utils.GenerateCode("C")
 }
