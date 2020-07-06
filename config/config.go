@@ -15,6 +15,7 @@ type Schema struct {
 		User     string `mapstructure:"user"`
 		Password string `mapstructure:"password"`
 		Env      string `mapstructure:"env"`
+		SSLMode  string `mapstructure:"sslmode"`
 	} `mapstructure:"database"`
 }
 
