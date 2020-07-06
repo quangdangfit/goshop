@@ -2,6 +2,7 @@ package product
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
 	"goshop/utils"
@@ -59,8 +60,16 @@ func (s *service) GetProducts(c *gin.Context) {
 
 func (s *service) CreateProduct(c *gin.Context) {
 	var reqBody ProductRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
+	if err := c.Bind(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	validate := validator.New()
+	err := validate.Struct(reqBody)
+	if err != nil {
+		logger.Error("Bad request: ", err.Error())
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
 
