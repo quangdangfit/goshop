@@ -11,9 +11,9 @@ import (
 var Database *gorm.DB
 
 func init() {
+	dbConfig := config.Config.Database
 	connectionPath := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=%s",
-		config.Config.Database.Host, config.Config.Database.Port, config.Config.Database.User,
-		config.Config.Database.Name, config.Config.Database.Password, config.Config.Database.SSLMode)
+		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Name, dbConfig.Password, dbConfig.SSLMode)
 
 	database, err := gorm.Open("postgres", connectionPath)
 	if err != nil {
