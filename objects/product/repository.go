@@ -1,6 +1,7 @@
 package product
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"github.com/jinzhu/gorm"
@@ -12,7 +13,7 @@ type Repository interface {
 	GetProducts() (*[]Product, error)
 	GetProductByID(uuid string) (*Product, error)
 	CreateProduct(req *ProductRequest) (*Product, error)
-	//UpdateProduct(uuid string, payload map[string]interface{}) (*Product, error)
+	UpdateProduct(uuid string, req *ProductRequest) (*Product, error)
 
 	beforeCreate(product *Product)
 }
@@ -38,7 +39,7 @@ func (r *repo) GetProducts() (*[]Product, error) {
 func (r *repo) GetProductByID(uuid string) (*Product, error) {
 	var product Product
 	if r.db.Where("uuid = ?", uuid).Find(&product).RecordNotFound() {
-		return nil, nil
+		return nil, errors.New("not found product")
 	}
 
 	return &product, nil
@@ -50,6 +51,18 @@ func (r *repo) CreateProduct(req *ProductRequest) (*Product, error) {
 
 	r.beforeCreate(&product)
 	r.db.Create(&product)
+
+	return &product, nil
+}
+
+func (r *repo) UpdateProduct(uuid string, req *ProductRequest) (*Product, error) {
+	var product Product
+	if r.db.Where("uuid = ? ", uuid).First(&product).RecordNotFound() {
+		return nil, errors.New("not found product")
+	}
+
+	copier.Copy(&product, &req)
+	r.db.Save(&product)
 
 	return &product, nil
 }

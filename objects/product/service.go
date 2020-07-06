@@ -12,6 +12,7 @@ type Service interface {
 	GetProducts(c *gin.Context)
 	GetProductByID(c *gin.Context)
 	CreateProduct(c *gin.Context)
+	UpdateProduct(c *gin.Context)
 }
 
 type service struct {
@@ -63,5 +64,28 @@ func (s *service) CreateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
-	c.JSON(http.StatusOK, utils.PrepareResponse(products, "OK", ""))
+
+	var res []ProductResponse
+	copier.Copy(&res, &products)
+	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+}
+
+func (s *service) UpdateProduct(c *gin.Context) {
+	uuid := c.Param("uuid")
+	var reqBody ProductRequest
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	products, err := s.repo.UpdateProduct(uuid, &reqBody)
+	if err != nil {
+		logger.Error(err.Error())
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		return
+	}
+
+	var res ProductResponse
+	copier.Copy(&res, &products)
+	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
