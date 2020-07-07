@@ -8,7 +8,7 @@ import (
 )
 
 type Category struct {
-	UUID        string `gorm:"unique;not null;index"`
+	UUID        string `gorm:"unique;not null;index;primary_key"`
 	Code        string `gorm:"unique;not null;index"`
 	Name        string
 	Description string

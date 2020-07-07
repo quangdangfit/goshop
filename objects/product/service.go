@@ -14,6 +14,7 @@ type Service interface {
 	GetProductByID(c *gin.Context)
 	CreateProduct(c *gin.Context)
 	UpdateProduct(c *gin.Context)
+	GetProductByCategory(c *gin.Context)
 }
 
 type service struct {
@@ -47,6 +48,26 @@ func (s *service) GetProducts(c *gin.Context) {
 	}
 
 	products, err := s.repo.GetProducts(active)
+	if err != nil {
+		logger.Error("Failed to get products: ", err)
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		return
+	}
+
+	var res []ProductResponse
+	copier.Copy(&res, &products)
+	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+}
+
+func (s *service) GetProductByCategory(c *gin.Context) {
+	categUUID := c.Param("uuid")
+	activeParam := c.Query("active")
+	active := true
+	if activeParam == "false" {
+		active = false
+	}
+
+	products, err := s.repo.GetProductByCategory(categUUID, active)
 	if err != nil {
 		logger.Error("Failed to get products: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
