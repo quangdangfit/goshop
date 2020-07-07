@@ -8,11 +8,11 @@ import (
 )
 
 type Category struct {
-	UUID        string `gorm:"unique;not null;index;primary_key"`
-	Code        string `gorm:"unique;not null;index"`
-	Name        string
-	Description string
-	Active      bool               `gorm:"default:true"`
+	UUID        string             `json:"uuid" gorm:"unique;not null;index;primary_key"`
+	Code        string             `json:"code" gorm:"unique;not null;index"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Active      bool               `json:"active" gorm:"default:true"`
 	Products    *[]product.Product `gorm:"foreignkey:UUID;association_foreignkey:CategUUID"`
 
 	gorm.Model

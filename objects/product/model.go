@@ -7,19 +7,19 @@ import (
 )
 
 type Product struct {
-	UUID        string `gorm:"unique;not null;index;primary_key"`
-	Code        string `gorm:"unique;not null;index"`
-	Name        string
-	Description string
-	CategUUID   string
-	Active      bool `gorm:"default:true"`
+	UUID        string `json:"uuid" gorm:"unique;not null;index;primary_key"`
+	Code        string `json:"code" gorm:"unique;not null;index"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CategUUID   string `json:"categ_uuid"`
+	Active      bool   `json:"active"gorm:"default:true"`
 
 	gorm.Model
 }
 
 func (product *Product) BeforeCreate(scope *gorm.Scope) error {
 	product.UUID = uuid.New().String()
-	product.Code = utils.GenerateCode("C")
+	product.Code = utils.GenerateCode("P")
 	return nil
 }
 
