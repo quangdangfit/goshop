@@ -4,11 +4,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"goshop/objects/category"
 	"goshop/objects/product"
+	"goshop/objects/user"
 )
 
 func API(e *gin.Engine) {
 	v1 := e.Group("api/v1")
 	{
+		userService := user.NewService()
+		v1.POST("/register", userService.Register)
+
 		proService := product.NewService()
 		v1.GET("/products", proService.GetProducts)
 		v1.POST("/products", proService.CreateProduct)

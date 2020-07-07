@@ -25,11 +25,11 @@ func (categ *Category) BeforeCreate(scope *gorm.Scope) error {
 }
 
 type CategoryResponse struct {
-	UUID        string `json:"uuid" bson:"uuid"`
-	Code        string `json:"code" bson:"code"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
-	Active      bool   `json:"active" bson:"active"`
+	UUID        string `json:"uuid"`
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Active      bool   `json:"active"`
 }
 
 type CategoryRequest struct {

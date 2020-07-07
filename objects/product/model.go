@@ -24,12 +24,12 @@ func (product *Product) BeforeCreate(scope *gorm.Scope) error {
 }
 
 type ProductResponse struct {
-	UUID        string `json:"uuid" bson:"uuid"`
-	Code        string `json:"code" bson:"code"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
-	CategUUID   string `json:"categ_uuid" bson:"code"`
-	Active      bool   `json:"active" bson:"active"`
+	UUID        string `json:"uuid"`
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CategUUID   string `json:"categ_uuid"`
+	Active      bool   `json:"active"`
 }
 
 type ProductRequest struct {

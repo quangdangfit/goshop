@@ -7,6 +7,7 @@ import (
 	"goshop/objects/order"
 	"goshop/objects/orderLine"
 	"goshop/objects/product"
+	"goshop/objects/user"
 )
 
 func Migrate() {
@@ -14,7 +15,8 @@ func Migrate() {
 	Pategory := category.Category{}
 	Order := order.Order{}
 	OrderLine := orderLine.OrderLine{}
+	User := user.User{}
 
-	dbs.Database.AutoMigrate(&Product, &Pategory, &Order, &OrderLine)
+	dbs.Database.AutoMigrate(&Product, &Pategory, &Order, &OrderLine, &User)
 	dbs.Database.Model(&Product).AddForeignKey("categ_uuid", "categories(uuid)", "RESTRICT", "RESTRICT")
 }
