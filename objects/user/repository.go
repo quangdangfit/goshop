@@ -12,7 +12,7 @@ import (
 type Repository interface {
 	Login(req *LoginRequest) (*User, error)
 	Register(req *RegisterRequest) (*User, error)
-	//GetUser(id string, jwt string) (*User, error)
+	GetUserByID(uuid string) (*User, error)
 }
 
 type repo struct {
@@ -50,16 +50,11 @@ func (r *repo) Register(req *RegisterRequest) (*User, error) {
 	return &user, nil
 }
 
-//func (r *repo) GetUser(uid string, jwt string) (*User, error) {
-//	userUUID, isValid := validation.ValidateToken(jwt)
-//	if isValid {
-//		user := &User{}
-//		if database.DB.Where("uid = ? ", uid).First(&user).RecordNotFound() {
-//			return nil, errors.New("user not found")
-//		}
-//		if user.UID == userUUID {
-//			return user, nil
-//		}
-//	}
-//	return nil, errors.New("not valid token")
-//}
+func (r *repo) GetUserByID(uuid string) (*User, error) {
+	user := User{}
+	if dbs.Database.Where("uuid = ? ", uuid).First(&user).RecordNotFound() {
+		return nil, errors.New("user not found")
+	}
+
+	return &user, nil
+}
