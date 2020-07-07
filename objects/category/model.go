@@ -3,15 +3,18 @@ package category
 import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"goshop/objects/product"
 	"goshop/utils"
 )
 
 type Category struct {
-	UUID        string `json:"uuid,omitempty" bson:"uuid,omitempty" gorm:"unique;not null;index"`
-	Code        string `json:"code,omitempty" bson:"code,omitempty" gorm:"unique;not null;index"`
-	Name        string `json:"name,omitempty" bson:"name,omitempty"`
-	Description string `json:"description,omitempty" bson:"description,omitempty"`
-	Active      bool   `json:"active,omitempty" bson:"active,omitempty" gorm:"default:true"`
+	UUID        string `gorm:"unique;not null;index"`
+	Code        string `gorm:"unique;not null;index"`
+	Name        string
+	Description string
+	Active      bool               `gorm:"default:true"`
+	Products    *[]product.Product `gorm:"foreignkey:UUID;association_foreignkey:CategUUID"`
+
 	gorm.Model
 }
 
@@ -30,6 +33,6 @@ type CategoryResponse struct {
 }
 
 type CategoryRequest struct {
-	Name        string `json:"name,omitempty" bson:"name,omitempty" validate:"required"`
-	Description string `json:"description,omitempty" bson:"description,omitempty"`
+	Name        string `json:"name,omitempty" validate:"required"`
+	Description string `json:"description,omitempty"`
 }
