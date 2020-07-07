@@ -12,6 +12,7 @@ func API(e *gin.Engine) {
 	{
 		userService := user.NewService()
 		v1.POST("/register", userService.Register)
+		v1.POST("/login", userService.Login)
 
 		proService := product.NewService()
 		v1.GET("/products", proService.GetProducts)
