@@ -19,6 +19,7 @@ func API(e *gin.Engine) {
 		v1.GET("/categories", categService.GetCategories)
 		v1.POST("/categories", categService.CreateCategory)
 		v1.GET("/categories/:uuid", categService.GetCategoryByID)
+		v1.GET("/categories/:uuid/products", proService.GetProductByCategory)
 		v1.PUT("/categories/:uuid", categService.UpdateCategory)
 	}
 }

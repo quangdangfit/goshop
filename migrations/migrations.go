@@ -16,5 +16,5 @@ func Migrate() {
 	OrderLine := orderLine.OrderLine{}
 
 	dbs.Database.AutoMigrate(&Product, &Pategory, &Order, &OrderLine)
-	dbs.Database.Model(&Product).AddForeignKey("categ_uuid", "categories(uuid)", "CASCADE", "CASCADE")
+	dbs.Database.Model(&Product).AddForeignKey("categ_uuid", "categories(uuid)", "RESTRICT", "RESTRICT")
 }

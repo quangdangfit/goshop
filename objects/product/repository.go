@@ -10,6 +10,7 @@ import (
 type Repository interface {
 	GetProducts(active bool) (*[]Product, error)
 	GetProductByID(uuid string) (*Product, error)
+	GetProductByCategory(uuid string, active bool) (*[]Product, error)
 	CreateProduct(req *ProductRequest) (*Product, error)
 	UpdateProduct(uuid string, req *ProductRequest) (*Product, error)
 }
@@ -25,6 +26,15 @@ func NewRepository() Repository {
 func (r *repo) GetProducts(active bool) (*[]Product, error) {
 	var products []Product
 	if r.db.Where("active = ?", active).Find(&products).RecordNotFound() {
+		return nil, nil
+	}
+
+	return &products, nil
+}
+
+func (r *repo) GetProductByCategory(categUUID string, active bool) (*[]Product, error) {
+	var products []Product
+	if r.db.Where("active = ? AND categ_uuid = ?", active, categUUID).Find(&products).RecordNotFound() {
 		return nil, nil
 	}
 
