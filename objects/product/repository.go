@@ -44,7 +44,9 @@ func (r *repo) CreateProduct(req *ProductRequest) (*Product, error) {
 	var product Product
 	copier.Copy(&product, &req)
 
-	r.db.Create(&product)
+	if err := r.db.Create(&product).Error; err != nil {
+		return nil, err
+	}
 
 	return &product, nil
 }
@@ -56,7 +58,9 @@ func (r *repo) UpdateProduct(uuid string, req *ProductRequest) (*Product, error)
 	}
 
 	copier.Copy(&product, &req)
-	r.db.Save(&product)
+	if err := r.db.Save(&product).Error; err != nil {
+		return nil, err
+	}
 
 	return &product, nil
 }

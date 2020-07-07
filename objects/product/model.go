@@ -7,12 +7,13 @@ import (
 )
 
 type Product struct {
-	UUID        string `json:"uuid,omitempty" bson:"uuid,omitempty" gorm:"unique;not null;index"`
-	Code        string `json:"code,omitempty" bson:"code,omitempty" gorm:"unique;not null;index"`
-	Name        string `json:"name,omitempty" bson:"name,omitempty"`
-	Description string `json:"description,omitempty" bson:"description,omitempty"`
-	CategUUID   string `json:"categ_uuid,omitempty" bson:"categ_uuid,omitempty"`
-	Active      bool   `json:"active,omitempty" bson:"active,omitempty" gorm:"default:true"`
+	UUID        string `gorm:"unique;not null;index;primary_key"`
+	Code        string `gorm:"unique;not null;index"`
+	Name        string
+	Description string
+	CategUUID   string
+	Active      bool `gorm:"default:true"`
+
 	gorm.Model
 }
 
@@ -32,7 +33,7 @@ type ProductResponse struct {
 }
 
 type ProductRequest struct {
-	Name        string `json:"name,omitempty" bson:"name,omitempty" validate:"required"`
-	Description string `json:"description,omitempty" bson:"description,omitempty"`
-	CategUUID   string `json:"categ_uuid,omitempty" bson:"categ_uuid,omitempty" validate:"required"`
+	Name        string `json:"name,omitempty" validate:"required"`
+	Description string `json:"description,omitempty"`
+	CategUUID   string `json:"categ_uuid,omitempty" validate:"required"`
 }

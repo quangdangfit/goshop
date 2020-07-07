@@ -44,7 +44,9 @@ func (r *repo) CreateCategory(req *CategoryRequest) (*Category, error) {
 	var category Category
 	copier.Copy(&category, &req)
 
-	r.db.Create(&category)
+	if err := r.db.Create(&category).Error; err != nil {
+		return nil, err
+	}
 
 	return &category, nil
 }
@@ -56,7 +58,9 @@ func (r *repo) UpdateCategory(uuid string, req *CategoryRequest) (*Category, err
 	}
 
 	copier.Copy(&category, &req)
-	r.db.Save(&category)
+	if err := r.db.Save(&category).Error; err != nil {
+		return nil, err
+	}
 
 	return &category, nil
 }
