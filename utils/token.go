@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
@@ -28,23 +29,27 @@ func GenerateToken(payload interface{}) string {
 	return token
 }
 
-func ValidateToken(jwtToken string) (*map[string]interface{}, bool) {
+func ValidateToken(jwtToken string) (*map[string]interface{}, error) {
 	if jwtToken == "" {
-		return nil, false
+		return nil, errors.New("token must be not empty")
 	}
 	cleanJWT := strings.Replace(jwtToken, "Bearer ", "", -1)
 	tokenData := jwt.MapClaims{}
-	token, _ := jwt.ParseWithClaims(cleanJWT, tokenData, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(cleanJWT, tokenData, func(token *jwt.Token) (interface{}, error) {
 		return []byte("TokenPassword"), nil
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	if !token.Valid {
-		return nil, false
+		return nil, errors.New("token is in valid")
 	}
 
 	var data map[string]interface{}
 	copier.Copy(&data, tokenData["payload"])
-	return &data, true
+	return &data, nil
 }
 
 func HashAndSalt(pass []byte) string {

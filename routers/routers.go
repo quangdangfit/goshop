@@ -2,30 +2,33 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	"goshop/middlewares/jwt"
 	"goshop/objects/category"
 	"goshop/objects/product"
 	"goshop/objects/user"
 )
 
-func API(e *gin.Engine) {
-	v1 := e.Group("api/v1")
+func Route(e *gin.Engine) {
+	userService := user.NewService()
+	e.POST("/register", userService.Register)
+	e.POST("/login", userService.Login)
+
+	apiV1 := e.Group("api/v1")
+	apiV1.Use(jwt.JWT())
 	{
-		userService := user.NewService()
-		v1.POST("/register", userService.Register)
-		v1.POST("/login", userService.Login)
-		v1.GET("/users/:uuid", userService.GetUserByID)
+		apiV1.GET("/users/:uuid", userService.GetUserByID)
 
 		proService := product.NewService()
-		v1.GET("/products", proService.GetProducts)
-		v1.POST("/products", proService.CreateProduct)
-		v1.GET("/products/:uuid", proService.GetProductByID)
-		v1.PUT("/products/:uuid", proService.UpdateProduct)
+		apiV1.GET("/products", proService.GetProducts)
+		apiV1.POST("/products", proService.CreateProduct)
+		apiV1.GET("/products/:uuid", proService.GetProductByID)
+		apiV1.PUT("/products/:uuid", proService.UpdateProduct)
 
 		categService := category.NewService()
-		v1.GET("/categories", categService.GetCategories)
-		v1.POST("/categories", categService.CreateCategory)
-		v1.GET("/categories/:uuid", categService.GetCategoryByID)
-		v1.GET("/categories/:uuid/products", proService.GetProductByCategory)
-		v1.PUT("/categories/:uuid", categService.UpdateCategory)
+		apiV1.GET("/categories", categService.GetCategories)
+		apiV1.POST("/categories", categService.CreateCategory)
+		apiV1.GET("/categories/:uuid", categService.GetCategoryByID)
+		apiV1.GET("/categories/:uuid/products", proService.GetProductByCategory)
+		apiV1.PUT("/categories/:uuid", categService.UpdateCategory)
 	}
 }

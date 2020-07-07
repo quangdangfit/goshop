@@ -12,7 +12,7 @@ type Product struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	CategUUID   string `json:"categ_uuid"`
-	Active      bool   `json:"active"gorm:"default:true"`
+	Active      bool   `json:"active" gorm:"default:true"`
 
 	gorm.Model
 }

@@ -16,7 +16,7 @@ import (
 func main() {
 	migrations.Migrate()
 	engine := gin.Default()
-	routers.API(engine)
+	routers.Route(engine)
 
 	server := &http.Server{
 		Addr:    ":8888",
