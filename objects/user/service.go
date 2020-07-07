@@ -11,7 +11,7 @@ import (
 type Service interface {
 	Login(c *gin.Context)
 	Register(c *gin.Context)
-	//GetUserByID(c *gin.Context)
+	GetUserByID(c *gin.Context)
 }
 
 type service struct {
@@ -29,6 +29,10 @@ func (s *service) validate(r RegisterRequest) bool {
 			{Value: r.Email, Valid: "email"},
 			{Value: r.Password, Valid: "password"},
 		})
+}
+
+func (s *service) checkPermission(uuid string, data map[string]interface{}) bool {
+	return data["uuid"] == uuid
 }
 
 func (s *service) Login(c *gin.Context) {
@@ -81,17 +85,29 @@ func (s *service) Register(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-//func (s *service) GetUserByID(c *gin.Context) {
-//	userUUID := c.Param("uuid")
-//	auth := c.GetHeader("Authorization")
-//
-//	user, err := s.repo.GetUser(userUUID, auth)
-//	if err != nil {
-//		logger.Error(err.Error())
-//		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-//		return
-//	}
-//	var res UserResponse
-//	copier.Copy(&res, &user)
-//	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
-//}
+func (s *service) GetUserByID(c *gin.Context) {
+	userUUID := c.Param("uuid")
+	auth := c.GetHeader("Authorization")
+
+	userData, valid := utils.ValidateToken(auth)
+	if !valid {
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, "Token is invalid", ""))
+		return
+	}
+
+	if !s.checkPermission(userUUID, *userData) {
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, "No Permission", ""))
+		return
+	}
+
+	user, err := s.repo.GetUserByID(userUUID)
+	if err != nil {
+		logger.Error(err.Error())
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		return
+	}
+
+	var res UserResponse
+	copier.Copy(&res, &user)
+	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+}

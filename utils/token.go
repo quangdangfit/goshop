@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
@@ -27,7 +28,7 @@ func GenerateToken(payload interface{}) string {
 	return token
 }
 
-func ValidateToken(jwtToken string) (*jwt.MapClaims, bool) {
+func ValidateToken(jwtToken string) (*map[string]interface{}, bool) {
 	if jwtToken == "" {
 		return nil, false
 	}
@@ -41,7 +42,9 @@ func ValidateToken(jwtToken string) (*jwt.MapClaims, bool) {
 		return nil, false
 	}
 
-	return &tokenData, true
+	var data map[string]interface{}
+	copier.Copy(&data, tokenData["payload"])
+	return &data, true
 }
 
 func HashAndSalt(pass []byte) string {
