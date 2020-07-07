@@ -87,23 +87,10 @@ func (s *service) Register(c *gin.Context) {
 
 func (s *service) GetUserByID(c *gin.Context) {
 	userUUID := c.Param("uuid")
-	auth := c.GetHeader("Authorization")
-
-	userData, valid := utils.ValidateToken(auth)
-	if !valid {
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, "Token is invalid", ""))
-		return
-	}
-
-	if !s.checkPermission(userUUID, *userData) {
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, "No Permission", ""))
-		return
-	}
-
 	user, err := s.repo.GetUserByID(userUUID)
 	if err != nil {
 		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), utils.ErrorNotExistUser))
 		return
 	}
 
