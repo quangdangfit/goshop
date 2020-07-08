@@ -25,6 +25,13 @@ func NewService() Service {
 	return &service{repo: NewRepository()}
 }
 
+// GetProductByID godoc
+// @Summary Get get product by uuid
+// @Produce json
+// @Param uuid path string true "Product UUID"
+// @Security ApiKeyAuth
+// @Success 200 {object} product.ProductResponse
+// @Router /api/v1/products/{uuid} [get]
 func (s *service) GetProductByID(c *gin.Context) {
 	productId := c.Param("uuid")
 
@@ -40,6 +47,12 @@ func (s *service) GetProductByID(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
+// GetProducts godoc
+// @Summary Get list products
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} []product.ProductResponse
+// @Router /api/v1/products [get]
 func (s *service) GetProducts(c *gin.Context) {
 	activeParam := c.Query("active")
 	active := true

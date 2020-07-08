@@ -1,0 +1,53 @@
+definitions:
+  product.ProductResponse:
+    properties:
+      active:
+        type: boolean
+      categ_uuid:
+        type: string
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      uuid:
+        type: string
+    type: object
+info:
+  contact: {}
+  license: {}
+paths:
+  /api/v1/products:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/product.ProductResponse'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: Get list products
+  /api/v1/products/{uuid}:
+    get:
+      parameters:
+      - description: Product UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product.ProductResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get get product by uuid
+swagger: "2.0"
