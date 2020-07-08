@@ -4,18 +4,16 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"goshop/dbs"
 	"goshop/models"
-	"goshop/objects/order"
-	"goshop/objects/orderLine"
 	"goshop/objects/role"
-	"goshop/objects/user"
+	"goshop/repositories"
 )
 
 func createAdmin() {
 	roleRepo := role.NewRepository()
 	role, _ := roleRepo.CreateRole(&role.RoleRequest{Name: "admin", Description: "Admin"})
 
-	userRepo := user.NewRepository()
-	userRepo.Register(&user.RegisterRequest{
+	userRepo := repositories.NewUserRepository()
+	userRepo.Register(&models.RegisterRequest{
 		Username: "admin",
 		Password: "admin",
 		Email:    "admin@admin.com",
@@ -26,10 +24,10 @@ func createAdmin() {
 func Migrate() {
 	Product := models.Product{}
 	Pategory := models.Category{}
-	Order := order.Order{}
-	OrderLine := orderLine.OrderLine{}
-	User := user.User{}
-	Role := role.Role{}
+	Order := models.Order{}
+	OrderLine := models.OrderLine{}
+	User := models.User{}
+	Role := models.Role{}
 
 	dbs.Database.AutoMigrate(&Product, &Pategory, &Order, &OrderLine, &User, &Role)
 	dbs.Database.Model(&Product).AddForeignKey("categ_uuid", "categories(uuid)", "RESTRICT", "RESTRICT")

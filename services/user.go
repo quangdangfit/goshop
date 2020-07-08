@@ -1,28 +1,30 @@
-package user
+package services
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
+	"goshop/models"
+	"goshop/repositories"
 	"goshop/utils"
 	"net/http"
 )
 
-type Service interface {
+type User interface {
 	Login(c *gin.Context)
 	Register(c *gin.Context)
 	GetUserByID(c *gin.Context)
 }
 
 type service struct {
-	repo Repository
+	repo repositories.UserRepository
 }
 
-func NewService() Service {
-	return &service{repo: NewRepository()}
+func NewUserService(repo repositories.UserRepository) User {
+	return &service{repo: repo}
 }
 
-func (s *service) validate(r RegisterRequest) bool {
+func (s *service) validate(r models.RegisterRequest) bool {
 	return utils.Validate(
 		[]utils.Validation{
 			{Value: r.Username, Valid: "username"},
@@ -36,7 +38,7 @@ func (s *service) checkPermission(uuid string, data map[string]interface{}) bool
 }
 
 func (s *service) Login(c *gin.Context) {
-	var reqBody LoginRequest
+	var reqBody models.LoginRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -49,7 +51,7 @@ func (s *service) Login(c *gin.Context) {
 		return
 	}
 
-	var res UserResponse
+	var res models.UserResponse
 	copier.Copy(&res, &user)
 	res.Extra = map[string]interface{}{
 		"token": utils.GenerateToken(user),
@@ -58,7 +60,7 @@ func (s *service) Login(c *gin.Context) {
 }
 
 func (s *service) Register(c *gin.Context) {
-	var reqBody RegisterRequest
+	var reqBody models.RegisterRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -77,7 +79,7 @@ func (s *service) Register(c *gin.Context) {
 		return
 	}
 
-	var res UserResponse
+	var res models.UserResponse
 	copier.Copy(&res, &user)
 	res.Extra = map[string]interface{}{
 		"token": utils.GenerateToken(user),
@@ -94,7 +96,7 @@ func (s *service) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	var res UserResponse
+	var res models.UserResponse
 	copier.Copy(&res, &user)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
