@@ -4,3 +4,9 @@ database:
   env: native
   user: ######
   password: ######
+
+redis:
+  host: localhost
+  port:
+  password:
+  database: 0

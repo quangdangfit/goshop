@@ -17,6 +17,13 @@ type Schema struct {
 		Env      string `mapstructure:"env"`
 		SSLMode  string `mapstructure:"sslmode"`
 	} `mapstructure:"database"`
+
+	Redis struct {
+		Host     string `mapstructure:"host"`
+		Port     int    `mapstructure:"port"`
+		Password string `mapstructure:"password"`
+		Database int    `mapstructure:"database"`
+	} `mapstructure:"redis"`
 }
 
 var Config Schema
