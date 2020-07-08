@@ -6,9 +6,9 @@ import (
 )
 
 var roleService services.RoleService
-var userService services.User
-var categoryService services.Category
-var productService services.Product
+var userService services.UserService
+var categoryService services.CategorySerivce
+var productService services.ProductService
 
 func init() {
 	roleRepo := repositories.NewRoleRepository()

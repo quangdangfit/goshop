@@ -10,21 +10,21 @@ import (
 	"net/http"
 )
 
-type User interface {
+type UserService interface {
 	Login(c *gin.Context)
 	Register(c *gin.Context)
 	GetUserByID(c *gin.Context)
 }
 
-type service struct {
+type user struct {
 	repo repositories.UserRepository
 }
 
-func NewUserService(repo repositories.UserRepository) User {
-	return &service{repo: repo}
+func NewUserService(repo repositories.UserRepository) UserService {
+	return &user{repo: repo}
 }
 
-func (s *service) validate(r models.RegisterRequest) bool {
+func (u *user) validate(r models.RegisterRequest) bool {
 	return utils.Validate(
 		[]utils.Validation{
 			{Value: r.Username, Valid: "username"},
@@ -33,18 +33,18 @@ func (s *service) validate(r models.RegisterRequest) bool {
 		})
 }
 
-func (s *service) checkPermission(uuid string, data map[string]interface{}) bool {
+func (u *user) checkPermission(uuid string, data map[string]interface{}) bool {
 	return data["uuid"] == uuid
 }
 
-func (s *service) Login(c *gin.Context) {
+func (u *user) Login(c *gin.Context) {
 	var reqBody models.LoginRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user, err := s.repo.Login(&reqBody)
+	user, err := u.repo.Login(&reqBody)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -59,20 +59,20 @@ func (s *service) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-func (s *service) Register(c *gin.Context) {
+func (u *user) Register(c *gin.Context) {
 	var reqBody models.RegisterRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	valid := s.validate(reqBody)
+	valid := u.validate(reqBody)
 	if !valid {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is invalid"})
 		return
 	}
 
-	user, err := s.repo.Register(&reqBody)
+	user, err := u.repo.Register(&reqBody)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -87,9 +87,9 @@ func (s *service) Register(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-func (s *service) GetUserByID(c *gin.Context) {
+func (u *user) GetUserByID(c *gin.Context) {
 	userUUID := c.Param("uuid")
-	user, err := s.repo.GetUserByID(userUUID)
+	user, err := u.repo.GetUserByID(userUUID)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), utils.ErrorNotExistUser))
