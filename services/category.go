@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-type Category interface {
+type CategorySerivce interface {
 	GetCategories(c *gin.Context)
 	GetCategoryByID(c *gin.Context)
 	CreateCategory(c *gin.Context)
@@ -22,18 +22,18 @@ type category struct {
 	repo repositories.CategoryRepository
 }
 
-func NewCategoryService(repo repositories.CategoryRepository) Category {
+func NewCategoryService(repo repositories.CategoryRepository) CategorySerivce {
 	return &category{repo: repo}
 }
 
-func (s *category) GetCategories(c *gin.Context) {
+func (categ *category) GetCategories(c *gin.Context) {
 	activeParam := c.Query("active")
 	active := true
 	if activeParam == "false" {
 		active = false
 	}
 
-	categories, err := s.repo.GetCategories(active)
+	categories, err := categ.repo.GetCategories(active)
 	if err != nil {
 		logger.Error("Failed to get categories: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -45,10 +45,10 @@ func (s *category) GetCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-func (s *category) GetCategoryByID(c *gin.Context) {
+func (categ *category) GetCategoryByID(c *gin.Context) {
 	categoryId := c.Param("uuid")
 
-	category, err := s.repo.GetCategoryByID(categoryId)
+	category, err := categ.repo.GetCategoryByID(categoryId)
 	if err != nil {
 		logger.Error("Failed to get category: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -60,7 +60,7 @@ func (s *category) GetCategoryByID(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-func (s *category) CreateCategory(c *gin.Context) {
+func (categ *category) CreateCategory(c *gin.Context) {
 	var reqBody models.CategoryRequest
 	if err := c.Bind(&reqBody); err != nil {
 		logger.Error("Failed to parse request body: ", err)
@@ -76,7 +76,7 @@ func (s *category) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	categories, err := s.repo.CreateCategory(&reqBody)
+	categories, err := categ.repo.CreateCategory(&reqBody)
 	if err != nil {
 		logger.Error("Failed to create category", err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -88,7 +88,7 @@ func (s *category) CreateCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-func (s *category) UpdateCategory(c *gin.Context) {
+func (categ *category) UpdateCategory(c *gin.Context) {
 	uuid := c.Param("uuid")
 	var reqBody models.CategoryRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
@@ -97,7 +97,7 @@ func (s *category) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	categories, err := s.repo.UpdateCategory(uuid, &reqBody)
+	categories, err := categ.repo.UpdateCategory(uuid, &reqBody)
 	if err != nil {
 		logger.Error("Failed to update category: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))

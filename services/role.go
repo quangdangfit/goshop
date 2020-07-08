@@ -15,15 +15,15 @@ type RoleService interface {
 	CreateRole(c *gin.Context)
 }
 
-type roleService struct {
+type role struct {
 	repo repositories.RoleRepository
 }
 
 func NewService(repo repositories.RoleRepository) RoleService {
-	return &roleService{repo: repo}
+	return &role{repo: repo}
 }
 
-func (r *roleService) CreateRole(c *gin.Context) {
+func (r *role) CreateRole(c *gin.Context) {
 	var reqBody models.RoleRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-type Product interface {
+type ProductService interface {
 	GetProducts(c *gin.Context)
 	GetProductByID(c *gin.Context)
 	CreateProduct(c *gin.Context)
@@ -23,7 +23,7 @@ type product struct {
 	repo repositories.ProductRepository
 }
 
-func NewProductService(repo repositories.ProductRepository) Product {
+func NewProductService(repo repositories.ProductRepository) ProductService {
 	return &product{repo: repo}
 }
 
@@ -34,10 +34,10 @@ func NewProductService(repo repositories.ProductRepository) Product {
 // @Security ApiKeyAuth
 // @Success 200 {object} product.ProductResponse
 // @Router /api/v1/products/{uuid} [get]
-func (s *product) GetProductByID(c *gin.Context) {
+func (p *product) GetProductByID(c *gin.Context) {
 	productId := c.Param("uuid")
 
-	product, err := s.repo.GetProductByID(productId)
+	product, err := p.repo.GetProductByID(productId)
 	if err != nil {
 		logger.Error("Failed to get product: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -55,14 +55,14 @@ func (s *product) GetProductByID(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Success 200 {object} []product.ProductResponse
 // @Router /api/v1/products [get]
-func (s *product) GetProducts(c *gin.Context) {
+func (p *product) GetProducts(c *gin.Context) {
 	activeParam := c.Query("active")
 	active := true
 	if activeParam == "false" {
 		active = false
 	}
 
-	products, err := s.repo.GetProducts(active)
+	products, err := p.repo.GetProducts(active)
 	if err != nil {
 		logger.Error("Failed to get products: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -74,7 +74,7 @@ func (s *product) GetProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-func (s *product) GetProductByCategory(c *gin.Context) {
+func (p *product) GetProductByCategory(c *gin.Context) {
 	categUUID := c.Param("uuid")
 	activeParam := c.Query("active")
 	active := true
@@ -82,7 +82,7 @@ func (s *product) GetProductByCategory(c *gin.Context) {
 		active = false
 	}
 
-	products, err := s.repo.GetProductByCategory(categUUID, active)
+	products, err := p.repo.GetProductByCategory(categUUID, active)
 	if err != nil {
 		logger.Error("Failed to get products: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -94,7 +94,7 @@ func (s *product) GetProductByCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-func (s *product) CreateProduct(c *gin.Context) {
+func (p *product) CreateProduct(c *gin.Context) {
 	var reqBody models.ProductRequest
 	if err := c.Bind(&reqBody); err != nil {
 		logger.Error("Failed to parse request body: ", err)
@@ -110,7 +110,7 @@ func (s *product) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	products, err := s.repo.CreateProduct(&reqBody)
+	products, err := p.repo.CreateProduct(&reqBody)
 	if err != nil {
 		logger.Error("Failed to create product", err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -122,7 +122,7 @@ func (s *product) CreateProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
-func (s *product) UpdateProduct(c *gin.Context) {
+func (p *product) UpdateProduct(c *gin.Context) {
 	uuid := c.Param("uuid")
 	var reqBody models.ProductRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
@@ -131,7 +131,7 @@ func (s *product) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	products, err := s.repo.UpdateProduct(uuid, &reqBody)
+	products, err := p.repo.UpdateProduct(uuid, &reqBody)
 	if err != nil {
 		logger.Error("Failed to update product: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
