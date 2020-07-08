@@ -20,6 +20,7 @@ func main() {
 	routers.Auth(engine)
 	routers.Admin(engine)
 	routers.API(engine)
+	routers.Docs(engine)
 
 	server := &http.Server{
 		Addr:    ":8888",
