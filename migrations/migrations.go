@@ -4,13 +4,12 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"goshop/dbs"
 	"goshop/models"
-	"goshop/objects/role"
 	"goshop/repositories"
 )
 
 func createAdmin() {
-	roleRepo := role.NewRepository()
-	role, _ := roleRepo.CreateRole(&role.RoleRequest{Name: "admin", Description: "Admin"})
+	roleRepo := repositories.NewRoleRepository()
+	role, _ := roleRepo.CreateRole(&models.RoleRequest{Name: "admin", Description: "Admin"})
 
 	userRepo := repositories.NewUserRepository()
 	userRepo.Register(&models.RegisterRequest{
