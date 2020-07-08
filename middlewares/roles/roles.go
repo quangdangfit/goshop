@@ -1,14 +1,13 @@
-package jwt
+package roles
 
 import (
-	"goshop/utils"
-	"net/http"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"goshop/utils"
+	"net/http"
 )
 
-func JWT() gin.HandlerFunc {
+func CheckAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var code string
 

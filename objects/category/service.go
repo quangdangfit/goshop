@@ -55,7 +55,6 @@ func (s *service) GetCategoryByID(c *gin.Context) {
 
 	var res CategoryResponse
 	copier.Copy(&res, &category)
-	logger.Info("===============>", category.Products)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 

@@ -8,14 +8,11 @@ import (
 	"goshop/objects/user"
 )
 
-func Route(e *gin.Engine) {
-	userService := user.NewService()
-	e.POST("/register", userService.Register)
-	e.POST("/login", userService.Login)
-
+func API(e *gin.Engine) {
 	apiV1 := e.Group("api/v1")
 	apiV1.Use(jwt.JWT())
 	{
+		userService := user.NewService()
 		apiV1.GET("/users/:uuid", userService.GetUserByID)
 
 		proService := product.NewService()

@@ -10,6 +10,7 @@ type User struct {
 	Username string `json:"username" gorm:"unique;not null;index"`
 	Email    string `json:"email" gorm:"unique;not null;index"`
 	Password string `json:"password"`
+	RoleUUID string `json:"role_uuid"`
 
 	gorm.Model
 }
@@ -30,6 +31,7 @@ type RegisterRequest struct {
 	Username string `json:"username" validate:"required"`
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
+	RoleUUID string `json:"role_uuid"`
 }
 
 type LoginRequest struct {
