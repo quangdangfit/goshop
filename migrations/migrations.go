@@ -3,10 +3,9 @@ package migrations
 import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"goshop/dbs"
-	"goshop/objects/category"
+	"goshop/models"
 	"goshop/objects/order"
 	"goshop/objects/orderLine"
-	"goshop/objects/product"
 	"goshop/objects/role"
 	"goshop/objects/user"
 )
@@ -25,8 +24,8 @@ func createAdmin() {
 }
 
 func Migrate() {
-	Product := product.Product{}
-	Pategory := category.Category{}
+	Product := models.Product{}
+	Pategory := models.Category{}
 	Order := order.Order{}
 	OrderLine := orderLine.OrderLine{}
 	User := user.User{}
