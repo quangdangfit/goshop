@@ -1,4 +1,4 @@
-package user
+package repositories
 
 import (
 	"errors"
@@ -6,25 +6,26 @@ import (
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"goshop/dbs"
+	"goshop/models"
 	"goshop/utils"
 )
 
-type Repository interface {
-	Login(req *LoginRequest) (*User, error)
-	Register(req *RegisterRequest) (*User, error)
-	GetUserByID(uuid string) (*User, error)
+type UserRepository interface {
+	Login(req *models.LoginRequest) (*models.User, error)
+	Register(req *models.RegisterRequest) (*models.User, error)
+	GetUserByID(uuid string) (*models.User, error)
 }
 
-type repo struct {
+type userRepo struct {
 	db *gorm.DB
 }
 
-func NewRepository() Repository {
-	return &repo{db: dbs.Database}
+func NewUserRepository() UserRepository {
+	return &userRepo{db: dbs.Database}
 }
 
-func (r *repo) Login(req *LoginRequest) (*User, error) {
-	user := &User{}
+func (u *userRepo) Login(req *models.LoginRequest) (*models.User, error) {
+	user := &models.User{}
 	if dbs.Database.Where("username = ? ", req.Username).First(&user).RecordNotFound() {
 		return nil, errors.New("user not found")
 	}
@@ -37,21 +38,21 @@ func (r *repo) Login(req *LoginRequest) (*User, error) {
 	return user, nil
 }
 
-func (r *repo) Register(req *RegisterRequest) (*User, error) {
-	var user User
+func (u *userRepo) Register(req *models.RegisterRequest) (*models.User, error) {
+	var user models.User
 	copier.Copy(&user, &req)
 	hashedPassword := utils.HashAndSalt([]byte(req.Password))
 	user.Password = hashedPassword
 
-	if err := r.db.Create(&user).Error; err != nil {
+	if err := u.db.Create(&user).Error; err != nil {
 		return nil, err
 	}
 
 	return &user, nil
 }
 
-func (r *repo) GetUserByID(uuid string) (*User, error) {
-	user := User{}
+func (u *userRepo) GetUserByID(uuid string) (*models.User, error) {
+	user := models.User{}
 	if dbs.Database.Where("uuid = ? ", uuid).First(&user).RecordNotFound() {
 		return nil, errors.New("user not found")
 	}

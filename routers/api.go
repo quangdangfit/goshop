@@ -3,12 +3,9 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"goshop/middlewares/jwt"
-	"goshop/objects/user"
 )
 
 func API(e *gin.Engine) {
-	userService := user.NewService()
-
 	apiV1 := e.Group("api/v1")
 	apiV1.Use(jwt.JWT())
 	{
