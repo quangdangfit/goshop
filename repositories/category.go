@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/jinzhu/copier"
 	"github.com/jinzhu/gorm"
@@ -16,6 +17,7 @@ type CategoryRepository interface {
 }
 
 type categRepo struct {
+	Repository
 	db *gorm.DB
 }
 
@@ -34,10 +36,17 @@ func (r *categRepo) GetCategories(active bool) (*[]models.Category, error) {
 
 func (r *categRepo) GetCategoryByID(uuid string) (*models.Category, error) {
 	var category models.Category
+	value := r.GetCache(uuid)
+	if value != nil {
+		json.Unmarshal(value, &category)
+		return &category, nil
+	}
+
 	if r.db.Where("uuid = ?", uuid).Find(&category).RecordNotFound() {
 		return nil, errors.New("not found category")
 	}
 
+	go r.SetCache(uuid, category)
 	return &category, nil
 }
 
