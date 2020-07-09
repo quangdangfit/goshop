@@ -1,6 +1,6 @@
 package repositories
 
-import "goshop/caches/gredis"
+import "goshop/cache/gredis"
 
 type Repository struct{}
 
@@ -8,6 +8,6 @@ func (r *Repository) GetCache(key string) []byte {
 	return gredis.GRedis.Get(key)
 }
 
-func (r *Repository) SetCache(key string, value interface{}) error {
+func (r *Repository) SetCache(key string, value []byte) error {
 	return gredis.GRedis.Set(key, value)
 }

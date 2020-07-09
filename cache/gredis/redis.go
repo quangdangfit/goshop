@@ -2,7 +2,6 @@ package gredis
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
@@ -17,8 +16,9 @@ const (
 var ctx = context.Background()
 
 type Redis interface {
+	IsConnected() bool
 	Get(key string) []byte
-	Set(key string, val interface{}) error
+	Set(key string, val []byte) error
 }
 
 type gredis struct {
@@ -43,10 +43,25 @@ func NewRedis() Redis {
 	return &gredis{client: rdb}
 }
 
+func (g *gredis) IsConnected() bool {
+	if g.client == nil {
+		return false
+	}
+
+	_, err := g.client.Ping(ctx).Result()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func (g *gredis) Get(key string) []byte {
 	val, err := g.client.Get(ctx, key).Bytes()
+	if err == redis.Nil {
+		return nil
+	}
 	if err != nil {
-		logger.Info("Failed to get from redis: ", err)
+		logger.Info("Redis fail to get: ", err)
 		return nil
 	}
 	logger.Debugf("Get from redis %s - %s", key, val)
@@ -54,15 +69,18 @@ func (g *gredis) Get(key string) []byte {
 	return val
 }
 
-func (g *gredis) Set(key string, val interface{}) error {
-	data, _ := json.Marshal(val)
-	err := g.client.Set(ctx, key, data, RedisExpiredTimes*time.Second).Err()
+func (g *gredis) Set(key string, val []byte) error {
+	err := g.client.Set(ctx, key, val, RedisExpiredTimes*time.Second).Err()
 	if err != nil {
-		logger.Error("Failed to set to redis: ", err)
+		logger.Error("Redis fail to set: ", err)
 		return err
 	}
 	logger.Debugf("Set to redis %s - %s", key, val)
 
+	return nil
+}
+
+func (g *gredis) Remove(key string) error {
 	return nil
 }
 

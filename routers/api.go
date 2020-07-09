@@ -2,12 +2,18 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	"goshop/config"
+	"goshop/middlewares/cache"
 	"goshop/middlewares/jwt"
 )
 
 func API(e *gin.Engine) {
 	apiV1 := e.Group("api/v1")
 	apiV1.Use(jwt.JWT())
+	if config.Config.Redis.Enable {
+		apiV1.Use(cache.Cache())
+	}
+
 	{
 		apiV1.GET("/users/:uuid", userService.GetUserByID)
 

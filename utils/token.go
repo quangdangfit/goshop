@@ -10,13 +10,13 @@ import (
 )
 
 const (
-	TokenExpiredTime = 3600
+	TokenExpiredTime = 300
 )
 
 func GenerateToken(payload interface{}) string {
 	tokenContent := jwt.MapClaims{
 		"payload": payload,
-		"expiry":  time.Now().Add(time.Second * TokenExpiredTime).Unix(),
+		"exp":     time.Now().Add(time.Second * TokenExpiredTime).Unix(),
 	}
 	jwtToken := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tokenContent)
 	token, err := jwtToken.SignedString([]byte("TokenPassword"))
@@ -31,12 +31,16 @@ func GenerateToken(payload interface{}) string {
 func ValidateToken(jwtToken string) (map[string]interface{}, error) {
 	cleanJWT := strings.Replace(jwtToken, "Bearer ", "", -1)
 	tokenData := jwt.MapClaims{}
-	_, err := jwt.ParseWithClaims(cleanJWT, tokenData, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(cleanJWT, tokenData, func(token *jwt.Token) (interface{}, error) {
 		return []byte("TokenPassword"), nil
 	})
 
 	if err != nil {
 		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, jwt.ErrInvalidKey
 	}
 
 	var data map[string]interface{}

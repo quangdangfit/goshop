@@ -6,6 +6,7 @@ database:
   password: ######
 
 redis:
+  enable: true
   host: localhost
   port:
   password:
