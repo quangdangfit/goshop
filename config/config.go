@@ -19,11 +19,12 @@ type Schema struct {
 	} `mapstructure:"database"`
 
 	Redis struct {
-		Enable   bool   `mapstructure:"enable"`
-		Host     string `mapstructure:"host"`
-		Port     int    `mapstructure:"port"`
-		Password string `mapstructure:"password"`
-		Database int    `mapstructure:"database"`
+		Enable     bool   `mapstructure:"enable"`
+		Host       string `mapstructure:"host"`
+		Port       int    `mapstructure:"port"`
+		Password   string `mapstructure:"password"`
+		Database   int    `mapstructure:"database"`
+		ExpiryTime int    `mapstructure:"expiry_time"`
 	} `mapstructure:"redis"`
 }
 
