@@ -19,6 +19,7 @@ type Schema struct {
 	} `mapstructure:"database"`
 
 	Redis struct {
+		Enable   bool   `mapstructure:"enable"`
 		Host     string `mapstructure:"host"`
 		Port     int    `mapstructure:"port"`
 		Password string `mapstructure:"password"`
