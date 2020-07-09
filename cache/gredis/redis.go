@@ -19,6 +19,7 @@ type Redis interface {
 	IsConnected() bool
 	Get(key string) []byte
 	Set(key string, val []byte) error
+	Remove(key string) error
 }
 
 type gredis struct {
@@ -81,6 +82,13 @@ func (g *gredis) Set(key string, val []byte) error {
 }
 
 func (g *gredis) Remove(key string) error {
+	err := g.client.Del(ctx, key).Err()
+	if err != nil {
+		logger.Errorf("Redis fail to delete key %s: %s", key, err)
+		return err
+	}
+	logger.Debug("Redis deleted key", key)
+
 	return nil
 }
 
