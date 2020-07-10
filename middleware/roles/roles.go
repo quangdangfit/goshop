@@ -6,6 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 
+	jwtMiddle "goshop/middleware/jwt"
 	"goshop/utils"
 )
 
@@ -24,7 +25,7 @@ func CheckAdmin() gin.HandlerFunc {
 			return
 		}
 
-		_, err := utils.ValidateToken(token)
+		_, err := jwtMiddle.ValidateToken(token)
 		if err != nil {
 			switch err.(*jwt.ValidationError).Errors {
 			case jwt.ValidationErrorExpired:
