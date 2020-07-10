@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,13 +30,17 @@ func NewCategoryService(repo repositories.CategoryRepository) CategorySerivce {
 }
 
 func (categ *category) GetCategories(c *gin.Context) {
-	activeParam := c.Query("active")
-	active := true
-	if activeParam == "false" {
-		active = false
+	var reqQuery models.CategoryQueryRequest
+	if err := c.ShouldBindQuery(&reqQuery); err != nil {
+		logger.Error("Failed to parse request query: ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	categories, err := categ.repo.GetCategories(active)
+	var query map[string]interface{}
+	data, _ := json.Marshal(reqQuery)
+	json.Unmarshal(data, &query)
+	categories, err := categ.repo.GetCategories(query)
 	if err != nil {
 		logger.Error("Failed to get categories: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -63,7 +68,7 @@ func (categ *category) GetCategoryByID(c *gin.Context) {
 }
 
 func (categ *category) CreateCategory(c *gin.Context) {
-	var reqBody models.CategoryRequest
+	var reqBody models.CategoryBodyRequest
 	if err := c.Bind(&reqBody); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -92,7 +97,7 @@ func (categ *category) CreateCategory(c *gin.Context) {
 
 func (categ *category) UpdateCategory(c *gin.Context) {
 	uuid := c.Param("uuid")
-	var reqBody models.CategoryRequest
+	var reqBody models.CategoryBodyRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

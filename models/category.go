@@ -31,7 +31,12 @@ type CategoryResponse struct {
 	Active      bool   `json:"active"`
 }
 
-type CategoryRequest struct {
+type CategoryBodyRequest struct {
 	Name        string `json:"name,omitempty" validate:"required"`
 	Description string `json:"description,omitempty"`
+}
+
+type CategoryQueryRequest struct {
+	Code   string `json:"code,omitempty" form:"code"`
+	Active string `json:"active,omitempty" form:"active"`
 }
