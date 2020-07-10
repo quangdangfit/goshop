@@ -2,12 +2,24 @@ package cache
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
-	"goshop/cache/gredis"
 	"net/http"
 )
+
+type Cache interface {
+	IsConnected() bool
+	Get(key string, data interface{}) error
+	Set(key string, val []byte) error
+	Remove(key string) error
+}
+
+// Setup Initialize the Cache instance
+func New() Cache {
+	return NewRedis()
+}
+
+var cache = New()
 
 type responseBodyWriter struct {
 	gin.ResponseWriter
@@ -19,10 +31,10 @@ func (r responseBodyWriter) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
-func Cache() gin.HandlerFunc {
+func Cached() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if gredis.GRedis == nil || !gredis.GRedis.IsConnected() {
-			logger.Warn("Redis cache is not available")
+		if cache == nil || !cache.IsConnected() {
+			logger.Warn("Cache cache is not available")
 			c.Next()
 			return
 		}
@@ -32,22 +44,19 @@ func Cache() gin.HandlerFunc {
 			c.Next()
 
 			if c.Request.Method == "POST" || c.Request.Method == "PUT" || c.Request.Method == "DELETE" {
-				gredis.GRedis.Remove(key)
+				cache.Remove(key)
 			}
-
 			return
 		}
 
 		w := &responseBodyWriter{body: &bytes.Buffer{}, ResponseWriter: c.Writer}
 		c.Writer = w
 
-		value := gredis.GRedis.Get(key)
 		var data map[string]interface{}
-		json.Unmarshal(value, &data)
+		cache.Get(key, &data)
 
-		if value != nil {
+		if data != nil {
 			c.JSON(http.StatusOK, data)
-
 			c.Abort()
 			return
 		}
@@ -56,7 +65,7 @@ func Cache() gin.HandlerFunc {
 
 		statusCode := w.Status()
 		if statusCode == http.StatusOK {
-			gredis.GRedis.Set(key, w.body.Bytes())
+			cache.Set(key, w.body.Bytes())
 		}
 	}
 }
