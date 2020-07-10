@@ -3,15 +3,17 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 
+	"goshop/config"
+	"goshop/middleware/cache"
 	"goshop/middleware/jwt"
 )
 
 func API(e *gin.Engine) {
 	apiV1 := e.Group("api/v1")
 	apiV1.Use(jwt.JWT())
-	//if config.Config.Redis.Enable {
-	//	apiV1.Use(cache.Cached())
-	//}
+	if config.Config.Redis.Enable {
+		apiV1.Use(cache.Cached())
+	}
 
 	{
 		apiV1.GET("/users/:uuid", userService.GetUserByID)
@@ -26,5 +28,10 @@ func API(e *gin.Engine) {
 		apiV1.GET("/categories/:uuid", categoryService.GetCategoryByID)
 		apiV1.GET("/categories/:uuid/products", productService.GetProductByCategory)
 		apiV1.PUT("/categories/:uuid", categoryService.UpdateCategory)
+
+		apiV1.GET("/warehouses", warehouseService.GetWarehouses)
+		apiV1.POST("/warehouses", warehouseService.CreateWarehouse)
+		apiV1.GET("/warehouses/:uuid", warehouseService.GetWarehouseByID)
+		apiV1.PUT("/warehouses/:uuid", warehouseService.UpdateWarehouse)
 	}
 }

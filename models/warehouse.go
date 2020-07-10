@@ -3,8 +3,6 @@ package models
 import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
-
-	"goshop/utils"
 )
 
 type Warehouse struct {
@@ -18,6 +16,22 @@ type Warehouse struct {
 
 func (w *Warehouse) BeforeCreate() error {
 	w.UUID = uuid.New().String()
-	w.Code = utils.GenerateCode("W")
 	return nil
+}
+
+type WarehouseResponse struct {
+	UUID   string `json:"uuid"`
+	Code   string `json:"code"`
+	Name   string `json:"name"`
+	Active bool   `json:"active"`
+}
+
+type WarehouseBodyRequest struct {
+	Code string `json:"code,omitempty" validate:"required"`
+	Name string `json:"name,omitempty" validate:"required"`
+}
+
+type WarehouseQueryRequest struct {
+	Code   string `json:"code,omitempty" form:"code"`
+	Active string `json:"active,omitempty" form:"active"`
 }
