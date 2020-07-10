@@ -21,6 +21,7 @@ type Product struct {
 func (product *Product) BeforeCreate(scope *gorm.Scope) error {
 	product.UUID = uuid.New().String()
 	product.Code = utils.GenerateCode("P")
+	product.Active = true
 	return nil
 }
 

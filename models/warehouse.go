@@ -16,6 +16,7 @@ type Warehouse struct {
 
 func (w *Warehouse) BeforeCreate() error {
 	w.UUID = uuid.New().String()
+	w.Active = true
 	return nil
 }
 
