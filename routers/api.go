@@ -3,8 +3,8 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"goshop/config"
-	"goshop/middlewares/cache"
-	"goshop/middlewares/jwt"
+	"goshop/middleware/cache"
+	"goshop/middleware/jwt"
 )
 
 func API(e *gin.Engine) {
