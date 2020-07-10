@@ -2,7 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	"goshop/middlewares/roles"
+	"goshop/middleware/roles"
 )
 
 func Admin(e *gin.Engine) {
