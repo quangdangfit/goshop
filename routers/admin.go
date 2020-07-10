@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"goshop/middleware/roles"
 )
 

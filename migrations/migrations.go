@@ -2,6 +2,7 @@ package migrations
 
 import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+
 	"goshop/dbs"
 	"goshop/models"
 	"goshop/repositories"

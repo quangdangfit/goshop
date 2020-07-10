@@ -2,9 +2,11 @@ package dbs
 
 import (
 	"fmt"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
+
 	"goshop/config"
 )
 
