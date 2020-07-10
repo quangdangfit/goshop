@@ -1,7 +1,8 @@
-package gredis
+package cache
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
@@ -15,19 +16,11 @@ const (
 
 var ctx = context.Background()
 
-type Redis interface {
-	IsConnected() bool
-	Get(key string) []byte
-	Set(key string, val []byte) error
-	Remove(key string) error
-}
-
 type gredis struct {
 	client *redis.Client
 }
 
-// Setup Initialize the Redis instance
-func NewRedis() Redis {
+func NewRedis() *gredis {
 	redisConfig := config.Config.Redis
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
@@ -56,24 +49,29 @@ func (g *gredis) IsConnected() bool {
 	return true
 }
 
-func (g *gredis) Get(key string) []byte {
+func (g *gredis) Get(key string, data interface{}) error {
 	val, err := g.client.Get(ctx, key).Bytes()
 	if err == redis.Nil {
 		return nil
 	}
 	if err != nil {
-		logger.Info("Redis fail to get: ", err)
+		logger.Info("Cache fail to get: ", err)
 		return nil
 	}
 	logger.Debugf("Get from redis %s - %s", key, val)
 
-	return val
+	err = json.Unmarshal(val, &data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (g *gredis) Set(key string, val []byte) error {
 	err := g.client.Set(ctx, key, val, RedisExpiredTimes*time.Second).Err()
 	if err != nil {
-		logger.Error("Redis fail to set: ", err)
+		logger.Error("Cache fail to set: ", err)
 		return err
 	}
 	logger.Debugf("Set to redis %s - %s", key, val)
@@ -84,12 +82,10 @@ func (g *gredis) Set(key string, val []byte) error {
 func (g *gredis) Remove(key string) error {
 	err := g.client.Del(ctx, key).Err()
 	if err != nil {
-		logger.Errorf("Redis fail to delete key %s: %s", key, err)
+		logger.Errorf("Cache fail to delete key %s: %s", key, err)
 		return err
 	}
-	logger.Debug("Redis deleted key", key)
+	logger.Debug("Cache deleted key", key)
 
 	return nil
 }
-
-var GRedis = NewRedis()
