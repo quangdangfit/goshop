@@ -20,6 +20,7 @@ type Category struct {
 func (categ *Category) BeforeCreate(scope *gorm.Scope) error {
 	categ.UUID = uuid.New().String()
 	categ.Code = utils.GenerateCode("C")
+	categ.Active = true
 	return nil
 }
 
