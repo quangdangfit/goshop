@@ -28,8 +28,9 @@ func Migrate() {
 	OrderLine := models.OrderLine{}
 	User := models.User{}
 	Role := models.Role{}
+	Warehouse := models.Warehouse{}
 
-	dbs.Database.AutoMigrate(&Product, &Pategory, &Order, &OrderLine, &User, &Role)
+	dbs.Database.AutoMigrate(&Product, &Pategory, &Order, &OrderLine, &User, &Role, &Warehouse)
 	dbs.Database.Model(&Product).AddForeignKey("categ_uuid", "categories(uuid)", "RESTRICT", "RESTRICT")
 	dbs.Database.Model(&User).AddForeignKey("role_uuid", "roles(uuid)", "RESTRICT", "RESTRICT")
 
