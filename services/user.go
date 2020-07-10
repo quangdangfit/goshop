@@ -1,13 +1,16 @@
 package services
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
+
+	jwtMiddle "goshop/middleware/jwt"
 	"goshop/models"
 	"goshop/repositories"
 	"goshop/utils"
-	"net/http"
 )
 
 type UserService interface {
@@ -54,7 +57,7 @@ func (u *user) Login(c *gin.Context) {
 	var res models.UserResponse
 	copier.Copy(&res, &user)
 	res.Extra = map[string]interface{}{
-		"token": utils.GenerateToken(user),
+		"token": jwtMiddle.GenerateToken(user),
 	}
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -82,7 +85,7 @@ func (u *user) Register(c *gin.Context) {
 	var res models.UserResponse
 	copier.Copy(&res, &user)
 	res.Extra = map[string]interface{}{
-		"token": utils.GenerateToken(user),
+		"token": jwtMiddle.GenerateToken(user),
 	}
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

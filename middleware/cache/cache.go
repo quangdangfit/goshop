@@ -2,9 +2,10 @@ package cache
 
 import (
 	"bytes"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
-	"net/http"
 )
 
 type Cache interface {

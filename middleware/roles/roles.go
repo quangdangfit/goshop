@@ -1,10 +1,12 @@
 package roles
 
 import (
+	"net/http"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+
 	"goshop/utils"
-	"net/http"
 )
 
 func CheckAdmin() gin.HandlerFunc {

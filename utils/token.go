@@ -1,12 +1,12 @@
 package utils
 
 import (
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
-	"time"
 )
 
 const (

@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"gitlab.com/quangdangfit/gocommon/utils/logger"
-	"goshop/migrations"
-	"goshop/routers"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"gitlab.com/quangdangfit/gocommon/utils/logger"
+
+	"goshop/migrations"
+	"goshop/routers"
 )
 
 func main() {
