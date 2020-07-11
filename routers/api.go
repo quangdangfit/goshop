@@ -33,5 +33,10 @@ func API(e *gin.Engine) {
 		apiV1.POST("/warehouses", warehouseService.CreateWarehouse)
 		apiV1.GET("/warehouses/:uuid", warehouseService.GetWarehouseByID)
 		apiV1.PUT("/warehouses/:uuid", warehouseService.UpdateWarehouse)
+
+		apiV1.GET("/quantities", quantityService.GetQuantities)
+		apiV1.POST("/quantities", quantityService.CreateQuantity)
+		apiV1.GET("/quantities/:uuid", quantityService.GetQuantityByID)
+		apiV1.PUT("/quantities/:uuid", quantityService.UpdateQuantity)
 	}
 }
