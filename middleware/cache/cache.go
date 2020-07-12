@@ -3,6 +3,7 @@ package cache
 import (
 	"bytes"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
@@ -12,7 +13,8 @@ type Cache interface {
 	IsConnected() bool
 	Get(key string, data interface{}) error
 	Set(key string, val []byte) error
-	Remove(key string) error
+	Remove(keys ...string) error
+	Keys(pattern string) ([]string, error)
 }
 
 // Setup Initialize the Cache instance
@@ -40,18 +42,33 @@ func Cached() gin.HandlerFunc {
 			return
 		}
 
+		w := &responseBodyWriter{body: &bytes.Buffer{}, ResponseWriter: c.Writer}
+		c.Writer = w
+
 		key := c.Request.URL.RequestURI()
 		if c.Request.Method != "GET" {
 			c.Next()
 
-			if c.Request.Method == "POST" || c.Request.Method == "PUT" || c.Request.Method == "DELETE" {
+			statusCode := w.Status()
+			if statusCode != http.StatusOK {
+				return
+			}
+
+			if c.Request.Method == "POST" {
+				temp := strings.Split(key, "/")
+				objName := temp[len(temp)-1]
+
+				keys, _ := cache.Keys("*" + objName + "*")
+				if keys != nil {
+					cache.Remove(keys...)
+				}
+
+			} else if c.Request.Method == "PUT" || c.Request.Method == "DELETE" {
 				cache.Remove(key)
 			}
+
 			return
 		}
-
-		w := &responseBodyWriter{body: &bytes.Buffer{}, ResponseWriter: c.Writer}
-		c.Writer = w
 
 		var data map[string]interface{}
 		cache.Get(key, &data)
