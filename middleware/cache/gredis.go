@@ -81,13 +81,22 @@ func (g *gredis) Set(key string, val []byte) error {
 	return nil
 }
 
-func (g *gredis) Remove(key string) error {
-	err := g.client.Del(ctx, key).Err()
+func (g *gredis) Remove(keys ...string) error {
+	err := g.client.Del(ctx, keys...).Err()
 	if err != nil {
-		logger.Errorf("Cache fail to delete key %s: %s", key, err)
+		logger.Errorf("Cache fail to delete key %s: %s", keys, err)
 		return err
 	}
-	logger.Debug("Cache deleted key", key)
+	logger.Debug("Cache deleted key", keys)
 
 	return nil
+}
+
+func (g *gredis) Keys(pattern string) ([]string, error) {
+	keys, err := g.client.Keys(ctx, pattern).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	return keys, nil
 }
