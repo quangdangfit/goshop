@@ -19,7 +19,8 @@ const (
 var ctx = context.Background()
 
 type gredis struct {
-	client *redis.Client
+	client     *redis.Client
+	expiryTime int
 }
 
 func NewRedis() *gredis {
@@ -35,8 +36,12 @@ func NewRedis() *gredis {
 		logger.Error(pong, err)
 		return nil
 	}
+	expiryTime := config.Config.Cache.ExpiryTime
+	if expiryTime <= 0 {
+		expiryTime = RedisExpiredTimes
+	}
 
-	return &gredis{client: rdb}
+	return &gredis{client: rdb, expiryTime: expiryTime}
 }
 
 func (g *gredis) IsConnected() bool {
@@ -71,7 +76,7 @@ func (g *gredis) Get(key string, data interface{}) error {
 }
 
 func (g *gredis) Set(key string, val []byte) error {
-	err := g.client.Set(ctx, key, val, RedisExpiredTimes*time.Second).Err()
+	err := g.client.Set(ctx, key, val, time.Duration(g.expiryTime)*time.Second).Err()
 	if err != nil {
 		logger.Error("Cache fail to set: ", err)
 		return err

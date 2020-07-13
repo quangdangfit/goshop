@@ -11,4 +11,7 @@ redis:
   port:
   password:
   database: 0
-  expiry_time: 300
+
+cache:
+  enable: true
+  expiry_time: 3600
