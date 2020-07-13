@@ -10,7 +10,7 @@ import (
 type Order struct {
 	UUID       string      `json:"uuid" gorm:"unique;not null;index;primary_key"`
 	Code       string      `json:"code"`
-	Lines      []OrderLine `json:"lines" gorm:"foreignkey:order_uuid;association_foreignkey:uuid;association_autocreate:false"`
+	Lines      []OrderLine `json:"lines" gorm:"foreignkey:order_uuid;association_foreignkey:uuid;save_associations:false"`
 	TotalPrice uint        `json:"total_price"`
 	Status     string      `json:"status"`
 

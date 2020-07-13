@@ -3,6 +3,8 @@ package models
 import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+
+	"goshop/dbs"
 )
 
 type OrderLine struct {
@@ -17,6 +19,10 @@ type OrderLine struct {
 
 func (line *OrderLine) BeforeCreate(scope *gorm.Scope) error {
 	line.UUID = uuid.New().String()
+	var product Product
+	dbs.Database.Where("uuid = ?", line.ProductUUID).First(&product)
+	line.Price = product.Price * line.Quantity
+
 	return nil
 }
 
