@@ -11,7 +11,7 @@ import (
 func API(e *gin.Engine) {
 	apiV1 := e.Group("api/v1")
 	apiV1.Use(jwt.JWT())
-	if config.Config.Redis.Enable {
+	if config.Config.Cache.Enable {
 		apiV1.Use(cache.Cached())
 	}
 
