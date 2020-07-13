@@ -54,7 +54,7 @@ func Cached() gin.HandlerFunc {
 				return
 			}
 
-			if c.Request.Method == "POST" {
+			if c.Request.Method == "POST" || c.Request.Method == "PUT" || c.Request.Method == "DELETE" {
 				temp := strings.Split(key, "/")
 				objName := temp[len(temp)-1]
 
@@ -62,9 +62,6 @@ func Cached() gin.HandlerFunc {
 				if keys != nil {
 					cache.Remove(keys...)
 				}
-
-			} else if c.Request.Method == "PUT" || c.Request.Method == "DELETE" {
-				cache.Remove(key)
 			}
 
 			return
