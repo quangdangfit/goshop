@@ -10,12 +10,12 @@ type OrderLine struct {
 	ProductUUID string `json:"product_uuid"`
 	OrderUUID   string `json:"order_uuid"`
 	Quantity    uint   `json:"quantity"`
-	TotalPrice  uint   `json:"total_price"`
+	Price       uint   `json:"price"`
 
 	gorm.Model
 }
 
-func (line *OrderLine) BeforeCreate() error {
+func (line *OrderLine) BeforeCreate(scope *gorm.Scope) error {
 	line.UUID = uuid.New().String()
 	return nil
 }
@@ -23,12 +23,11 @@ func (line *OrderLine) BeforeCreate() error {
 type OrderLineResponse struct {
 	UUID        string `json:"uuid"`
 	ProductUUID string `json:"product_uuid"`
-	Quantity    string `json:"quantity"`
-	TotalPrice  bool   `json:"total_price"`
+	Quantity    uint   `json:"quantity"`
+	Price       uint   `json:"price"`
 }
 
 type OrderLineBodyRequest struct {
 	ProductUUID string `json:"product_uuid,omitempty" validate:"required"`
-	OrderUUID   string `json:"order_uuid,omitempty" validate:"required"`
-	Quantity    string `json:"quantity,omitempty" validate:"required"`
+	Quantity    uint   `json:"quantity,omitempty" validate:"required"`
 }
