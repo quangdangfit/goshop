@@ -33,6 +33,8 @@ func Migrate() {
 	dbs.Database.AutoMigrate(&Product, &Pategory, &Order, &OrderLine, &User, &Role, &Warehouse)
 	dbs.Database.Model(&Product).AddForeignKey("categ_uuid", "categories(uuid)", "RESTRICT", "RESTRICT")
 	dbs.Database.Model(&User).AddForeignKey("role_uuid", "roles(uuid)", "RESTRICT", "RESTRICT")
+	dbs.Database.Model(&OrderLine).AddForeignKey("product_uuid", "products(uuid)", "RESTRICT", "RESTRICT")
+	dbs.Database.Model(&OrderLine).AddForeignKey("order_uuid", "orders(uuid)", "RESTRICT", "RESTRICT")
 
 	//createAdmin()
 }

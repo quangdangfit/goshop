@@ -11,6 +11,7 @@ var categoryService services.CategorySerivce
 var productService services.ProductService
 var warehouseService services.WarehouseSerivce
 var quantityService services.QuantitySerivce
+var orderService services.OrderSerivce
 
 func init() {
 	roleRepo := repositories.NewRoleRepository()
@@ -19,6 +20,7 @@ func init() {
 	productRepo := repositories.NewProductRepository()
 	warehouseRepo := repositories.NewWarehouseRepository()
 	quantityRepo := repositories.NewQuantityRepository()
+	orderRepo := repositories.NewOrderRepository()
 
 	roleService = services.NewService(roleRepo)
 	userService = services.NewUserService(userRepo)
@@ -26,4 +28,5 @@ func init() {
 	productService = services.NewProductService(productRepo)
 	warehouseService = services.NewWarehouseService(warehouseRepo)
 	quantityService = services.NewQuantityService(quantityRepo)
+	orderService = services.NewOrderService(orderRepo)
 }
