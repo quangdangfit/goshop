@@ -60,14 +60,21 @@ func (r *orderRepo) CreateOrder(req *models.OrderBodyRequest) (*models.Order, er
 	}
 
 	var lines []models.OrderLine
+	var totalPrice uint
 	for _, line := range order.Lines {
 		line.OrderUUID = order.UUID
 		if err := r.db.Create(&line).Error; err != nil {
 			return nil, err
 		}
 		lines = append(lines, line)
+		totalPrice += line.Price
 	}
+	order.TotalPrice = totalPrice
 	order.Lines = lines
+
+	if err := r.db.Save(&order).Error; err != nil {
+		return nil, err
+	}
 
 	return &order, nil
 }
