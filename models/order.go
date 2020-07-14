@@ -20,7 +20,7 @@ type Order struct {
 func (order *Order) BeforeCreate(scope *gorm.Scope) error {
 	order.UUID = uuid.New().String()
 	order.Code = utils.GenerateCode("SO")
-	order.Status = "New"
+	order.Status = OrderStatusNew
 
 	return nil
 }
