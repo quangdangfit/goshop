@@ -15,6 +15,7 @@ type OrderRepository interface {
 	GetOrderByID(uuid string) (*models.Order, error)
 	CreateOrder(req *models.OrderBodyRequest) (*models.Order, error)
 	UpdateOrder(uuid string, req *models.OrderBodyRequest) (*models.Order, error)
+	AssignOrder(uuid string) error
 }
 
 type orderRepo struct {
@@ -91,4 +92,25 @@ func (r *orderRepo) UpdateOrder(uuid string, req *models.OrderBodyRequest) (*mod
 	}
 
 	return order, nil
+}
+
+func (r *orderRepo) AssignOrder(uuid string) error {
+	order, err := r.GetOrderByID(uuid)
+	if err != nil {
+		return err
+	}
+
+	for _, line := range order.Lines {
+		quantity, err := QuantityRepo.GetQuantityProductID(line.ProductUUID)
+		if err != nil || quantity.Quantity < line.Quantity {
+			return errors.New("product quantity is not enough")
+		}
+	}
+
+	order.Status = models.OrderStatusAssigned
+	if err := r.db.Save(&order).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

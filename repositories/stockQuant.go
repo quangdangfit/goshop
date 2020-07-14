@@ -13,6 +13,7 @@ import (
 type QuantityRepository interface {
 	GetQuantities(map[string]interface{}) (*[]models.Quantity, error)
 	GetQuantityByID(uuid string) (*models.Quantity, error)
+	GetQuantityProductID(productUUID string) (*models.Quantity, error)
 	CreateQuantity(req *models.QuantityBodyRequest) (*models.Quantity, error)
 	UpdateQuantity(uuid string, req *models.QuantityBodyRequest) (*models.Quantity, error)
 }
@@ -66,4 +67,13 @@ func (r *quantityRepo) UpdateQuantity(uuid string, req *models.QuantityBodyReque
 	}
 
 	return quantity, nil
+}
+
+func (r *quantityRepo) GetQuantityProductID(productUUID string) (*models.Quantity, error) {
+	var quantity models.Quantity
+	if r.db.Where("product_uuid = ?", productUUID).First(&quantity).RecordNotFound() {
+		return nil, errors.New("not found quantity")
+	}
+
+	return &quantity, nil
 }

@@ -6,7 +6,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
+
+	"goshop/repositories"
 )
+
+var RoleSer = NewService(repositories.RoleRepo)
+var UserSer = NewUserService(repositories.UserRepo)
+var CategorySer = NewCategoryService(repositories.CategoryRepo)
+var ProductSer = NewProductService(repositories.ProductRepo)
+var WarehouseSer = NewWarehouseService(repositories.WarehouseRepo)
+var QuantitySer = NewQuantityService(repositories.QuantityRepo)
+var OrderSer = NewOrderService(repositories.OrderRepo)
 
 type Service struct {
 }
