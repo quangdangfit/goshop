@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
 
-	"goshop/migrations"
-	"goshop/routers"
+	"goshop/app/migrations"
+	"goshop/app/routers"
 )
 
 func main() {
