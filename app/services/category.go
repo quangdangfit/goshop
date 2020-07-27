@@ -1,7 +1,7 @@
 package services
 
 import (
-	"encoding/json"
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,42 +14,29 @@ import (
 	"goshop/pkg/utils"
 )
 
-type CategorySerivce interface {
-	GetCategories(c *gin.Context)
+type ICategory interface {
+	GetCategories(ctx context.Context, query models.CategoryQueryRequest) (*[]models.Category, error)
 	GetCategoryByID(c *gin.Context)
 	CreateCategory(c *gin.Context)
 	UpdateCategory(c *gin.Context)
 }
 
 type category struct {
-	repo repositories.CategoryRepository
+	repo repositories.ICategoryRepository
 }
 
-func NewCategoryService(repo repositories.CategoryRepository) CategorySerivce {
+func NewCategoryService(repo repositories.ICategoryRepository) ICategory {
 	return &category{repo: repo}
 }
 
-func (categ *category) GetCategories(c *gin.Context) {
-	var reqQuery models.CategoryQueryRequest
-	if err := c.ShouldBindQuery(&reqQuery); err != nil {
-		logger.Error("Failed to parse request query: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	var query map[string]interface{}
-	data, _ := json.Marshal(reqQuery)
-	json.Unmarshal(data, &query)
+func (categ *category) GetCategories(ctx context.Context, query models.CategoryQueryRequest) (*[]models.Category, error) {
 	categories, err := categ.repo.GetCategories(query)
 	if err != nil {
 		logger.Error("Failed to get categories: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	var res []models.CategoryResponse
-	copier.Copy(&res, &categories)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return categories, nil
 }
 
 func (categ *category) GetCategoryByID(c *gin.Context) {

@@ -7,11 +7,12 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
+	"goshop/app/schema"
 	"goshop/dbs"
 )
 
-type ProductRepository interface {
-	GetProducts(active bool) (*[]models.Product, error)
+type IProductRepository interface {
+	GetProducts(params schema.ProductQueryParams) (*[]models.Product, error)
 	GetProductByID(uuid string) (*models.Product, error)
 	GetProductByCategory(uuid string, active bool) (*[]models.Product, error)
 	CreateProduct(req *models.ProductRequest) (*models.Product, error)
@@ -22,13 +23,13 @@ type productRepo struct {
 	db *gorm.DB
 }
 
-func NewProductRepository() ProductRepository {
+func NewProductRepository() IProductRepository {
 	return &productRepo{db: dbs.Database}
 }
 
-func (r *productRepo) GetProducts(active bool) (*[]models.Product, error) {
+func (r *productRepo) GetProducts(params schema.ProductQueryParams) (*[]models.Product, error) {
 	var products []models.Product
-	if r.db.Where("active = ?", active).Find(&products).RecordNotFound() {
+	if r.db.Where(params).Find(&products).RecordNotFound() {
 		return nil, nil
 	}
 

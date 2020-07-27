@@ -10,8 +10,8 @@ import (
 	"goshop/dbs"
 )
 
-type CategoryRepository interface {
-	GetCategories(map[string]interface{}) (*[]models.Category, error)
+type ICategoryRepository interface {
+	GetCategories(query models.CategoryQueryRequest) (*[]models.Category, error)
 	GetCategoryByID(uuid string) (*models.Category, error)
 	CreateCategory(req *models.CategoryBodyRequest) (*models.Category, error)
 	UpdateCategory(uuid string, req *models.CategoryBodyRequest) (*models.Category, error)
@@ -21,11 +21,11 @@ type categRepo struct {
 	db *gorm.DB
 }
 
-func NewCategoryRepository() CategoryRepository {
+func NewCategoryRepository() ICategoryRepository {
 	return &categRepo{db: dbs.Database}
 }
 
-func (r *categRepo) GetCategories(query map[string]interface{}) (*[]models.Category, error) {
+func (r *categRepo) GetCategories(query models.CategoryQueryRequest) (*[]models.Category, error) {
 	var categories []models.Category
 	if r.db.Where(query).Find(&categories).RecordNotFound() {
 		return nil, nil

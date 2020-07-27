@@ -8,21 +8,23 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
 
+	"goshop/app"
 	"goshop/app/migrations"
-	"goshop/app/routers"
+	"goshop/app/router"
 )
 
 func main() {
 	migrations.Migrate()
-	engine := gin.Default()
 
-	routers.Auth(engine)
-	routers.Admin(engine)
-	routers.API(engine)
-	routers.Docs(engine)
+	container := app.BuildContainer()
+	engine := router.InitGinEngine(container)
+
+	//router.Auth(engine)
+	//router.Admin(engine)
+	//router.API(engine)
+	//router.Docs(engine)
 
 	server := &http.Server{
 		Addr:    ":8888",
