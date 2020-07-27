@@ -7,3 +7,8 @@ type Category struct {
 	Description string `json:"description"`
 	Active      bool   `json:"active"`
 }
+
+type CategoryBodyParam struct {
+	Name        string `json:"name,omitempty" validate:"required"`
+	Description string `json:"description,omitempty"`
+}

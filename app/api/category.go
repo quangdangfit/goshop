@@ -76,9 +76,31 @@ func (categ *Category) CreateCategory(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	categories, err := categ.service.CreateCategory(ctx, item)
+	categories, err := categ.service.CreateCategory(ctx, &item)
 	if err != nil {
 		logger.Error("Failed to create category", err.Error())
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		return
+	}
+
+	var res models.CategoryResponse
+	copier.Copy(&res, &categories)
+	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+}
+
+func (categ *Category) UpdateCategory(c *gin.Context) {
+	uuid := c.Param("uuid")
+	var item schema.CategoryBodyParam
+	if err := c.ShouldBind(&item); err != nil {
+		logger.Error("Failed to parse request body: ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := c.Request.Context()
+	categories, err := categ.service.UpdateCategory(ctx, uuid, &item)
+	if err != nil {
+		logger.Error("Failed to update category: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}

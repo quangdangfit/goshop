@@ -14,8 +14,8 @@ import (
 type ICategoryRepository interface {
 	GetCategories(query models.CategoryQueryRequest) (*[]models.Category, error)
 	GetCategoryByID(uuid string) (*models.Category, error)
-	CreateCategory(req *schema.Category) (*models.Category, error)
-	UpdateCategory(uuid string, req *models.CategoryBodyRequest) (*models.Category, error)
+	CreateCategory(item *schema.Category) (*models.Category, error)
+	UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error)
 }
 
 type categRepo struct {
@@ -44,9 +44,9 @@ func (r *categRepo) GetCategoryByID(uuid string) (*models.Category, error) {
 	return &category, nil
 }
 
-func (r *categRepo) CreateCategory(req *schema.Category) (*models.Category, error) {
+func (r *categRepo) CreateCategory(item *schema.Category) (*models.Category, error) {
 	var category models.Category
-	copier.Copy(&category, &req)
+	copier.Copy(&category, &item)
 
 	if err := r.db.Create(&category).Error; err != nil {
 		return nil, err
@@ -55,13 +55,13 @@ func (r *categRepo) CreateCategory(req *schema.Category) (*models.Category, erro
 	return &category, nil
 }
 
-func (r *categRepo) UpdateCategory(uuid string, req *models.CategoryBodyRequest) (*models.Category, error) {
+func (r *categRepo) UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error) {
 	var category models.Category
 	if r.db.Where("uuid = ? ", uuid).First(&category).RecordNotFound() {
 		return nil, errors.New("not found category")
 	}
 
-	copier.Copy(&category, &req)
+	copier.Copy(&category, &item)
 	if err := r.db.Save(&category).Error; err != nil {
 		return nil, err
 	}
