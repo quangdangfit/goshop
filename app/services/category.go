@@ -16,7 +16,7 @@ import (
 
 type ICategory interface {
 	GetCategories(ctx context.Context, query models.CategoryQueryRequest) (*[]models.Category, error)
-	GetCategoryByID(c *gin.Context)
+	GetCategoryByID(ctx context.Context, uuid string) (*models.Category, error)
 	CreateCategory(c *gin.Context)
 	UpdateCategory(c *gin.Context)
 }
@@ -39,19 +39,14 @@ func (categ *category) GetCategories(ctx context.Context, query models.CategoryQ
 	return categories, nil
 }
 
-func (categ *category) GetCategoryByID(c *gin.Context) {
-	categoryId := c.Param("uuid")
-
-	category, err := categ.repo.GetCategoryByID(categoryId)
+func (categ *category) GetCategoryByID(ctx context.Context, uuid string) (*models.Category, error) {
+	category, err := categ.repo.GetCategoryByID(uuid)
 	if err != nil {
 		logger.Error("Failed to get category: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	var res models.CategoryResponse
-	copier.Copy(&res, &category)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return category, nil
 }
 
 func (categ *category) CreateCategory(c *gin.Context) {

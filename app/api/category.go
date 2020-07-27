@@ -13,13 +13,11 @@ import (
 )
 
 type Category struct {
-	Service services.ICategory
+	service services.ICategory
 }
 
 func NewCategoryAPI(service services.ICategory) *Category {
-	return &Category{
-		Service: service,
-	}
+	return &Category{service: service}
 }
 
 func (categ *Category) GetCategories(c *gin.Context) {
@@ -31,7 +29,7 @@ func (categ *Category) GetCategories(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	rs, err := categ.Service.GetCategories(ctx, reqQuery)
+	rs, err := categ.service.GetCategories(ctx, reqQuery)
 	if err != nil {
 		logger.Error("Failed to get categories: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
@@ -40,5 +38,21 @@ func (categ *Category) GetCategories(c *gin.Context) {
 
 	var res []models.CategoryResponse
 	copier.Copy(&res, &rs)
+	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+}
+
+func (categ *Category) GetCategoryByID(c *gin.Context) {
+	categoryId := c.Param("uuid")
+
+	ctx := c.Request.Context()
+	category, err := categ.service.GetCategoryByID(ctx, categoryId)
+	if err != nil {
+		logger.Error("Failed to get category: ", err)
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		return
+	}
+
+	var res models.CategoryResponse
+	copier.Copy(&res, &category)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
