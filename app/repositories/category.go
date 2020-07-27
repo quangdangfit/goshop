@@ -7,13 +7,14 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
+	"goshop/app/schema"
 	"goshop/dbs"
 )
 
 type ICategoryRepository interface {
 	GetCategories(query models.CategoryQueryRequest) (*[]models.Category, error)
 	GetCategoryByID(uuid string) (*models.Category, error)
-	CreateCategory(req *models.CategoryBodyRequest) (*models.Category, error)
+	CreateCategory(req *schema.Category) (*models.Category, error)
 	UpdateCategory(uuid string, req *models.CategoryBodyRequest) (*models.Category, error)
 }
 
@@ -43,7 +44,7 @@ func (r *categRepo) GetCategoryByID(uuid string) (*models.Category, error) {
 	return &category, nil
 }
 
-func (r *categRepo) CreateCategory(req *models.CategoryBodyRequest) (*models.Category, error) {
+func (r *categRepo) CreateCategory(req *schema.Category) (*models.Category, error) {
 	var category models.Category
 	copier.Copy(&category, &req)
 
