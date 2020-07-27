@@ -5,19 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
 
 	"goshop/app/models"
 	"goshop/app/repositories"
+	"goshop/app/schema"
 	"goshop/pkg/utils"
 )
 
 type ICategory interface {
 	GetCategories(ctx context.Context, query models.CategoryQueryRequest) (*[]models.Category, error)
-	GetCategoryByID(c *gin.Context)
-	CreateCategory(c *gin.Context)
+	GetCategoryByID(ctx context.Context, uuid string) (*models.Category, error)
+	CreateCategory(cxt context.Context, item schema.Category) (*models.Category, error)
 	UpdateCategory(c *gin.Context)
 }
 
@@ -39,47 +39,24 @@ func (categ *category) GetCategories(ctx context.Context, query models.CategoryQ
 	return categories, nil
 }
 
-func (categ *category) GetCategoryByID(c *gin.Context) {
-	categoryId := c.Param("uuid")
-
-	category, err := categ.repo.GetCategoryByID(categoryId)
+func (categ *category) GetCategoryByID(ctx context.Context, uuid string) (*models.Category, error) {
+	category, err := categ.repo.GetCategoryByID(uuid)
 	if err != nil {
 		logger.Error("Failed to get category: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	var res models.CategoryResponse
-	copier.Copy(&res, &category)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return category, nil
 }
 
-func (categ *category) CreateCategory(c *gin.Context) {
-	var reqBody models.CategoryBodyRequest
-	if err := c.Bind(&reqBody); err != nil {
-		logger.Error("Failed to parse request body: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	validate := validator.New()
-	err := validate.Struct(reqBody)
-	if err != nil {
-		logger.Error("Request body is invalid: ", err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
-	}
-
-	categories, err := categ.repo.CreateCategory(&reqBody)
+func (categ *category) CreateCategory(cxt context.Context, item schema.Category) (*models.Category, error) {
+	category, err := categ.repo.CreateCategory(&item)
 	if err != nil {
 		logger.Error("Failed to create category", err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	var res models.CategoryResponse
-	copier.Copy(&res, &categories)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return category, nil
 }
 
 func (categ *category) UpdateCategory(c *gin.Context) {
