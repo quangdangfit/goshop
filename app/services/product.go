@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,11 +11,12 @@ import (
 
 	"goshop/app/models"
 	"goshop/app/repositories"
+	"goshop/app/schema"
 	"goshop/pkg/utils"
 )
 
-type ProductService interface {
-	GetProducts(c *gin.Context)
+type IProductService interface {
+	GetProducts(c context.Context, params schema.ProductQueryParams) (*[]models.ProductResponse, error)
 	GetProductByID(c *gin.Context)
 	CreateProduct(c *gin.Context)
 	UpdateProduct(c *gin.Context)
@@ -22,10 +24,10 @@ type ProductService interface {
 }
 
 type product struct {
-	repo repositories.ProductRepository
+	repo repositories.IProductRepository
 }
 
-func NewProductService(repo repositories.ProductRepository) ProductService {
+func NewProductService(repo repositories.IProductRepository) IProductService {
 	return &product{repo: repo}
 }
 
@@ -57,23 +59,16 @@ func (p *product) GetProductByID(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Success 200 {object} []product.ProductResponse
 // @Router /api/v1/products [get]
-func (p *product) GetProducts(c *gin.Context) {
-	activeParam := c.Query("active")
-	active := true
-	if activeParam == "false" {
-		active = false
-	}
-
-	products, err := p.repo.GetProducts(active)
+func (p *product) GetProducts(c context.Context, params schema.ProductQueryParams) (*[]models.ProductResponse, error) {
+	products, err := p.repo.GetProducts(params)
 	if err != nil {
 		logger.Error("Failed to get products: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
 	var res []models.ProductResponse
 	copier.Copy(&res, &products)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return &res, nil
 }
 
 func (p *product) GetProductByCategory(c *gin.Context) {

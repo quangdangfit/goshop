@@ -11,16 +11,17 @@ import (
 func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 	err := container.Invoke(func(
 		category *api.Category,
+		product *api.Product,
 	) error {
 		apiV1 := r.Group("api/v1")
 		{
 			apiV1.GET("/users/:uuid", userService.GetUserByID)
 		}
 		{
-			apiV1.GET("/products", productService.GetProducts)
-			apiV1.POST("/products", productService.CreateProduct)
-			apiV1.GET("/products/:uuid", productService.GetProductByID)
-			apiV1.PUT("/products/:uuid", productService.UpdateProduct)
+			apiV1.GET("/products", product.GetProducts)
+			//apiV1.POST("/products", product.CreateProduct)
+			//apiV1.GET("/products/:uuid", product.GetProductByID)
+			//apiV1.PUT("/products/:uuid", product.UpdateProduct)
 		}
 		{
 			apiV1.GET("/categories", category.GetCategories)
