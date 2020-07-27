@@ -16,5 +16,6 @@ require (
 	github.com/swaggo/gin-swagger v1.2.0
 	github.com/swaggo/swag v1.5.1
 	gitlab.com/quangdangfit/gocommon v1.0.5
+	go.uber.org/dig v1.10.0
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
 )

@@ -16,8 +16,10 @@ type Category struct {
 	Service services.ICategory
 }
 
-func (categ *Category) init(service services.ICategory) {
-	categ.Service = service
+func NewCategoryAPI(service services.ICategory) *Category {
+	return &Category{
+		Service: service,
+	}
 }
 
 func (categ *Category) GetCategories(c *gin.Context) {

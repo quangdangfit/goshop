@@ -22,10 +22,10 @@ type ICategory interface {
 }
 
 type category struct {
-	repo repositories.CategoryRepository
+	repo repositories.ICategoryRepository
 }
 
-func NewCategoryService(repo repositories.CategoryRepository) ICategory {
+func NewCategoryService(repo repositories.ICategoryRepository) ICategory {
 	return &category{repo: repo}
 }
 

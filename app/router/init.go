@@ -1,4 +1,4 @@
-package routers
+package router
 
 import (
 	"goshop/app/services"
