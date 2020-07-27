@@ -13,10 +13,10 @@ import (
 )
 
 type Category struct {
-	Service services.Category
+	Service services.ICategory
 }
 
-func (categ *Category) init(service services.Category) {
+func (categ *Category) init(service services.ICategory) {
 	categ.Service = service
 }
 

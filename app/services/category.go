@@ -14,7 +14,7 @@ import (
 	"goshop/pkg/utils"
 )
 
-type Category interface {
+type ICategory interface {
 	GetCategories(ctx context.Context, query models.CategoryQueryRequest) (*[]models.Category, error)
 	GetCategoryByID(c *gin.Context)
 	CreateCategory(c *gin.Context)
@@ -25,7 +25,7 @@ type category struct {
 	repo repositories.CategoryRepository
 }
 
-func NewCategoryService(repo repositories.CategoryRepository) Category {
+func NewCategoryService(repo repositories.CategoryRepository) ICategory {
 	return &category{repo: repo}
 }
 
