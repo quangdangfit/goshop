@@ -11,7 +11,7 @@ import (
 )
 
 type CategoryRepository interface {
-	GetCategories(map[string]interface{}) (*[]models.Category, error)
+	GetCategories(query models.CategoryQueryRequest) (*[]models.Category, error)
 	GetCategoryByID(uuid string) (*models.Category, error)
 	CreateCategory(req *models.CategoryBodyRequest) (*models.Category, error)
 	UpdateCategory(uuid string, req *models.CategoryBodyRequest) (*models.Category, error)
@@ -25,7 +25,7 @@ func NewCategoryRepository() CategoryRepository {
 	return &categRepo{db: dbs.Database}
 }
 
-func (r *categRepo) GetCategories(query map[string]interface{}) (*[]models.Category, error) {
+func (r *categRepo) GetCategories(query models.CategoryQueryRequest) (*[]models.Category, error) {
 	var categories []models.Category
 	if r.db.Where(query).Find(&categories).RecordNotFound() {
 		return nil, nil

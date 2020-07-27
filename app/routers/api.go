@@ -2,6 +2,8 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"goshop/app/api"
 )
 
 func API(e *gin.Engine) {
@@ -19,7 +21,8 @@ func API(e *gin.Engine) {
 		apiV1.GET("/products/:uuid", productService.GetProductByID)
 		apiV1.PUT("/products/:uuid", productService.UpdateProduct)
 
-		apiV1.GET("/categories", categoryService.GetCategories)
+		categAPI := api.Category{Service: categoryService}
+		apiV1.GET("/categories", categAPI.GetCategories)
 		apiV1.POST("/categories", categoryService.CreateCategory)
 		apiV1.GET("/categories/:uuid", categoryService.GetCategoryByID)
 		apiV1.GET("/categories/:uuid/products", productService.GetProductByCategory)
