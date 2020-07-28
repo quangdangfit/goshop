@@ -13,6 +13,7 @@ func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 		category *api.Category,
 		product *api.Product,
 		warehouse *api.Warehouse,
+		quantity *api.Quantity,
 	) error {
 		apiV1 := r.Group("api/v1")
 		{
@@ -38,10 +39,10 @@ func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 			apiV1.PUT("/warehouses/:uuid", warehouse.UpdateWarehouse)
 		}
 		{
-			apiV1.GET("/quantities", quantityService.GetQuantities)
-			apiV1.POST("/quantities", quantityService.CreateQuantity)
-			apiV1.GET("/quantities/:uuid", quantityService.GetQuantityByID)
-			apiV1.PUT("/quantities/:uuid", quantityService.UpdateQuantity)
+			apiV1.GET("/quantities", quantity.GetQuantities)
+			apiV1.POST("/quantities", quantity.CreateQuantity)
+			apiV1.GET("/quantities/:uuid", quantity.GetQuantityByID)
+			apiV1.PUT("/quantities/:uuid", quantity.UpdateQuantity)
 		}
 		{
 			apiV1.GET("/orders", orderService.GetOrders)
