@@ -78,6 +78,9 @@ Project information and existing API
 Listening port: 8888
 ```
 
+### Document
+* API document at: `http://localhost:8888/swagger/index.html`
+
 ### Techstack
 - RESTful API
 - Gorm
