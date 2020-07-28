@@ -8,7 +8,6 @@ import (
 	"github.com/jinzhu/copier"
 	"gitlab.com/quangdangfit/gocommon/utils/logger"
 
-	"goshop/app/models"
 	"goshop/app/schema"
 	"goshop/app/services"
 	"goshop/pkg/utils"
@@ -23,22 +22,22 @@ func NewCategoryAPI(service services.ICategory) *Category {
 }
 
 func (categ *Category) GetCategories(c *gin.Context) {
-	var reqQuery models.CategoryQueryRequest
-	if err := c.ShouldBindQuery(&reqQuery); err != nil {
+	var query schema.CategoryQueryParam
+	if err := c.ShouldBindQuery(&query); err != nil {
 		logger.Error("Failed to parse request query: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	ctx := c.Request.Context()
-	rs, err := categ.service.GetCategories(ctx, reqQuery)
+	rs, err := categ.service.GetCategories(ctx, &query)
 	if err != nil {
 		logger.Error("Failed to get categories: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
 
-	var res []models.CategoryResponse
+	var res []schema.Category
 	copier.Copy(&res, &rs)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -54,7 +53,7 @@ func (categ *Category) GetCategoryByID(c *gin.Context) {
 		return
 	}
 
-	var res models.CategoryResponse
+	var res schema.Category
 	copier.Copy(&res, &category)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -76,14 +75,36 @@ func (categ *Category) CreateCategory(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	categories, err := categ.service.CreateCategory(ctx, item)
+	categories, err := categ.service.CreateCategory(ctx, &item)
 	if err != nil {
 		logger.Error("Failed to create category", err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
 
-	var res models.CategoryResponse
+	var res schema.Category
+	copier.Copy(&res, &categories)
+	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+}
+
+func (categ *Category) UpdateCategory(c *gin.Context) {
+	uuid := c.Param("uuid")
+	var item schema.CategoryBodyParam
+	if err := c.ShouldBind(&item); err != nil {
+		logger.Error("Failed to parse request body: ", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := c.Request.Context()
+	categories, err := categ.service.UpdateCategory(ctx, uuid, &item)
+	if err != nil {
+		logger.Error("Failed to update category: ", err)
+		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		return
+	}
+
+	var res schema.Category
 	copier.Copy(&res, &categories)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

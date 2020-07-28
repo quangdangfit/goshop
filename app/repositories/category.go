@@ -9,13 +9,14 @@ import (
 	"goshop/app/models"
 	"goshop/app/schema"
 	"goshop/dbs"
+	"goshop/pkg/utils"
 )
 
 type ICategoryRepository interface {
-	GetCategories(query models.CategoryQueryRequest) (*[]models.Category, error)
+	GetCategories(query *schema.CategoryQueryParam) (*[]models.Category, error)
 	GetCategoryByID(uuid string) (*models.Category, error)
-	CreateCategory(req *schema.Category) (*models.Category, error)
-	UpdateCategory(uuid string, req *models.CategoryBodyRequest) (*models.Category, error)
+	CreateCategory(item *schema.Category) (*models.Category, error)
+	UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error)
 }
 
 type categRepo struct {
@@ -26,9 +27,11 @@ func NewCategoryRepository() ICategoryRepository {
 	return &categRepo{db: dbs.Database}
 }
 
-func (r *categRepo) GetCategories(query models.CategoryQueryRequest) (*[]models.Category, error) {
+func (r *categRepo) GetCategories(query *schema.CategoryQueryParam) (*[]models.Category, error) {
 	var categories []models.Category
-	if r.db.Where(query).Find(&categories).RecordNotFound() {
+	var mapQuery map[string]interface{}
+	utils.Copy(&mapQuery, query)
+	if r.db.Where(mapQuery).Find(&categories).RecordNotFound() {
 		return nil, nil
 	}
 
@@ -44,9 +47,9 @@ func (r *categRepo) GetCategoryByID(uuid string) (*models.Category, error) {
 	return &category, nil
 }
 
-func (r *categRepo) CreateCategory(req *schema.Category) (*models.Category, error) {
+func (r *categRepo) CreateCategory(item *schema.Category) (*models.Category, error) {
 	var category models.Category
-	copier.Copy(&category, &req)
+	copier.Copy(&category, &item)
 
 	if err := r.db.Create(&category).Error; err != nil {
 		return nil, err
@@ -55,14 +58,15 @@ func (r *categRepo) CreateCategory(req *schema.Category) (*models.Category, erro
 	return &category, nil
 }
 
-func (r *categRepo) UpdateCategory(uuid string, req *models.CategoryBodyRequest) (*models.Category, error) {
+func (r *categRepo) UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error) {
 	var category models.Category
+	var value map[string]interface{}
 	if r.db.Where("uuid = ? ", uuid).First(&category).RecordNotFound() {
 		return nil, errors.New("not found category")
 	}
 
-	copier.Copy(&category, &req)
-	if err := r.db.Save(&category).Error; err != nil {
+	utils.Copy(&value, item)
+	if err := r.db.Model(&category).Updates(value).Error; err != nil {
 		return nil, err
 	}
 
