@@ -7,14 +7,15 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
+	"goshop/app/schema"
 	"goshop/dbs"
 )
 
 type OrderRepository interface {
-	GetOrders(map[string]interface{}) (*[]models.Order, error)
+	GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error)
 	GetOrderByID(uuid string) (*models.Order, error)
-	CreateOrder(req *models.OrderBodyRequest) (*models.Order, error)
-	UpdateOrder(uuid string, req *models.OrderBodyRequest) (*models.Order, error)
+	CreateOrder(item *schema.OrderBodyParam) (*models.Order, error)
+	UpdateOrder(uuid string, item *schema.OrderBodyParam) (*models.Order, error)
 	AssignOrder(uuid string) error
 }
 
@@ -27,7 +28,7 @@ func NewOrderRepository() OrderRepository {
 	return &orderRepo{db: dbs.Database, lineRepo: NewOrderLineRepository()}
 }
 
-func (r *orderRepo) GetOrders(query map[string]interface{}) (*[]models.Order, error) {
+func (r *orderRepo) GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error) {
 	var orders []models.Order
 	if r.db.Find(&orders, query).RecordNotFound() {
 		return nil, nil
@@ -48,9 +49,9 @@ func (r *orderRepo) GetOrderByID(uuid string) (*models.Order, error) {
 	return &order, nil
 }
 
-func (r *orderRepo) CreateOrder(req *models.OrderBodyRequest) (*models.Order, error) {
+func (r *orderRepo) CreateOrder(item *schema.OrderBodyParam) (*models.Order, error) {
 	var order models.Order
-	copier.Copy(&order, &req)
+	copier.Copy(&order, &item)
 
 	if order.Lines == nil {
 		return nil, errors.New("order lines must be not empty")
@@ -80,13 +81,13 @@ func (r *orderRepo) CreateOrder(req *models.OrderBodyRequest) (*models.Order, er
 	return &order, nil
 }
 
-func (r *orderRepo) UpdateOrder(uuid string, req *models.OrderBodyRequest) (*models.Order, error) {
+func (r *orderRepo) UpdateOrder(uuid string, item *schema.OrderBodyParam) (*models.Order, error) {
 	order, err := r.GetOrderByID(uuid)
 	if err != nil {
 		return nil, err
 	}
 
-	copier.Copy(order, &req)
+	copier.Copy(order, &item)
 	if err := r.db.Save(&order).Error; err != nil {
 		return nil, err
 	}
