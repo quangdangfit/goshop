@@ -9,10 +9,6 @@ import (
 	"goshop/app/services"
 )
 
-func Init() {
-	BuildContainer()
-}
-
 func BuildContainer() *dig.Container {
 	container := dig.New()
 

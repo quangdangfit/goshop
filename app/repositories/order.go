@@ -20,8 +20,9 @@ type OrderRepository interface {
 }
 
 type orderRepo struct {
-	db       *gorm.DB
-	lineRepo OrderLineRepository
+	db           *gorm.DB
+	lineRepo     OrderLineRepository
+	quantityRepo QuantityRepository
 }
 
 func NewOrderRepository() OrderRepository {
@@ -102,7 +103,7 @@ func (r *orderRepo) AssignOrder(uuid string) error {
 	}
 
 	for _, line := range order.Lines {
-		quantity, err := QuantityRepo.GetQuantityProductID(line.ProductUUID)
+		quantity, err := r.quantityRepo.GetQuantityProductID(line.ProductUUID)
 		if err != nil || quantity.Quantity < line.Quantity {
 			return errors.New("product quantity is not enough")
 		}

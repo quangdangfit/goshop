@@ -25,15 +25,3 @@ func (line *OrderLine) BeforeCreate(scope *gorm.Scope) error {
 
 	return nil
 }
-
-type OrderLineResponse struct {
-	UUID        string `json:"uuid"`
-	ProductUUID string `json:"product_uuid"`
-	Quantity    uint   `json:"quantity"`
-	Price       uint   `json:"price"`
-}
-
-type OrderLineBodyRequest struct {
-	ProductUUID string `json:"product_uuid,omitempty" validate:"required"`
-	Quantity    uint   `json:"quantity,omitempty" validate:"required"`
-}

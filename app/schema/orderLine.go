@@ -7,6 +7,10 @@ type OrderLine struct {
 	Price       uint   `json:"price"`
 }
 
+type OrderLineQueryParam struct {
+	ProductUUID string `json:"product_uuid,omitempty" validate:"required"`
+}
+
 type OrderLineBodyParam struct {
 	ProductUUID string `json:"product_uuid,omitempty" validate:"required"`
 	Quantity    uint   `json:"quantity,omitempty" validate:"required"`

@@ -7,6 +7,7 @@ import (
 
 func InitGinEngine(container *dig.Container) *gin.Engine {
 	app := gin.New()
+	Docs(app)
 	RegisterAPI(app, container)
 	return app
 }

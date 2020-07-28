@@ -21,11 +21,6 @@ func main() {
 	container := app.BuildContainer()
 	engine := router.InitGinEngine(container)
 
-	//router.Auth(engine)
-	//router.Admin(engine)
-	//router.API(engine)
-	//router.Docs(engine)
-
 	server := &http.Server{
 		Addr:    ":8888",
 		Handler: engine,
