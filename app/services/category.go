@@ -10,7 +10,7 @@ import (
 	"goshop/app/schema"
 )
 
-type ICategory interface {
+type ICategoryService interface {
 	GetCategories(ctx context.Context, query *schema.CategoryQueryParam) (*[]models.Category, error)
 	GetCategoryByID(ctx context.Context, uuid string) (*models.Category, error)
 	CreateCategory(cxt context.Context, item *schema.Category) (*models.Category, error)
@@ -21,7 +21,7 @@ type category struct {
 	repo repositories.ICategoryRepository
 }
 
-func NewCategoryService(repo repositories.ICategoryRepository) ICategory {
+func NewCategoryService(repo repositories.ICategoryRepository) ICategoryService {
 	return &category{repo: repo}
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"goshop/app/models"
 	"goshop/app/repositories"
+	"goshop/app/schema"
 	"goshop/dbs"
 )
 
@@ -13,7 +14,7 @@ func createAdmin() {
 	role, _ := roleRepo.CreateRole(&models.RoleRequest{Name: "admin", Description: "Admin"})
 
 	userRepo := repositories.NewUserRepository()
-	userRepo.Register(&models.RegisterRequest{
+	userRepo.Register(&schema.Register{
 		Username: "admin",
 		Password: "admin",
 		Email:    "admin@admin.com",

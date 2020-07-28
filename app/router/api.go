@@ -14,10 +14,17 @@ func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 		product *api.Product,
 		warehouse *api.Warehouse,
 		quantity *api.Quantity,
+		user *api.User,
 	) error {
+		auth := r.Group("/auth")
+		{
+			auth.POST("auth/register", user.Register)
+			auth.POST("auth/login", user.Login)
+		}
+
 		apiV1 := r.Group("api/v1")
 		{
-			apiV1.GET("/users/:uuid", userService.GetUserByID)
+			apiV1.GET("/users/:uuid", user.GetUserByID)
 		}
 		{
 			apiV1.GET("/products", product.GetProducts)
