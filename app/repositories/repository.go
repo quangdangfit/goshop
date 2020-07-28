@@ -1,9 +1,17 @@
 package repositories
 
-var RoleRepo = NewRoleRepository()
-var UserRepo = NewUserRepository()
-var CategoryRepo = NewCategoryRepository()
-var ProductRepo = NewProductRepository()
-var WarehouseRepo = NewWarehouseRepository()
-var QuantityRepo = NewQuantityRepository()
-var OrderRepo = NewOrderRepository()
+import (
+	"go.uber.org/dig"
+)
+
+func Inject(container *dig.Container) error {
+	_ = container.Provide(NewCategoryRepository)
+	_ = container.Provide(NewProductRepository)
+	_ = container.Provide(NewOrderRepository)
+	_ = container.Provide(NewOrderLineRepository)
+	_ = container.Provide(NewQuantityRepository)
+	_ = container.Provide(NewUserRepository)
+	_ = container.Provide(NewRoleRepository)
+	_ = container.Provide(NewWarehouseRepository)
+	return nil
+}

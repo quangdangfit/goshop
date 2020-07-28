@@ -1,53 +1,30 @@
 package services
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
-	"github.com/jinzhu/copier"
-	"gitlab.com/quangdangfit/gocommon/utils/logger"
+	"context"
 
 	"goshop/app/models"
 	"goshop/app/repositories"
-	"goshop/pkg/utils"
+	"goshop/app/schema"
 )
 
-type RoleService interface {
-	CreateRole(c *gin.Context)
+type IRoleService interface {
+	CreateRole(ctx context.Context, item *schema.RoleBodyParam) (*models.Role, error)
 }
 
 type role struct {
 	repo repositories.RoleRepository
 }
 
-func NewService(repo repositories.RoleRepository) RoleService {
+func NewRoleService(repo repositories.RoleRepository) IRoleService {
 	return &role{repo: repo}
 }
 
-func (r *role) CreateRole(c *gin.Context) {
-	var reqBody models.RoleRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	validate := validator.New()
-	err := validate.Struct(reqBody)
+func (r *role) CreateRole(ctx context.Context, item *schema.RoleBodyParam) (*models.Role, error) {
+	role, err := r.repo.CreateRole(item)
 	if err != nil {
-		logger.Error("Request body is invalid: ", err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	user, err := r.repo.CreateRole(&reqBody)
-	if err != nil {
-		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
-	}
-
-	var res models.RoleResponse
-	copier.Copy(&res, &user)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return role, nil
 }
