@@ -12,11 +12,11 @@ import (
 )
 
 type IProductRepository interface {
-	GetProducts(params schema.ProductQueryParams) (*[]models.Product, error)
+	GetProducts(params schema.ProductQueryParam) (*[]models.Product, error)
 	GetProductByID(uuid string) (*models.Product, error)
-	GetProductByCategory(uuid string, active bool) (*[]models.Product, error)
-	CreateProduct(req *models.ProductRequest) (*models.Product, error)
-	UpdateProduct(uuid string, req *models.ProductRequest) (*models.Product, error)
+	GetProductByCategoryID(uuid string) (*[]models.Product, error)
+	CreateProduct(item *schema.ProductBodyParam) (*models.Product, error)
+	UpdateProduct(uuid string, item *schema.ProductBodyParam) (*models.Product, error)
 }
 
 type productRepo struct {
@@ -27,7 +27,7 @@ func NewProductRepository() IProductRepository {
 	return &productRepo{db: dbs.Database}
 }
 
-func (r *productRepo) GetProducts(params schema.ProductQueryParams) (*[]models.Product, error) {
+func (r *productRepo) GetProducts(params schema.ProductQueryParam) (*[]models.Product, error) {
 	var products []models.Product
 	if r.db.Where(params).Find(&products).RecordNotFound() {
 		return nil, nil
@@ -36,9 +36,9 @@ func (r *productRepo) GetProducts(params schema.ProductQueryParams) (*[]models.P
 	return &products, nil
 }
 
-func (r *productRepo) GetProductByCategory(categUUID string, active bool) (*[]models.Product, error) {
+func (r *productRepo) GetProductByCategoryID(uuid string) (*[]models.Product, error) {
 	var products []models.Product
-	if r.db.Where("active = ? AND categ_uuid = ?", active, categUUID).Find(&products).RecordNotFound() {
+	if r.db.Where("categ_uuid = ?", uuid).Find(&products).RecordNotFound() {
 		return nil, nil
 	}
 
@@ -54,9 +54,9 @@ func (r *productRepo) GetProductByID(uuid string) (*models.Product, error) {
 	return &product, nil
 }
 
-func (r *productRepo) CreateProduct(req *models.ProductRequest) (*models.Product, error) {
+func (r *productRepo) CreateProduct(item *schema.ProductBodyParam) (*models.Product, error) {
 	var product models.Product
-	copier.Copy(&product, &req)
+	copier.Copy(&product, &item)
 
 	if err := r.db.Create(&product).Error; err != nil {
 		return nil, err
@@ -65,13 +65,13 @@ func (r *productRepo) CreateProduct(req *models.ProductRequest) (*models.Product
 	return &product, nil
 }
 
-func (r *productRepo) UpdateProduct(uuid string, req *models.ProductRequest) (*models.Product, error) {
+func (r *productRepo) UpdateProduct(uuid string, item *schema.ProductBodyParam) (*models.Product, error) {
 	var product models.Product
 	if r.db.Where("uuid = ? ", uuid).First(&product).RecordNotFound() {
 		return nil, errors.New("not found product")
 	}
 
-	copier.Copy(&product, &req)
+	copier.Copy(&product, &item)
 	if err := r.db.Save(&product).Error; err != nil {
 		return nil, err
 	}
