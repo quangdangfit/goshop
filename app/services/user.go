@@ -1,105 +1,57 @@
 package services
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
-	"gitlab.com/quangdangfit/gocommon/utils/logger"
+	"context"
 
 	jwtMiddle "goshop/app/middleware/jwt"
 	"goshop/app/models"
 	"goshop/app/repositories"
-	"goshop/pkg/utils"
+	"goshop/app/schema"
 )
 
-type UserService interface {
-	Login(c *gin.Context)
-	Register(c *gin.Context)
-	GetUserByID(c *gin.Context)
+type IUserService interface {
+	Login(ctx context.Context, item *schema.Login) (*models.User, string, error)
+	Register(ctx context.Context, item *schema.Register) (*models.User, string, error)
+	GetUserByID(ctx context.Context, uuid string) (*models.User, error)
 }
 
 type user struct {
 	repo repositories.UserRepository
 }
 
-func NewUserService(repo repositories.UserRepository) UserService {
+func NewUserService(repo repositories.UserRepository) IUserService {
 	return &user{repo: repo}
-}
-
-func (u *user) validate(r models.RegisterRequest) bool {
-	return utils.Validate(
-		[]utils.Validation{
-			{Value: r.Username, Valid: "username"},
-			{Value: r.Email, Valid: "email"},
-			{Value: r.Password, Valid: "password"},
-		})
 }
 
 func (u *user) checkPermission(uuid string, data map[string]interface{}) bool {
 	return data["uuid"] == uuid
 }
 
-func (u *user) Login(c *gin.Context) {
-	var reqBody models.LoginRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	user, err := u.repo.Login(&reqBody)
+func (u *user) Login(ctx context.Context, item *schema.Login) (*models.User, string, error) {
+	user, err := u.repo.Login(item)
 	if err != nil {
-		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, "", err
 	}
 
-	var res models.UserResponse
-	copier.Copy(&res, &user)
-	res.Extra = map[string]interface{}{
-		"token": jwtMiddle.GenerateToken(user),
-	}
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	token := jwtMiddle.GenerateToken(user)
+	return user, token, nil
 }
 
-func (u *user) Register(c *gin.Context) {
-	var reqBody models.RegisterRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	valid := u.validate(reqBody)
-	if !valid {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is invalid"})
-		return
-	}
-
-	user, err := u.repo.Register(&reqBody)
+func (u *user) Register(ctx context.Context, item *schema.Register) (*models.User, string, error) {
+	user, err := u.repo.Register(item)
 	if err != nil {
-		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, "", err
 	}
 
-	var res models.UserResponse
-	copier.Copy(&res, &user)
-	res.Extra = map[string]interface{}{
-		"token": jwtMiddle.GenerateToken(user),
-	}
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	token := jwtMiddle.GenerateToken(user)
+	return user, token, nil
 }
 
-func (u *user) GetUserByID(c *gin.Context) {
-	userUUID := c.Param("uuid")
-	user, err := u.repo.GetUserByID(userUUID)
+func (u *user) GetUserByID(ctx context.Context, uuid string) (*models.User, error) {
+	user, err := u.repo.GetUserByID(uuid)
 	if err != nil {
-		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), utils.ErrorNotExistUser))
-		return
+		return nil, err
 	}
 
-	var res models.UserResponse
-	copier.Copy(&res, &user)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return user, nil
 }

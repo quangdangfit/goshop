@@ -8,13 +8,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"goshop/app/models"
+	"goshop/app/schema"
 	"goshop/dbs"
 	"goshop/pkg/utils"
 )
 
 type UserRepository interface {
-	Login(req *models.LoginRequest) (*models.User, error)
-	Register(req *models.RegisterRequest) (*models.User, error)
+	Login(item *schema.Login) (*models.User, error)
+	Register(item *schema.Register) (*models.User, error)
 	GetUserByID(uuid string) (*models.User, error)
 }
 
@@ -26,13 +27,13 @@ func NewUserRepository() UserRepository {
 	return &userRepo{db: dbs.Database}
 }
 
-func (u *userRepo) Login(req *models.LoginRequest) (*models.User, error) {
+func (u *userRepo) Login(item *schema.Login) (*models.User, error) {
 	user := &models.User{}
-	if dbs.Database.Where("username = ? ", req.Username).First(&user).RecordNotFound() {
+	if dbs.Database.Where("username = ? ", item.Username).First(&user).RecordNotFound() {
 		return nil, errors.New("user not found")
 	}
 
-	passErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	passErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(item.Password))
 	if passErr == bcrypt.ErrMismatchedHashAndPassword && passErr != nil {
 		return nil, errors.New("wrong password")
 	}
@@ -40,10 +41,10 @@ func (u *userRepo) Login(req *models.LoginRequest) (*models.User, error) {
 	return user, nil
 }
 
-func (u *userRepo) Register(req *models.RegisterRequest) (*models.User, error) {
+func (u *userRepo) Register(item *schema.Register) (*models.User, error) {
 	var user models.User
-	copier.Copy(&user, &req)
-	hashedPassword := utils.HashAndSalt([]byte(req.Password))
+	copier.Copy(&user, &item)
+	hashedPassword := utils.HashAndSalt([]byte(item.Password))
 	user.Password = hashedPassword
 
 	if err := u.db.Create(&user).Error; err != nil {

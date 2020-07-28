@@ -14,10 +14,10 @@ import (
 )
 
 type Category struct {
-	service services.ICategory
+	service services.ICategoryService
 }
 
-func NewCategoryAPI(service services.ICategory) *Category {
+func NewCategoryAPI(service services.ICategoryService) *Category {
 	return &Category{service: service}
 }
 
