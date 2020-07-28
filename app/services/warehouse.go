@@ -1,117 +1,60 @@
 package services
 
 import (
-	"encoding/json"
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
-	"github.com/jinzhu/copier"
-	"gitlab.com/quangdangfit/gocommon/utils/logger"
+	"context"
 
 	"goshop/app/models"
 	"goshop/app/repositories"
-	"goshop/pkg/utils"
+	"goshop/app/schema"
 )
 
-type WarehouseSerivce interface {
-	GetWarehouses(c *gin.Context)
-	GetWarehouseByID(c *gin.Context)
-	CreateWarehouse(c *gin.Context)
-	UpdateWarehouse(c *gin.Context)
+type IWarehouseSerivce interface {
+	GetWarehouses(ctx context.Context, query *schema.WarehouseQueryParam) (*[]models.Warehouse, error)
+	GetWarehouseByID(ctx context.Context, uuid string) (*models.Warehouse, error)
+	CreateWarehouse(ctx context.Context, item *schema.WarehouseBodyParam) (*models.Warehouse, error)
+	UpdateWarehouse(ctx context.Context, uuid string, items *schema.WarehouseBodyParam) (*models.Warehouse, error)
 }
 
 type warehouse struct {
 	repo repositories.WarehouseRepository
 }
 
-func NewWarehouseService(repo repositories.WarehouseRepository) WarehouseSerivce {
+func NewWarehouseService(repo repositories.WarehouseRepository) IWarehouseSerivce {
 	return &warehouse{repo: repo}
 }
 
-func (categ *warehouse) GetWarehouses(c *gin.Context) {
-	var reqQuery models.WarehouseQueryRequest
-	if err := c.ShouldBindQuery(&reqQuery); err != nil {
-		logger.Error("Failed to parse request query: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	var query map[string]interface{}
-	data, _ := json.Marshal(reqQuery)
-	json.Unmarshal(data, &query)
-	warehouses, err := categ.repo.GetWarehouses(query)
+func (w *warehouse) GetWarehouses(ctx context.Context, query *schema.WarehouseQueryParam) (*[]models.Warehouse, error) {
+	warehouses, err := w.repo.GetWarehouses(query)
 	if err != nil {
-		logger.Error("Failed to get warehouses}: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	var res []models.WarehouseResponse
-	copier.Copy(&res, &warehouses)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return warehouses, nil
 }
 
-func (categ *warehouse) GetWarehouseByID(c *gin.Context) {
-	warehouseId := c.Param("uuid")
-
-	warehouse, err := categ.repo.GetWarehouseByID(warehouseId)
+func (w *warehouse) GetWarehouseByID(ctx context.Context, uuid string) (*models.Warehouse, error) {
+	warehouse, err := w.repo.GetWarehouseByID(uuid)
 	if err != nil {
-		logger.Error("Failed to get warehouse: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	var res models.WarehouseResponse
-	copier.Copy(&res, &warehouse)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return warehouse, nil
 }
 
-func (categ *warehouse) CreateWarehouse(c *gin.Context) {
-	var reqBody models.WarehouseBodyRequest
-	if err := c.Bind(&reqBody); err != nil {
-		logger.Error("Failed to parse request body: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	validate := validator.New()
-	err := validate.Struct(reqBody)
+func (w *warehouse) CreateWarehouse(ctx context.Context, item *schema.WarehouseBodyParam) (*models.Warehouse, error) {
+	warehouse, err := w.repo.CreateWarehouse(item)
 	if err != nil {
-		logger.Error("Request body is invalid: ", err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	warehouses, err := categ.repo.CreateWarehouse(&reqBody)
-	if err != nil {
-		logger.Error("Failed to create warehouse", err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
-	}
-
-	var res models.WarehouseResponse
-	copier.Copy(&res, &warehouses)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return warehouse, nil
 }
 
-func (categ *warehouse) UpdateWarehouse(c *gin.Context) {
-	uuid := c.Param("uuid")
-	var reqBody models.WarehouseBodyRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		logger.Error("Failed to parse request body: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	warehouses, err := categ.repo.UpdateWarehouse(uuid, &reqBody)
+func (w *warehouse) UpdateWarehouse(ctx context.Context, uuid string, item *schema.WarehouseBodyParam) (*models.Warehouse, error) {
+	warehouse, err := w.repo.UpdateWarehouse(uuid, item)
 	if err != nil {
-		logger.Error("Failed to update warehouse: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
+		return nil, err
 	}
 
-	var res models.WarehouseResponse
-	copier.Copy(&res, &warehouses)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	return warehouse, nil
 }
