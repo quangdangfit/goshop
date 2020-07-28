@@ -23,21 +23,3 @@ func (categ *Category) BeforeCreate(scope *gorm.Scope) error {
 	categ.Active = true
 	return nil
 }
-
-type CategoryResponse struct {
-	UUID        string `json:"uuid"`
-	Code        string `json:"code"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Active      bool   `json:"active"`
-}
-
-type CategoryBodyRequest struct {
-	Name        string `json:"name,omitempty" validate:"required"`
-	Description string `json:"description,omitempty"`
-}
-
-type CategoryQueryRequest struct {
-	Code   string `json:"code,omitempty" form:"code"`
-	Active string `json:"active,omitempty" form:"active"`
-}

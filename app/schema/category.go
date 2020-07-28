@@ -12,3 +12,8 @@ type CategoryBodyParam struct {
 	Name        string `json:"name,omitempty" validate:"required"`
 	Description string `json:"description,omitempty"`
 }
+
+type CategoryQueryParam struct {
+	Code   string `json:"code,omitempty" form:"code"`
+	Active bool   `json:"active" form:"active"`
+}

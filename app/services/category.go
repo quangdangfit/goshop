@@ -11,7 +11,7 @@ import (
 )
 
 type ICategory interface {
-	GetCategories(ctx context.Context, query models.CategoryQueryRequest) (*[]models.Category, error)
+	GetCategories(ctx context.Context, query *schema.CategoryQueryParam) (*[]models.Category, error)
 	GetCategoryByID(ctx context.Context, uuid string) (*models.Category, error)
 	CreateCategory(cxt context.Context, item *schema.Category) (*models.Category, error)
 	UpdateCategory(ctx context.Context, uuid string, item *schema.CategoryBodyParam) (*models.Category, error)
@@ -25,7 +25,7 @@ func NewCategoryService(repo repositories.ICategoryRepository) ICategory {
 	return &category{repo: repo}
 }
 
-func (c *category) GetCategories(ctx context.Context, query models.CategoryQueryRequest) (*[]models.Category, error) {
+func (c *category) GetCategories(ctx context.Context, query *schema.CategoryQueryParam) (*[]models.Category, error) {
 	categories, err := c.repo.GetCategories(query)
 	if err != nil {
 		logger.Error("Failed to get categories: ", err)
