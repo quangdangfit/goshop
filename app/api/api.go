@@ -7,5 +7,6 @@ import (
 func Inject(container *dig.Container) error {
 	_ = container.Provide(NewCategoryAPI)
 	_ = container.Provide(NewProductAPI)
+	_ = container.Provide(NewWarehouseAPI)
 	return nil
 }
