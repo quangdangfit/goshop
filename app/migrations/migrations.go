@@ -11,7 +11,7 @@ import (
 
 func createAdmin() {
 	roleRepo := repositories.NewRoleRepository()
-	role, _ := roleRepo.CreateRole(&models.RoleRequest{Name: "admin", Description: "Admin"})
+	role, _ := roleRepo.CreateRole(&schema.RoleBodyParam{Name: "admin", Description: "Admin"})
 
 	userRepo := repositories.NewUserRepository()
 	userRepo.Register(&schema.Register{

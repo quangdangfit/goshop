@@ -15,6 +15,7 @@ func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 		warehouse *api.Warehouse,
 		quantity *api.Quantity,
 		user *api.User,
+		role *api.Role,
 	) error {
 		auth := r.Group("/auth")
 		{
@@ -22,6 +23,12 @@ func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 			auth.POST("auth/login", user.Login)
 		}
 
+		admin := r.Group("admin")
+		{
+			admin.POST("/roles", role.CreateRole)
+		}
+
+		//--------------------------------API-----------------------------------
 		apiV1 := r.Group("api/v1")
 		{
 			apiV1.GET("/users/:uuid", user.GetUserByID)

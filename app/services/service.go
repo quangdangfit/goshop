@@ -10,7 +10,7 @@ import (
 	"goshop/app/repositories"
 )
 
-var RoleSer = NewService(repositories.RoleRepo)
+var RoleSer = NewRoleService(repositories.RoleRepo)
 var UserSer = NewUserService(repositories.UserRepo)
 var CategorySer = NewCategoryService(repositories.CategoryRepo)
 var ProductSer = NewProductService(repositories.ProductRepo)
