@@ -19,15 +19,15 @@ func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 		}
 		{
 			apiV1.GET("/products", product.GetProducts)
-			//apiV1.POST("/products", product.CreateProduct)
-			//apiV1.GET("/products/:uuid", product.GetProductByID)
-			//apiV1.PUT("/products/:uuid", product.UpdateProduct)
+			apiV1.POST("/products", product.CreateProduct)
+			apiV1.GET("/products/:uuid", product.GetProductByID)
+			apiV1.PUT("/products/:uuid", product.UpdateProduct)
 		}
 		{
 			apiV1.GET("/categories", category.GetCategories)
 			apiV1.POST("/categories", category.CreateCategory)
 			apiV1.GET("/categories/:uuid", category.GetCategoryByID)
-			//apiV1.GET("/categories/:uuid/products", productService.GetProductByCategory)
+			apiV1.GET("/categories/:uuid/products", product.GetProductByCategoryID)
 			apiV1.PUT("/categories/:uuid", category.UpdateCategory)
 		}
 		{

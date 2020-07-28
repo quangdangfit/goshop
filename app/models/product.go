@@ -25,20 +25,3 @@ func (product *Product) BeforeCreate(scope *gorm.Scope) error {
 	product.Active = true
 	return nil
 }
-
-type ProductResponse struct {
-	UUID        string `json:"uuid"`
-	Code        string `json:"code"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CategUUID   string `json:"categ_uuid"`
-	Price       uint   `json:"price"`
-	Active      bool   `json:"active"`
-}
-
-type ProductRequest struct {
-	Name        string `json:"name,omitempty" validate:"required"`
-	Description string `json:"description,omitempty"`
-	CategUUID   string `json:"categ_uuid,omitempty" validate:"required"`
-	Price       uint   `json:"price,omitempty"`
-}
