@@ -1,0 +1,28 @@
+version: 2.17
+jobs:
+  build:
+    working_directory: /data/src/goshop
+    docker:
+      - image: circleci/golang:1.15.5
+    steps:
+      - checkout
+      - run:
+          name: go-mod
+          command: sudo go mod vendor
+  deploy:
+    machine:
+      enabled: true
+    steps:
+      - checkout
+      - run:
+          name: Deploy over SSH
+          command: ssh ubuntu@ec2-175-41-131-58.ap-southeast-1.compute.amazonaws.com "cd /data/src/goshop; git pull; sudo systemctl restart tlrp.service";
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
