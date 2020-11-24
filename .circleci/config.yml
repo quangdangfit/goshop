@@ -5,7 +5,7 @@ jobs:
     docker:
       - image: circleci/golang:1.15.5
     steps:
-      - checkout develop
+      - checkout
       - run:
           name: go-mod
           command: sudo go mod vendor
@@ -13,10 +13,10 @@ jobs:
     machine:
       enabled: true
     steps:
-      - checkout develop
+      - checkout
       - run:
           name: Deploy over SSH
-          command: ssh ubuntu@ec2-175-41-131-58.ap-southeast-1.compute.amazonaws.com "cd /data/src/goshop; git checkout develop; git pull; sudo systemctl restart tlrp.service";
+          command: ssh ubuntu@ec2-175-41-131-58.ap-southeast-1.compute.amazonaws.com "cd /data/src/goshop; git pull; sudo systemctl restart tlrp.service";
 
 workflows:
   version: 2
