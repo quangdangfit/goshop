@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"gitlab.com/quangdangfit/gocommon/utils/logger"
+	"github.com/quangdangfit/gocommon/logger"
 	"golang.org/x/crypto/bcrypt"
 )
 
