@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/config"
@@ -17,12 +18,12 @@ const (
 
 var ctx = context.Background()
 
-type gredis struct {
+type GRedis struct {
 	client     *redis.Client
 	expiryTime int
 }
 
-func NewRedis() *gredis {
+func NewRedis() *GRedis {
 	redisConfig := config.Config.Redis
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
@@ -40,10 +41,10 @@ func NewRedis() *gredis {
 		expiryTime = RedisExpiredTimes
 	}
 
-	return &gredis{client: rdb, expiryTime: expiryTime}
+	return &GRedis{client: rdb, expiryTime: expiryTime}
 }
 
-func (g *gredis) IsConnected() bool {
+func (g *GRedis) IsConnected() bool {
 	if g.client == nil {
 		return false
 	}
@@ -55,7 +56,7 @@ func (g *gredis) IsConnected() bool {
 	return true
 }
 
-func (g *gredis) Get(key string, data interface{}) error {
+func (g *GRedis) Get(key string, data interface{}) error {
 	val, err := g.client.Get(ctx, key).Bytes()
 	if err == redis.Nil {
 		return nil
@@ -74,7 +75,7 @@ func (g *gredis) Get(key string, data interface{}) error {
 	return nil
 }
 
-func (g *gredis) Set(key string, val []byte) error {
+func (g *GRedis) Set(key string, val []byte) error {
 	err := g.client.Set(ctx, key, val, time.Duration(g.expiryTime)*time.Second).Err()
 	if err != nil {
 		logger.Error("Cache fail to set: ", err)
@@ -85,7 +86,7 @@ func (g *gredis) Set(key string, val []byte) error {
 	return nil
 }
 
-func (g *gredis) Remove(keys ...string) error {
+func (g *GRedis) Remove(keys ...string) error {
 	err := g.client.Del(ctx, keys...).Err()
 	if err != nil {
 		logger.Errorf("Cache fail to delete key %s: %s", keys, err)
@@ -96,7 +97,7 @@ func (g *gredis) Remove(keys ...string) error {
 	return nil
 }
 
-func (g *gredis) Keys(pattern string) ([]string, error) {
+func (g *GRedis) Keys(pattern string) ([]string, error) {
 	keys, err := g.client.Keys(ctx, pattern).Result()
 	if err != nil {
 		return nil, err
