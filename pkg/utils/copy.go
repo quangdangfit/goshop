@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/json"
 
-	"gitlab.com/quangdangfit/gocommon/utils/logger"
+	"github.com/quangdangfit/gocommon/logger"
 )
 
 func Copy(dest interface{}, src interface{}) error {

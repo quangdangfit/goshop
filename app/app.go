@@ -1,7 +1,7 @@
 package app
 
 import (
-	"gitlab.com/quangdangfit/gocommon/utils/logger"
+	"github.com/quangdangfit/gocommon/logger"
 	"go.uber.org/dig"
 
 	"goshop/app/api"
