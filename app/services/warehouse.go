@@ -16,10 +16,10 @@ type IWarehouseSerivce interface {
 }
 
 type warehouse struct {
-	repo repositories.WarehouseRepository
+	repo repositories.IWarehouseRepository
 }
 
-func NewWarehouseService(repo repositories.WarehouseRepository) IWarehouseSerivce {
+func NewWarehouseService(repo repositories.IWarehouseRepository) IWarehouseSerivce {
 	return &warehouse{repo: repo}
 }
 

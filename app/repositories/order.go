@@ -11,7 +11,7 @@ import (
 	"goshop/dbs"
 )
 
-type OrderRepository interface {
+type IOrderRepository interface {
 	GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error)
 	GetOrderByID(uuid string) (*models.Order, error)
 	CreateOrder(item *schema.OrderBodyParam) (*models.Order, error)
@@ -19,17 +19,17 @@ type OrderRepository interface {
 	AssignOrder(uuid string) error
 }
 
-type orderRepo struct {
+type OrderRepo struct {
 	db           *gorm.DB
-	lineRepo     OrderLineRepository
-	quantityRepo QuantityRepository
+	lineRepo     IOrderLineRepository
+	quantityRepo IQuantityRepository
 }
 
-func NewOrderRepository() OrderRepository {
-	return &orderRepo{db: dbs.Database, lineRepo: NewOrderLineRepository()}
+func NewOrderRepository() *OrderRepo {
+	return &OrderRepo{db: dbs.Database, lineRepo: NewOrderLineRepository()}
 }
 
-func (r *orderRepo) GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error) {
+func (r *OrderRepo) GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error) {
 	var orders []models.Order
 	if r.db.Find(&orders, query).RecordNotFound() {
 		return nil, nil
@@ -38,7 +38,7 @@ func (r *orderRepo) GetOrders(query *schema.OrderQueryParam) (*[]models.Order, e
 	return &orders, nil
 }
 
-func (r *orderRepo) GetOrderByID(uuid string) (*models.Order, error) {
+func (r *OrderRepo) GetOrderByID(uuid string) (*models.Order, error) {
 	var order models.Order
 	var lines []models.OrderLine
 	if r.db.Where("uuid = ?", uuid).First(&order).RecordNotFound() {
@@ -50,7 +50,7 @@ func (r *orderRepo) GetOrderByID(uuid string) (*models.Order, error) {
 	return &order, nil
 }
 
-func (r *orderRepo) CreateOrder(item *schema.OrderBodyParam) (*models.Order, error) {
+func (r *OrderRepo) CreateOrder(item *schema.OrderBodyParam) (*models.Order, error) {
 	var order models.Order
 	copier.Copy(&order, &item)
 
@@ -65,7 +65,7 @@ func (r *orderRepo) CreateOrder(item *schema.OrderBodyParam) (*models.Order, err
 	var lines []models.OrderLine
 	var totalPrice uint
 	for _, line := range order.Lines {
-		line.OrderUUID = order.UUID
+		line.OrderID = order.ID
 		if err := r.db.Create(&line).Error; err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func (r *orderRepo) CreateOrder(item *schema.OrderBodyParam) (*models.Order, err
 	return &order, nil
 }
 
-func (r *orderRepo) UpdateOrder(uuid string, item *schema.OrderBodyParam) (*models.Order, error) {
+func (r *OrderRepo) UpdateOrder(uuid string, item *schema.OrderBodyParam) (*models.Order, error) {
 	order, err := r.GetOrderByID(uuid)
 	if err != nil {
 		return nil, err
@@ -96,14 +96,14 @@ func (r *orderRepo) UpdateOrder(uuid string, item *schema.OrderBodyParam) (*mode
 	return order, nil
 }
 
-func (r *orderRepo) AssignOrder(uuid string) error {
+func (r *OrderRepo) AssignOrder(uuid string) error {
 	order, err := r.GetOrderByID(uuid)
 	if err != nil {
 		return err
 	}
 
 	for _, line := range order.Lines {
-		quantity, err := r.quantityRepo.GetQuantityProductID(line.ProductUUID)
+		quantity, err := r.quantityRepo.GetQuantityProductID(line.ProductID)
 		if err != nil || quantity.Quantity < line.Quantity {
 			return errors.New("product quantity is not enough")
 		}

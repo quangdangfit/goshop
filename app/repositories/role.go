@@ -9,19 +9,19 @@ import (
 	"goshop/dbs"
 )
 
-type RoleRepository interface {
+type IRoleRepository interface {
 	CreateRole(req *schema.RoleBodyParam) (*models.Role, error)
 }
 
-type roleRepo struct {
+type RoleRepo struct {
 	db *gorm.DB
 }
 
-func NewRoleRepository() RoleRepository {
-	return &roleRepo{db: dbs.Database}
+func NewRoleRepository() *RoleRepo {
+	return &RoleRepo{db: dbs.Database}
 }
 
-func (r *roleRepo) CreateRole(req *schema.RoleBodyParam) (*models.Role, error) {
+func (r *RoleRepo) CreateRole(req *schema.RoleBodyParam) (*models.Role, error) {
 	var role models.Role
 	copier.Copy(&role, &req)
 

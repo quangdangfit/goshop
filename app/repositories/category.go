@@ -19,15 +19,15 @@ type ICategoryRepository interface {
 	UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error)
 }
 
-type categRepo struct {
+type CategoryRepo struct {
 	db *gorm.DB
 }
 
-func NewCategoryRepository() ICategoryRepository {
-	return &categRepo{db: dbs.Database}
+func NewCategoryRepository() *CategoryRepo {
+	return &CategoryRepo{db: dbs.Database}
 }
 
-func (r *categRepo) GetCategories(query *schema.CategoryQueryParam) (*[]models.Category, error) {
+func (r *CategoryRepo) GetCategories(query *schema.CategoryQueryParam) (*[]models.Category, error) {
 	var categories []models.Category
 	var mapQuery map[string]interface{}
 	utils.Copy(&mapQuery, query)
@@ -38,7 +38,7 @@ func (r *categRepo) GetCategories(query *schema.CategoryQueryParam) (*[]models.C
 	return &categories, nil
 }
 
-func (r *categRepo) GetCategoryByID(uuid string) (*models.Category, error) {
+func (r *CategoryRepo) GetCategoryByID(uuid string) (*models.Category, error) {
 	var category models.Category
 	if r.db.Where("uuid = ?", uuid).Find(&category).RecordNotFound() {
 		return nil, errors.New("not found category")
@@ -47,7 +47,7 @@ func (r *categRepo) GetCategoryByID(uuid string) (*models.Category, error) {
 	return &category, nil
 }
 
-func (r *categRepo) CreateCategory(item *schema.Category) (*models.Category, error) {
+func (r *CategoryRepo) CreateCategory(item *schema.Category) (*models.Category, error) {
 	var category models.Category
 	copier.Copy(&category, &item)
 
@@ -58,7 +58,7 @@ func (r *categRepo) CreateCategory(item *schema.Category) (*models.Category, err
 	return &category, nil
 }
 
-func (r *categRepo) UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error) {
+func (r *CategoryRepo) UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error) {
 	var category models.Category
 	var value map[string]interface{}
 	if r.db.Where("uuid = ? ", uuid).First(&category).RecordNotFound() {

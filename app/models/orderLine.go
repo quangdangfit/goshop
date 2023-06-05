@@ -8,19 +8,17 @@ import (
 )
 
 type OrderLine struct {
-	UUID        string `json:"uuid" gorm:"unique;not null;index;primary_key"`
-	ProductUUID string `json:"product_uuid"`
-	OrderUUID   string `json:"order_uuid"`
-	Quantity    uint   `json:"quantity"`
-	Price       uint   `json:"price"`
-
-	gorm.Model
+	Base
+	ProductID string `json:"product_id"`
+	OrderID   string `json:"order_id"`
+	Quantity  uint   `json:"quantity"`
+	Price     uint   `json:"price"`
 }
 
 func (line *OrderLine) BeforeCreate(scope *gorm.Scope) error {
-	line.UUID = uuid.New().String()
+	line.ID = uuid.New().String()
 	var product Product
-	dbs.Database.Where("uuid = ?", line.ProductUUID).First(&product)
+	dbs.Database.Where("uuid = ?", line.ProductID).First(&product)
 	line.Price = product.Price * line.Quantity
 
 	return nil
