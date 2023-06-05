@@ -1,0 +1,71 @@
+name: CI frontera-arena-service
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  CI:
+    strategy:
+      matrix:
+        go-version: [1.18.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      mongo_db_url: mongodb://test:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@localhost:27017
+      mongo_db_name: test
+      accountant_private_key: ${{ secrets.ACCOUNTANT_PRIVATE_KEY }}
+
+    services:
+      mongodb:
+        image: mongo:bionic
+        env:
+          MONGO_INITDB_ROOT_USERNAME: test
+          MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+          MONGO_INITDB_DATABASE: test
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Private repo access
+        run: git config --global url."https://${{ secrets.FRONTERA_DEPLOYMENT_PAT }}@github.com".insteadOf "https://github.com"
+
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache go pkg
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Generate Mock
+        run: go install github.com/golang/mock/mockgen@v1.6.0 && make mock
+
+      - name: Install dependencies
+        run: go mod download
+        env:
+          GOPRIVATE: github.com/tokoinofficial
+
+      - name: Build
+        run: go build -o main
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+
+      - name: Run unit tests
+        env:
+          env: "localhost"
+          port: 9999
+        run: make unittest
