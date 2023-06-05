@@ -8,15 +8,8 @@ import (
 )
 
 type Schema struct {
-	Database struct {
-		Host     string `mapstructure:"host"`
-		Port     int    `mapstructure:"port"`
-		Name     string `mapstructure:"name"`
-		User     string `mapstructure:"user"`
-		Password string `mapstructure:"password"`
-		Env      string `mapstructure:"env"`
-		SSLMode  string `mapstructure:"sslmode"`
-	} `mapstructure:"database"`
+	Environment string `mapstructure:"environment"`
+	DatabaseURI string `mapstructure:"database_uri"`
 
 	Redis struct {
 		Host     string `mapstructure:"host"`
@@ -31,7 +24,10 @@ type Schema struct {
 	} `mapstructure:"cache"`
 }
 
-var Config Schema
+var (
+	ProductionEnv = "production"
+	cfg           Schema
+)
 
 func init() {
 	config := viper.New()
@@ -49,9 +45,13 @@ func init() {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 
-	err = config.Unmarshal(&Config)
+	err = config.Unmarshal(&cfg)
 	if err != nil { // Handle errors reading the config file
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 	// fmt.Printf("Current Config: %+v", Config)
+}
+
+func GetConfig() *Schema {
+	return &cfg
 }

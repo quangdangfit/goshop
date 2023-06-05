@@ -4,24 +4,20 @@ An example of gin contains many useful features for e-commerce websites
 
 ## How to run
 
-### Required
+### Required Environment
 
 - Postgres
 - Redis
+
+You can see the docker compose file [here](https://github.com/quangdangfit/docker-compose-template/blob/master/base/docker-compose.yml) to setup required environment
 
 ### Config
 - Copy config file: `cp config/config.sample.yaml config/config.yaml`
 - You should modify `config/config.yaml`
 
 ```yaml
-database:
-  host: localhost
-  port: 5432
-  name: goshop
-  env: development
-  user: postgres
-  password: 1234
-  sslmode: disable
+environment: development
+database_uri: postgres://username:password@host:5432/database
 
 redis:
   enable: true
@@ -37,8 +33,17 @@ cache:
 
 ### Run
 ```shell script
-$ cd $GOPATH/src/goshop
 $ go run main.go 
+```
+
+### Test
+```shell script
+$ go test
+```
+
+### Test with Coverage
+```shell script
+go test -timeout 9000s -a -v -coverpkg=./... ./test
 ```
 
 Project information and existing API
@@ -74,8 +79,6 @@ Project information and existing API
 [GIN-debug] POST   /api/v1/orders            --> goshop/app/api.(*Order).CreateOrder-fm (1 handlers)
 [GIN-debug] GET    /api/v1/orders/:uuid      --> goshop/app/api.(*Order).GetOrderByID-fm (1 handlers)
 [GIN-debug] PUT    /api/v1/orders/:uuid      --> goshop/app/api.(*Order).UpdateOrder-fm (1 handlers)
-
-Listening port: 8888
 ```
 
 ### Document
@@ -86,7 +89,7 @@ Listening port: 8888
 - Gorm
 - Swagger
 - Logging
-- Jwt-go
+- Jwt-Go
 - Gin
 - Graceful restart or stop (fvbock/endless)
 - Cron Job
