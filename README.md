@@ -4,17 +4,19 @@ An example of gin contains many useful features for e-commerce websites
 
 ## How to run
 
-### Required
+### Required Environment
 
 - Postgres
 - Redis
+
+You can see the docker compose file [here](https://github.com/quangdangfit/docker-compose-template/blob/master/base/docker-compose.yml) to setup required environment
 
 ### Config
 - Copy config file: `cp config/config.sample.yaml config/config.yaml`
 - You should modify `config/config.yaml`
 
 ```yaml
-environment: production
+environment: development
 database_uri: postgres://username:password@host:5432/database
 
 redis:
@@ -31,8 +33,17 @@ cache:
 
 ### Run
 ```shell script
-$ cd $GOPATH/src/goshop
 $ go run main.go 
+```
+
+### Test
+```shell script
+$ go test
+```
+
+### Test with Coverage
+```shell script
+go test -timeout 9000s -a -v -coverpkg=./... ./test
 ```
 
 Project information and existing API
