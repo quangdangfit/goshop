@@ -13,21 +13,21 @@ import (
 	"goshop/pkg/utils"
 )
 
-type UserRepository interface {
+type IUserRepository interface {
 	Login(item *schema.Login) (*models.User, error)
 	Register(item *schema.Register) (*models.User, error)
 	GetUserByID(uuid string) (*models.User, error)
 }
 
-type userRepo struct {
+type UserRepo struct {
 	db *gorm.DB
 }
 
-func NewUserRepository() UserRepository {
-	return &userRepo{db: dbs.Database}
+func NewUserRepository() *UserRepo {
+	return &UserRepo{db: dbs.Database}
 }
 
-func (u *userRepo) Login(item *schema.Login) (*models.User, error) {
+func (u *UserRepo) Login(item *schema.Login) (*models.User, error) {
 	user := &models.User{}
 	if dbs.Database.Where("username = ? ", item.Username).First(&user).RecordNotFound() {
 		return nil, errors.New("user not found")
@@ -41,7 +41,7 @@ func (u *userRepo) Login(item *schema.Login) (*models.User, error) {
 	return user, nil
 }
 
-func (u *userRepo) Register(item *schema.Register) (*models.User, error) {
+func (u *UserRepo) Register(item *schema.Register) (*models.User, error) {
 	var user models.User
 	copier.Copy(&user, &item)
 	hashedPassword := utils.HashAndSalt([]byte(item.Password))
@@ -54,7 +54,7 @@ func (u *userRepo) Register(item *schema.Register) (*models.User, error) {
 	return &user, nil
 }
 
-func (u *userRepo) GetUserByID(uuid string) (*models.User, error) {
+func (u *UserRepo) GetUserByID(uuid string) (*models.User, error) {
 	user := models.User{}
 	if dbs.Database.Where("uuid = ? ", uuid).First(&user).RecordNotFound() {
 		return nil, errors.New("user not found")

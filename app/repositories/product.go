@@ -19,15 +19,15 @@ type IProductRepository interface {
 	UpdateProduct(uuid string, item *schema.ProductBodyParam) (*models.Product, error)
 }
 
-type productRepo struct {
+type ProductRepo struct {
 	db *gorm.DB
 }
 
-func NewProductRepository() IProductRepository {
-	return &productRepo{db: dbs.Database}
+func NewProductRepository() *ProductRepo {
+	return &ProductRepo{db: dbs.Database}
 }
 
-func (r *productRepo) GetProducts(params schema.ProductQueryParam) (*[]models.Product, error) {
+func (r *ProductRepo) GetProducts(params schema.ProductQueryParam) (*[]models.Product, error) {
 	var products []models.Product
 	if r.db.Where(params).Find(&products).RecordNotFound() {
 		return nil, nil
@@ -36,7 +36,7 @@ func (r *productRepo) GetProducts(params schema.ProductQueryParam) (*[]models.Pr
 	return &products, nil
 }
 
-func (r *productRepo) GetProductByCategoryID(uuid string) (*[]models.Product, error) {
+func (r *ProductRepo) GetProductByCategoryID(uuid string) (*[]models.Product, error) {
 	var products []models.Product
 	if r.db.Where("categ_uuid = ?", uuid).Find(&products).RecordNotFound() {
 		return nil, nil
@@ -45,7 +45,7 @@ func (r *productRepo) GetProductByCategoryID(uuid string) (*[]models.Product, er
 	return &products, nil
 }
 
-func (r *productRepo) GetProductByID(uuid string) (*models.Product, error) {
+func (r *ProductRepo) GetProductByID(uuid string) (*models.Product, error) {
 	var product models.Product
 	if r.db.Where("uuid = ?", uuid).Find(&product).RecordNotFound() {
 		return nil, errors.New("not found product")
@@ -54,7 +54,7 @@ func (r *productRepo) GetProductByID(uuid string) (*models.Product, error) {
 	return &product, nil
 }
 
-func (r *productRepo) CreateProduct(item *schema.ProductBodyParam) (*models.Product, error) {
+func (r *ProductRepo) CreateProduct(item *schema.ProductBodyParam) (*models.Product, error) {
 	var product models.Product
 	copier.Copy(&product, &item)
 
@@ -65,7 +65,7 @@ func (r *productRepo) CreateProduct(item *schema.ProductBodyParam) (*models.Prod
 	return &product, nil
 }
 
-func (r *productRepo) UpdateProduct(uuid string, item *schema.ProductBodyParam) (*models.Product, error) {
+func (r *ProductRepo) UpdateProduct(uuid string, item *schema.ProductBodyParam) (*models.Product, error) {
 	var product models.Product
 	if r.db.Where("uuid = ? ", uuid).First(&product).RecordNotFound() {
 		return nil, errors.New("not found product")

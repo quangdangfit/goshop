@@ -16,10 +16,10 @@ type IOrderSerivce interface {
 }
 
 type order struct {
-	repo repositories.OrderRepository
+	repo repositories.IOrderRepository
 }
 
-func NewOrderService(repo repositories.OrderRepository) IOrderSerivce {
+func NewOrderService(repo repositories.IOrderRepository) IOrderSerivce {
 	return &order{repo: repo}
 }
 

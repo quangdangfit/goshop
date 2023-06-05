@@ -6,14 +6,12 @@ import (
 )
 
 type Role struct {
-	UUID        string `json:"uuid" gorm:"unique;not null;index;primary_key"`
+	Base
 	Name        string `json:"name" gorm:"unique;not null;index"`
 	Description string `json:"description"`
-
-	gorm.Model
 }
 
 func (role *Role) BeforeCreate(scope *gorm.Scope) error {
-	role.UUID = uuid.New().String()
+	role.ID = uuid.New().String()
 	return nil
 }

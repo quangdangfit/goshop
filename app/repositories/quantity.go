@@ -11,7 +11,7 @@ import (
 	"goshop/dbs"
 )
 
-type QuantityRepository interface {
+type IQuantityRepository interface {
 	GetQuantities(query *schema.QuantityQueryParam) (*[]models.Quantity, error)
 	GetQuantityByID(uuid string) (*models.Quantity, error)
 	GetQuantityProductID(productUUID string) (*models.Quantity, error)
@@ -19,15 +19,15 @@ type QuantityRepository interface {
 	UpdateQuantity(uuid string, item *schema.QuantityBodyParam) (*models.Quantity, error)
 }
 
-type quantityRepo struct {
+type QuantityRepo struct {
 	db *gorm.DB
 }
 
-func NewQuantityRepository() QuantityRepository {
-	return &quantityRepo{db: dbs.Database}
+func NewQuantityRepository() *QuantityRepo {
+	return &QuantityRepo{db: dbs.Database}
 }
 
-func (r *quantityRepo) GetQuantities(query *schema.QuantityQueryParam) (*[]models.Quantity, error) {
+func (r *QuantityRepo) GetQuantities(query *schema.QuantityQueryParam) (*[]models.Quantity, error) {
 	var quantities []models.Quantity
 	if r.db.Find(&quantities, query).RecordNotFound() {
 		return nil, nil
@@ -36,7 +36,7 @@ func (r *quantityRepo) GetQuantities(query *schema.QuantityQueryParam) (*[]model
 	return &quantities, nil
 }
 
-func (r *quantityRepo) GetQuantityByID(uuid string) (*models.Quantity, error) {
+func (r *QuantityRepo) GetQuantityByID(uuid string) (*models.Quantity, error) {
 	var quantity models.Quantity
 	if r.db.Where("uuid = ?", uuid).First(&quantity).RecordNotFound() {
 		return nil, errors.New("not found quantity")
@@ -45,7 +45,7 @@ func (r *quantityRepo) GetQuantityByID(uuid string) (*models.Quantity, error) {
 	return &quantity, nil
 }
 
-func (r *quantityRepo) CreateQuantity(item *schema.QuantityBodyParam) (*models.Quantity, error) {
+func (r *QuantityRepo) CreateQuantity(item *schema.QuantityBodyParam) (*models.Quantity, error) {
 	var quantity models.Quantity
 	copier.Copy(&quantity, &item)
 
@@ -56,7 +56,7 @@ func (r *quantityRepo) CreateQuantity(item *schema.QuantityBodyParam) (*models.Q
 	return &quantity, nil
 }
 
-func (r *quantityRepo) UpdateQuantity(uuid string, item *schema.QuantityBodyParam) (*models.Quantity, error) {
+func (r *QuantityRepo) UpdateQuantity(uuid string, item *schema.QuantityBodyParam) (*models.Quantity, error) {
 	quantity, err := r.GetQuantityByID(uuid)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (r *quantityRepo) UpdateQuantity(uuid string, item *schema.QuantityBodyPara
 	return quantity, nil
 }
 
-func (r *quantityRepo) GetQuantityProductID(productUUID string) (*models.Quantity, error) {
+func (r *QuantityRepo) GetQuantityProductID(productUUID string) (*models.Quantity, error) {
 	var quantity models.Quantity
 	if r.db.Where("product_uuid = ?", productUUID).First(&quantity).RecordNotFound() {
 		return nil, errors.New("not found quantity")

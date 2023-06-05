@@ -16,10 +16,10 @@ type IQuantityService interface {
 }
 
 type quantity struct {
-	repo repositories.QuantityRepository
+	repo repositories.IQuantityRepository
 }
 
-func NewQuantityService(repo repositories.QuantityRepository) IQuantityService {
+func NewQuantityService(repo repositories.IQuantityRepository) IQuantityService {
 	return &quantity{repo: repo}
 }
 
