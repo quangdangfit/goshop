@@ -1,9 +1,5 @@
-database:
-  host: localhost:27017
-  name: database
-  env: native
-  user: ######
-  password: ######
+environment: production
+database_uri: postgres://username:password@host:5432/database
 
 redis:
   enable: true

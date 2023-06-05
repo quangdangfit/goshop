@@ -8,7 +8,7 @@ import (
 	"goshop/app/api"
 )
 
-func RegisterAPI(r *gin.Engine, container *dig.Container) error {
+func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 	err := container.Invoke(func(
 		category *api.Category,
 		product *api.Product,
