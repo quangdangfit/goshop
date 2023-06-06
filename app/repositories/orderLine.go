@@ -7,15 +7,15 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/dbs"
 )
 
 type IOrderLineRepository interface {
-	GetOrderLines(query *schema.OrderLineQueryParam) (*[]models.OrderLine, error)
+	GetOrderLines(query *serializers.OrderLineQueryParam) (*[]models.OrderLine, error)
 	GetOrderLineByID(uuid string) (*models.OrderLine, error)
-	CreateOrderLine(item *schema.OrderLineBodyParam) (*models.OrderLine, error)
-	UpdateOrderLine(uuid string, item *schema.OrderLineBodyParam) (*models.OrderLine, error)
+	CreateOrderLine(item *serializers.OrderLineBodyParam) (*models.OrderLine, error)
+	UpdateOrderLine(uuid string, item *serializers.OrderLineBodyParam) (*models.OrderLine, error)
 }
 
 type OrderLineRepo struct {
@@ -26,7 +26,7 @@ func NewOrderLineRepository() *OrderLineRepo {
 	return &OrderLineRepo{db: dbs.Database}
 }
 
-func (line *OrderLineRepo) GetOrderLines(query *schema.OrderLineQueryParam) (*[]models.OrderLine, error) {
+func (line *OrderLineRepo) GetOrderLines(query *serializers.OrderLineQueryParam) (*[]models.OrderLine, error) {
 	var orderLines []models.OrderLine
 	if line.db.Find(&orderLines, query).RecordNotFound() {
 		return nil, nil
@@ -44,7 +44,7 @@ func (line *OrderLineRepo) GetOrderLineByID(uuid string) (*models.OrderLine, err
 	return &orderLine, nil
 }
 
-func (line *OrderLineRepo) CreateOrderLine(item *schema.OrderLineBodyParam) (*models.OrderLine, error) {
+func (line *OrderLineRepo) CreateOrderLine(item *serializers.OrderLineBodyParam) (*models.OrderLine, error) {
 	var orderLine models.OrderLine
 	copier.Copy(&orderLine, &item)
 
@@ -55,7 +55,7 @@ func (line *OrderLineRepo) CreateOrderLine(item *schema.OrderLineBodyParam) (*mo
 	return &orderLine, nil
 }
 
-func (line *OrderLineRepo) UpdateOrderLine(uuid string, item *schema.OrderLineBodyParam) (*models.OrderLine, error) {
+func (line *OrderLineRepo) UpdateOrderLine(uuid string, item *serializers.OrderLineBodyParam) (*models.OrderLine, error) {
 	orderLine, err := line.GetOrderLineByID(uuid)
 	if err != nil {
 		return nil, err

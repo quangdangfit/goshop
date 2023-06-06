@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/utils"
 )
@@ -22,7 +22,7 @@ func NewWarehouseAPI(service services.IWarehouseSerivce) *Warehouse {
 }
 
 func (w *Warehouse) GetWarehouses(c *gin.Context) {
-	var query schema.WarehouseQueryParam
+	var query serializers.WarehouseQueryParam
 	if err := c.ShouldBindQuery(&query); err != nil {
 		logger.Error("Failed to parse request query: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -37,7 +37,7 @@ func (w *Warehouse) GetWarehouses(c *gin.Context) {
 		return
 	}
 
-	var res []schema.Warehouse
+	var res []serializers.Warehouse
 	copier.Copy(&res, &warehouses)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -53,13 +53,13 @@ func (w *Warehouse) GetWarehouseByID(c *gin.Context) {
 		return
 	}
 
-	var res schema.Warehouse
+	var res serializers.Warehouse
 	copier.Copy(&res, &warehouse)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (w *Warehouse) CreateWarehouse(c *gin.Context) {
-	var item schema.WarehouseBodyParam
+	var item serializers.WarehouseBodyParam
 	if err := c.Bind(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -82,14 +82,14 @@ func (w *Warehouse) CreateWarehouse(c *gin.Context) {
 		return
 	}
 
-	var res schema.Warehouse
+	var res serializers.Warehouse
 	copier.Copy(&res, &warehouses)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (w *Warehouse) UpdateWarehouse(c *gin.Context) {
 	uuid := c.Param("uuid")
-	var item schema.WarehouseBodyParam
+	var item serializers.WarehouseBodyParam
 	if err := c.ShouldBindJSON(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -104,7 +104,7 @@ func (w *Warehouse) UpdateWarehouse(c *gin.Context) {
 		return
 	}
 
-	var res schema.Warehouse
+	var res serializers.Warehouse
 	copier.Copy(&res, &warehouses)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

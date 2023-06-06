@@ -5,11 +5,11 @@ import (
 
 	"goshop/app/models"
 	"goshop/app/repositories"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 )
 
 type IRoleService interface {
-	CreateRole(ctx context.Context, item *schema.RoleBodyParam) (*models.Role, error)
+	CreateRole(ctx context.Context, item *serializers.RoleBodyParam) (*models.Role, error)
 }
 
 type role struct {
@@ -20,7 +20,7 @@ func NewRoleService(repo repositories.IRoleRepository) IRoleService {
 	return &role{repo: repo}
 }
 
-func (r *role) CreateRole(ctx context.Context, item *schema.RoleBodyParam) (*models.Role, error) {
+func (r *role) CreateRole(ctx context.Context, item *serializers.RoleBodyParam) (*models.Role, error) {
 	role, err := r.repo.CreateRole(item)
 	if err != nil {
 		return nil, err

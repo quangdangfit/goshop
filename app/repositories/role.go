@@ -5,12 +5,12 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/dbs"
 )
 
 type IRoleRepository interface {
-	CreateRole(req *schema.RoleBodyParam) (*models.Role, error)
+	CreateRole(req *serializers.RoleBodyParam) (*models.Role, error)
 }
 
 type RoleRepo struct {
@@ -21,7 +21,7 @@ func NewRoleRepository() *RoleRepo {
 	return &RoleRepo{db: dbs.Database}
 }
 
-func (r *RoleRepo) CreateRole(req *schema.RoleBodyParam) (*models.Role, error) {
+func (r *RoleRepo) CreateRole(req *serializers.RoleBodyParam) (*models.Role, error) {
 	var role models.Role
 	copier.Copy(&role, &req)
 

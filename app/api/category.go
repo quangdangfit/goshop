@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/utils"
 )
@@ -22,7 +22,7 @@ func NewCategoryAPI(service services.ICategoryService) *Category {
 }
 
 func (categ *Category) GetCategories(c *gin.Context) {
-	var query schema.CategoryQueryParam
+	var query serializers.CategoryQueryParam
 	if err := c.ShouldBindQuery(&query); err != nil {
 		logger.Error("Failed to parse request query: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -37,7 +37,7 @@ func (categ *Category) GetCategories(c *gin.Context) {
 		return
 	}
 
-	var res []schema.Category
+	var res []serializers.Category
 	copier.Copy(&res, &rs)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -53,13 +53,13 @@ func (categ *Category) GetCategoryByID(c *gin.Context) {
 		return
 	}
 
-	var res schema.Category
+	var res serializers.Category
 	copier.Copy(&res, &category)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (categ *Category) CreateCategory(c *gin.Context) {
-	var item schema.Category
+	var item serializers.Category
 	if err := c.Bind(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -82,14 +82,14 @@ func (categ *Category) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	var res schema.Category
+	var res serializers.Category
 	copier.Copy(&res, &categories)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (categ *Category) UpdateCategory(c *gin.Context) {
 	uuid := c.Param("uuid")
-	var item schema.CategoryBodyParam
+	var item serializers.CategoryBodyParam
 	if err := c.ShouldBind(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -104,7 +104,7 @@ func (categ *Category) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	var res schema.Category
+	var res serializers.Category
 	copier.Copy(&res, &categories)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

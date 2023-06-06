@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/utils"
 )
@@ -22,7 +22,7 @@ func NewOrderAPI(service services.IOrderSerivce) *Order {
 }
 
 func (categ *Order) GetOrders(c *gin.Context) {
-	var query schema.OrderQueryParam
+	var query serializers.OrderQueryParam
 	if err := c.ShouldBindQuery(&query); err != nil {
 		logger.Error("Failed to parse request query: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -37,7 +37,7 @@ func (categ *Order) GetOrders(c *gin.Context) {
 		return
 	}
 
-	var res []schema.Order
+	var res []serializers.Order
 	copier.Copy(&res, &orders)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -53,13 +53,13 @@ func (categ *Order) GetOrderByID(c *gin.Context) {
 		return
 	}
 
-	var res schema.Order
+	var res serializers.Order
 	copier.Copy(&res, &order)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (categ *Order) CreateOrder(c *gin.Context) {
-	var item schema.OrderBodyParam
+	var item serializers.OrderBodyParam
 	if err := c.Bind(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -82,14 +82,14 @@ func (categ *Order) CreateOrder(c *gin.Context) {
 		return
 	}
 
-	var res schema.Order
+	var res serializers.Order
 	copier.Copy(&res, &orders)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (categ *Order) UpdateOrder(c *gin.Context) {
 	uuid := c.Param("uuid")
-	var item schema.OrderBodyParam
+	var item serializers.OrderBodyParam
 	if err := c.ShouldBindJSON(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -104,7 +104,7 @@ func (categ *Order) UpdateOrder(c *gin.Context) {
 		return
 	}
 
-	var res schema.Order
+	var res serializers.Order
 	copier.Copy(&res, &orders)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

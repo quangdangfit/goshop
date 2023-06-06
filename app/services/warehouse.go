@@ -5,14 +5,14 @@ import (
 
 	"goshop/app/models"
 	"goshop/app/repositories"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 )
 
 type IWarehouseSerivce interface {
-	GetWarehouses(ctx context.Context, query *schema.WarehouseQueryParam) (*[]models.Warehouse, error)
+	GetWarehouses(ctx context.Context, query *serializers.WarehouseQueryParam) (*[]models.Warehouse, error)
 	GetWarehouseByID(ctx context.Context, uuid string) (*models.Warehouse, error)
-	CreateWarehouse(ctx context.Context, item *schema.WarehouseBodyParam) (*models.Warehouse, error)
-	UpdateWarehouse(ctx context.Context, uuid string, items *schema.WarehouseBodyParam) (*models.Warehouse, error)
+	CreateWarehouse(ctx context.Context, item *serializers.WarehouseBodyParam) (*models.Warehouse, error)
+	UpdateWarehouse(ctx context.Context, uuid string, items *serializers.WarehouseBodyParam) (*models.Warehouse, error)
 }
 
 type warehouse struct {
@@ -23,7 +23,7 @@ func NewWarehouseService(repo repositories.IWarehouseRepository) IWarehouseSeriv
 	return &warehouse{repo: repo}
 }
 
-func (w *warehouse) GetWarehouses(ctx context.Context, query *schema.WarehouseQueryParam) (*[]models.Warehouse, error) {
+func (w *warehouse) GetWarehouses(ctx context.Context, query *serializers.WarehouseQueryParam) (*[]models.Warehouse, error) {
 	warehouses, err := w.repo.GetWarehouses(query)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (w *warehouse) GetWarehouseByID(ctx context.Context, uuid string) (*models.
 	return warehouse, nil
 }
 
-func (w *warehouse) CreateWarehouse(ctx context.Context, item *schema.WarehouseBodyParam) (*models.Warehouse, error) {
+func (w *warehouse) CreateWarehouse(ctx context.Context, item *serializers.WarehouseBodyParam) (*models.Warehouse, error) {
 	warehouse, err := w.repo.CreateWarehouse(item)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (w *warehouse) CreateWarehouse(ctx context.Context, item *schema.WarehouseB
 	return warehouse, nil
 }
 
-func (w *warehouse) UpdateWarehouse(ctx context.Context, uuid string, item *schema.WarehouseBodyParam) (*models.Warehouse, error) {
+func (w *warehouse) UpdateWarehouse(ctx context.Context, uuid string, item *serializers.WarehouseBodyParam) (*models.Warehouse, error) {
 	warehouse, err := w.repo.UpdateWarehouse(uuid, item)
 	if err != nil {
 		return nil, err

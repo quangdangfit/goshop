@@ -1,4 +1,4 @@
-package schema
+package serializers
 
 type Category struct {
 	UUID        string `json:"uuid"`

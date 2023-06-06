@@ -7,15 +7,15 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/dbs"
 )
 
 type IOrderRepository interface {
-	GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error)
+	GetOrders(query *serializers.OrderQueryParam) (*[]models.Order, error)
 	GetOrderByID(uuid string) (*models.Order, error)
-	CreateOrder(item *schema.OrderBodyParam) (*models.Order, error)
-	UpdateOrder(uuid string, item *schema.OrderBodyParam) (*models.Order, error)
+	CreateOrder(item *serializers.OrderBodyParam) (*models.Order, error)
+	UpdateOrder(uuid string, item *serializers.OrderBodyParam) (*models.Order, error)
 	AssignOrder(uuid string) error
 }
 
@@ -29,7 +29,7 @@ func NewOrderRepository() *OrderRepo {
 	return &OrderRepo{db: dbs.Database, lineRepo: NewOrderLineRepository()}
 }
 
-func (r *OrderRepo) GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error) {
+func (r *OrderRepo) GetOrders(query *serializers.OrderQueryParam) (*[]models.Order, error) {
 	var orders []models.Order
 	if r.db.Find(&orders, query).RecordNotFound() {
 		return nil, nil
@@ -50,7 +50,7 @@ func (r *OrderRepo) GetOrderByID(uuid string) (*models.Order, error) {
 	return &order, nil
 }
 
-func (r *OrderRepo) CreateOrder(item *schema.OrderBodyParam) (*models.Order, error) {
+func (r *OrderRepo) CreateOrder(item *serializers.OrderBodyParam) (*models.Order, error) {
 	var order models.Order
 	copier.Copy(&order, &item)
 
@@ -82,7 +82,7 @@ func (r *OrderRepo) CreateOrder(item *schema.OrderBodyParam) (*models.Order, err
 	return &order, nil
 }
 
-func (r *OrderRepo) UpdateOrder(uuid string, item *schema.OrderBodyParam) (*models.Order, error) {
+func (r *OrderRepo) UpdateOrder(uuid string, item *serializers.OrderBodyParam) (*models.Order, error) {
 	order, err := r.GetOrderByID(uuid)
 	if err != nil {
 		return nil, err

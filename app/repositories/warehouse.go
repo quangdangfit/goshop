@@ -7,15 +7,15 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/dbs"
 )
 
 type IWarehouseRepository interface {
-	GetWarehouses(query *schema.WarehouseQueryParam) (*[]models.Warehouse, error)
+	GetWarehouses(query *serializers.WarehouseQueryParam) (*[]models.Warehouse, error)
 	GetWarehouseByID(uuid string) (*models.Warehouse, error)
-	CreateWarehouse(item *schema.WarehouseBodyParam) (*models.Warehouse, error)
-	UpdateWarehouse(uuid string, item *schema.WarehouseBodyParam) (*models.Warehouse, error)
+	CreateWarehouse(item *serializers.WarehouseBodyParam) (*models.Warehouse, error)
+	UpdateWarehouse(uuid string, item *serializers.WarehouseBodyParam) (*models.Warehouse, error)
 }
 
 type WarehouseRepo struct {
@@ -26,7 +26,7 @@ func NewWarehouseRepository() *WarehouseRepo {
 	return &WarehouseRepo{db: dbs.Database}
 }
 
-func (w *WarehouseRepo) GetWarehouses(query *schema.WarehouseQueryParam) (*[]models.Warehouse, error) {
+func (w *WarehouseRepo) GetWarehouses(query *serializers.WarehouseQueryParam) (*[]models.Warehouse, error) {
 	var warehouses []models.Warehouse
 	if w.db.Find(&warehouses, query).RecordNotFound() {
 		return nil, nil
@@ -44,7 +44,7 @@ func (w *WarehouseRepo) GetWarehouseByID(uuid string) (*models.Warehouse, error)
 	return &warehouse, nil
 }
 
-func (w *WarehouseRepo) CreateWarehouse(item *schema.WarehouseBodyParam) (*models.Warehouse, error) {
+func (w *WarehouseRepo) CreateWarehouse(item *serializers.WarehouseBodyParam) (*models.Warehouse, error) {
 	var warehouse models.Warehouse
 	copier.Copy(&warehouse, &item)
 
@@ -55,7 +55,7 @@ func (w *WarehouseRepo) CreateWarehouse(item *schema.WarehouseBodyParam) (*model
 	return &warehouse, nil
 }
 
-func (w *WarehouseRepo) UpdateWarehouse(uuid string, item *schema.WarehouseBodyParam) (*models.Warehouse, error) {
+func (w *WarehouseRepo) UpdateWarehouse(uuid string, item *serializers.WarehouseBodyParam) (*models.Warehouse, error) {
 	warehouse, err := w.GetWarehouseByID(uuid)
 	if err != nil {
 		return nil, err

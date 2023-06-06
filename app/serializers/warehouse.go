@@ -1,4 +1,4 @@
-package schema
+package serializers
 
 type Warehouse struct {
 	UUID   string `json:"uuid"`

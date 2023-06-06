@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/utils"
 )
@@ -39,7 +39,7 @@ func (p *Product) GetProductByID(c *gin.Context) {
 		return
 	}
 
-	var res schema.Product
+	var res serializers.Product
 	copier.Copy(&res, &product)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -51,7 +51,7 @@ func (p *Product) GetProductByID(c *gin.Context) {
 // @Success 200 {object} []product.ProductResponse
 // @Router /api/v1/products [get]
 func (categ *Product) GetProducts(c *gin.Context) {
-	var params schema.ProductQueryParam
+	var params serializers.ProductQueryParam
 	if err := c.ShouldBindQuery(&params); err != nil {
 		logger.Error("Failed to parse request query: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -66,7 +66,7 @@ func (categ *Product) GetProducts(c *gin.Context) {
 		return
 	}
 
-	var res []schema.Product
+	var res []serializers.Product
 	copier.Copy(&res, &rs)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -82,13 +82,13 @@ func (p *Product) GetProductByCategoryID(c *gin.Context) {
 		return
 	}
 
-	var res []schema.Product
+	var res []serializers.Product
 	copier.Copy(&res, &products)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (p *Product) CreateProduct(c *gin.Context) {
-	var item schema.ProductBodyParam
+	var item serializers.ProductBodyParam
 	if err := c.Bind(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -111,14 +111,14 @@ func (p *Product) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	var res []schema.Product
+	var res []serializers.Product
 	copier.Copy(&res, &products)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (p *Product) UpdateProduct(c *gin.Context) {
 	uuid := c.Param("uuid")
-	var item schema.ProductBodyParam
+	var item serializers.ProductBodyParam
 	if err := c.ShouldBindJSON(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -133,7 +133,7 @@ func (p *Product) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	var res schema.Product
+	var res serializers.Product
 	copier.Copy(&res, &products)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

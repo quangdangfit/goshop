@@ -7,26 +7,23 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
+	"goshop/pkg/response"
 	"goshop/pkg/utils"
+	"goshop/pkg/validation"
 )
 
 type User struct {
-	service services.IUserService
+	validator validation.Validation
+	service   services.IUserService
 }
 
 func NewUserAPI(service services.IUserService) *User {
-	return &User{service: service}
-}
-
-func (u *User) validate(r schema.Register) bool {
-	return utils.Validate(
-		[]utils.Validation{
-			{Value: r.Username, Valid: "username"},
-			{Value: r.Email, Valid: "email"},
-			{Value: r.Password, Valid: "password"},
-		})
+	return &User{
+		validator: validation.New(),
+		service:   service,
+	}
 }
 
 func (u *User) checkPermission(uuid string, data map[string]interface{}) bool {
@@ -34,55 +31,51 @@ func (u *User) checkPermission(uuid string, data map[string]interface{}) bool {
 }
 
 func (u *User) Login(c *gin.Context) {
-	var item schema.Login
+	var item serializers.Login
 	if err := c.ShouldBindJSON(&item); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	ctx := c.Request.Context()
-	user, token, err := u.service.Login(ctx, &item)
+	user, _, err := u.service.Login(ctx, &item)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
 
-	var res schema.User
+	var res serializers.User
 	copier.Copy(&res, &user)
-	res.Extra = map[string]interface{}{
-		"token": token,
-	}
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (u *User) Register(c *gin.Context) {
-	var item schema.Register
-	if err := c.ShouldBindJSON(&item); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var params serializers.RegisterReq
+	if err := c.ShouldBindJSON(&params); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid Parameters")
 		return
 	}
 
-	valid := u.validate(item)
-	if !valid {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is invalid"})
+	if err := u.validator.ValidateStruct(params); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid Parameters")
 		return
 	}
 
 	ctx := c.Request.Context()
-	user, token, err := u.service.Register(ctx, &item)
+	user, token, err := u.service.Register(ctx, &params)
 	if err != nil {
 		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		response.Error(c, http.StatusInternalServerError, err, "Internal Server Error")
 		return
 	}
 
-	var res schema.User
-	copier.Copy(&res, &user)
-	res.Extra = map[string]interface{}{
-		"token": token,
-	}
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res serializers.RegisterRes
+	copier.Copy(&res.User, &user)
+	res.AccessToken = token
+
+	response.JSON(c, http.StatusOK, res)
 }
 
 func (u *User) GetUserByID(c *gin.Context) {
@@ -95,7 +88,7 @@ func (u *User) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	var res schema.User
+	var res serializers.User
 	copier.Copy(&res, &user)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

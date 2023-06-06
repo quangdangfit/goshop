@@ -7,16 +7,16 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/dbs"
 )
 
 type IQuantityRepository interface {
-	GetQuantities(query *schema.QuantityQueryParam) (*[]models.Quantity, error)
+	GetQuantities(query *serializers.QuantityQueryParam) (*[]models.Quantity, error)
 	GetQuantityByID(uuid string) (*models.Quantity, error)
 	GetQuantityProductID(productUUID string) (*models.Quantity, error)
-	CreateQuantity(item *schema.QuantityBodyParam) (*models.Quantity, error)
-	UpdateQuantity(uuid string, item *schema.QuantityBodyParam) (*models.Quantity, error)
+	CreateQuantity(item *serializers.QuantityBodyParam) (*models.Quantity, error)
+	UpdateQuantity(uuid string, item *serializers.QuantityBodyParam) (*models.Quantity, error)
 }
 
 type QuantityRepo struct {
@@ -27,7 +27,7 @@ func NewQuantityRepository() *QuantityRepo {
 	return &QuantityRepo{db: dbs.Database}
 }
 
-func (r *QuantityRepo) GetQuantities(query *schema.QuantityQueryParam) (*[]models.Quantity, error) {
+func (r *QuantityRepo) GetQuantities(query *serializers.QuantityQueryParam) (*[]models.Quantity, error) {
 	var quantities []models.Quantity
 	if r.db.Find(&quantities, query).RecordNotFound() {
 		return nil, nil
@@ -45,7 +45,7 @@ func (r *QuantityRepo) GetQuantityByID(uuid string) (*models.Quantity, error) {
 	return &quantity, nil
 }
 
-func (r *QuantityRepo) CreateQuantity(item *schema.QuantityBodyParam) (*models.Quantity, error) {
+func (r *QuantityRepo) CreateQuantity(item *serializers.QuantityBodyParam) (*models.Quantity, error) {
 	var quantity models.Quantity
 	copier.Copy(&quantity, &item)
 
@@ -56,7 +56,7 @@ func (r *QuantityRepo) CreateQuantity(item *schema.QuantityBodyParam) (*models.Q
 	return &quantity, nil
 }
 
-func (r *QuantityRepo) UpdateQuantity(uuid string, item *schema.QuantityBodyParam) (*models.Quantity, error) {
+func (r *QuantityRepo) UpdateQuantity(uuid string, item *serializers.QuantityBodyParam) (*models.Quantity, error) {
 	quantity, err := r.GetQuantityByID(uuid)
 	if err != nil {
 		return nil, err

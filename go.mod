@@ -5,6 +5,8 @@ go 1.18
 require (
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc
 	github.com/gin-gonic/gin v1.6.3
+	github.com/go-playground/locales v0.13.0
+	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-redis/redis/v8 v8.7.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -31,8 +33,6 @@ require (
 	github.com/go-openapi/jsonreference v0.19.0 // indirect
 	github.com/go-openapi/spec v0.19.0 // indirect
 	github.com/go-openapi/swag v0.17.0 // indirect
-	github.com/go-playground/locales v0.13.0 // indirect
-	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect

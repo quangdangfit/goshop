@@ -1,4 +1,4 @@
-package schema
+package serializers
 
 type Role struct {
 	UUID        string `json:"uuid"`

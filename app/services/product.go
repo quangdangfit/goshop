@@ -5,14 +5,14 @@ import (
 
 	"goshop/app/models"
 	"goshop/app/repositories"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 )
 
 type IProductService interface {
-	GetProducts(c context.Context, params schema.ProductQueryParam) (*[]models.Product, error)
+	GetProducts(c context.Context, params serializers.ProductQueryParam) (*[]models.Product, error)
 	GetProductByID(ctx context.Context, uuid string) (*models.Product, error)
-	CreateProduct(ctx context.Context, item *schema.ProductBodyParam) (*models.Product, error)
-	UpdateProduct(ctx context.Context, uuid string, item *schema.ProductBodyParam) (*models.Product, error)
+	CreateProduct(ctx context.Context, item *serializers.ProductBodyParam) (*models.Product, error)
+	UpdateProduct(ctx context.Context, uuid string, item *serializers.ProductBodyParam) (*models.Product, error)
 	GetProductByCategoryID(ctx context.Context, uuid string) (*[]models.Product, error)
 }
 
@@ -33,7 +33,7 @@ func (p *product) GetProductByID(ctx context.Context, uuid string) (*models.Prod
 	return product, nil
 }
 
-func (p *product) GetProducts(ctx context.Context, params schema.ProductQueryParam) (*[]models.Product, error) {
+func (p *product) GetProducts(ctx context.Context, params serializers.ProductQueryParam) (*[]models.Product, error) {
 	products, err := p.repo.GetProducts(params)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (p *product) GetProductByCategoryID(ctx context.Context, uuid string) (*[]m
 	return products, nil
 }
 
-func (p *product) CreateProduct(ctx context.Context, item *schema.ProductBodyParam) (*models.Product, error) {
+func (p *product) CreateProduct(ctx context.Context, item *serializers.ProductBodyParam) (*models.Product, error) {
 	product, err := p.repo.CreateProduct(item)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (p *product) CreateProduct(ctx context.Context, item *schema.ProductBodyPar
 	return product, nil
 }
 
-func (p *product) UpdateProduct(ctx context.Context, uuid string, item *schema.ProductBodyParam) (*models.Product, error) {
+func (p *product) UpdateProduct(ctx context.Context, uuid string, item *serializers.ProductBodyParam) (*models.Product, error) {
 	product, err := p.repo.UpdateProduct(uuid, item)
 	if err != nil {
 		return nil, err

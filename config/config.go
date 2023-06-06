@@ -9,6 +9,7 @@ import (
 
 type Schema struct {
 	Environment string `mapstructure:"environment"`
+	Port        int    `mapstructure:"port"`
 	DatabaseURI string `mapstructure:"database_uri"`
 
 	Redis struct {

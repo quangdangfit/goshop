@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/utils"
 )
@@ -22,7 +22,7 @@ func NewRoleAPI(service services.IRoleService) *Role {
 }
 
 func (r *Role) CreateRole(c *gin.Context) {
-	var item schema.RoleBodyParam
+	var item serializers.RoleBodyParam
 	if err := c.ShouldBindJSON(&item); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -44,7 +44,7 @@ func (r *Role) CreateRole(c *gin.Context) {
 		return
 	}
 
-	var res schema.Role
+	var res serializers.Role
 	copier.Copy(&res, &user)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

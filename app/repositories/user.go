@@ -8,14 +8,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"goshop/app/models"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/dbs"
 	"goshop/pkg/utils"
 )
 
 type IUserRepository interface {
-	Login(item *schema.Login) (*models.User, error)
-	Register(item *schema.Register) (*models.User, error)
+	Login(item *serializers.Login) (*models.User, error)
+	Register(item *serializers.RegisterReq) (*models.User, error)
 	GetUserByID(uuid string) (*models.User, error)
 }
 
@@ -27,7 +27,7 @@ func NewUserRepository() *UserRepo {
 	return &UserRepo{db: dbs.Database}
 }
 
-func (u *UserRepo) Login(item *schema.Login) (*models.User, error) {
+func (u *UserRepo) Login(item *serializers.Login) (*models.User, error) {
 	user := &models.User{}
 	if dbs.Database.Where("username = ? ", item.Username).First(&user).RecordNotFound() {
 		return nil, errors.New("user not found")
@@ -41,7 +41,7 @@ func (u *UserRepo) Login(item *schema.Login) (*models.User, error) {
 	return user, nil
 }
 
-func (u *UserRepo) Register(item *schema.Register) (*models.User, error) {
+func (u *UserRepo) Register(item *serializers.RegisterReq) (*models.User, error) {
 	var user models.User
 	copier.Copy(&user, &item)
 	hashedPassword := utils.HashAndSalt([]byte(item.Password))

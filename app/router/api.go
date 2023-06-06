@@ -20,8 +20,8 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 	) error {
 		auth := r.Group("/auth")
 		{
-			auth.POST("auth/register", user.Register)
-			auth.POST("auth/login", user.Login)
+			auth.POST("/register", user.Register)
+			auth.POST("/login", user.Login)
 		}
 
 		admin := r.Group("admin")

@@ -1,4 +1,4 @@
-package schema
+package serializers
 
 type Quantity struct {
 	UUID          string `json:"uuid"`

@@ -7,16 +7,16 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"goshop/app/models"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/dbs"
 	"goshop/pkg/utils"
 )
 
 type ICategoryRepository interface {
-	GetCategories(query *schema.CategoryQueryParam) (*[]models.Category, error)
+	GetCategories(query *serializers.CategoryQueryParam) (*[]models.Category, error)
 	GetCategoryByID(uuid string) (*models.Category, error)
-	CreateCategory(item *schema.Category) (*models.Category, error)
-	UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error)
+	CreateCategory(item *serializers.Category) (*models.Category, error)
+	UpdateCategory(uuid string, item *serializers.CategoryBodyParam) (*models.Category, error)
 }
 
 type CategoryRepo struct {
@@ -27,7 +27,7 @@ func NewCategoryRepository() *CategoryRepo {
 	return &CategoryRepo{db: dbs.Database}
 }
 
-func (r *CategoryRepo) GetCategories(query *schema.CategoryQueryParam) (*[]models.Category, error) {
+func (r *CategoryRepo) GetCategories(query *serializers.CategoryQueryParam) (*[]models.Category, error) {
 	var categories []models.Category
 	var mapQuery map[string]interface{}
 	utils.Copy(&mapQuery, query)
@@ -47,7 +47,7 @@ func (r *CategoryRepo) GetCategoryByID(uuid string) (*models.Category, error) {
 	return &category, nil
 }
 
-func (r *CategoryRepo) CreateCategory(item *schema.Category) (*models.Category, error) {
+func (r *CategoryRepo) CreateCategory(item *serializers.Category) (*models.Category, error) {
 	var category models.Category
 	copier.Copy(&category, &item)
 
@@ -58,7 +58,7 @@ func (r *CategoryRepo) CreateCategory(item *schema.Category) (*models.Category, 
 	return &category, nil
 }
 
-func (r *CategoryRepo) UpdateCategory(uuid string, item *schema.CategoryBodyParam) (*models.Category, error) {
+func (r *CategoryRepo) UpdateCategory(uuid string, item *serializers.CategoryBodyParam) (*models.Category, error) {
 	var category models.Category
 	var value map[string]interface{}
 	if r.db.Where("uuid = ? ", uuid).First(&category).RecordNotFound() {
