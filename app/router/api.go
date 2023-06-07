@@ -6,6 +6,7 @@ import (
 	"go.uber.org/dig"
 
 	"goshop/app/api"
+	"goshop/app/middleware"
 )
 
 func RegisterRoute(r *gin.Engine, container *dig.Container) error {
@@ -18,10 +19,12 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 		role *api.Role,
 		order *api.Order,
 	) error {
-		auth := r.Group("/auth")
+		authMiddleware := middleware.JWT()
+		authRoute := r.Group("/auth")
 		{
-			auth.POST("/register", user.Register)
-			auth.POST("/login", user.Login)
+			authRoute.POST("/register", user.Register)
+			authRoute.POST("/login", user.Login)
+			authRoute.POST("/me", authMiddleware, user.Login)
 		}
 
 		admin := r.Group("admin")
@@ -31,9 +34,6 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 
 		//--------------------------------API-----------------------------------
 		apiV1 := r.Group("api/v1")
-		{
-			apiV1.GET("/users/:uuid", user.GetUserByID)
-		}
 		{
 			apiV1.GET("/products", product.GetProducts)
 			apiV1.POST("/products", product.CreateProduct)

@@ -1,22 +1,22 @@
 package repositories
 
 import (
+	"context"
 	"errors"
+	"time"
 
 	"github.com/jinzhu/copier"
 	"github.com/jinzhu/gorm"
-	"golang.org/x/crypto/bcrypt"
 
 	"goshop/app/models"
 	"goshop/app/serializers"
 	"goshop/dbs"
-	"goshop/pkg/utils"
 )
 
 type IUserRepository interface {
-	Login(item *serializers.Login) (*models.User, error)
-	Register(item *serializers.RegisterReq) (*models.User, error)
-	GetUserByID(uuid string) (*models.User, error)
+	Create(ctx context.Context, req *serializers.RegisterReq) (*models.User, error)
+	GetUserByID(ctx context.Context, id string) (*models.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 }
 
 type UserRepo struct {
@@ -27,25 +27,15 @@ func NewUserRepository() *UserRepo {
 	return &UserRepo{db: dbs.Database}
 }
 
-func (u *UserRepo) Login(item *serializers.Login) (*models.User, error) {
-	user := &models.User{}
-	if dbs.Database.Where("username = ? ", item.Username).First(&user).RecordNotFound() {
-		return nil, errors.New("user not found")
-	}
+func (u *UserRepo) Create(ctx context.Context, req *serializers.RegisterReq) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-	passErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(item.Password))
-	if passErr == bcrypt.ErrMismatchedHashAndPassword && passErr != nil {
-		return nil, errors.New("wrong password")
-	}
-
-	return user, nil
-}
-
-func (u *UserRepo) Register(item *serializers.RegisterReq) (*models.User, error) {
 	var user models.User
-	copier.Copy(&user, &item)
-	hashedPassword := utils.HashAndSalt([]byte(item.Password))
-	user.Password = hashedPassword
+	err := copier.Copy(&user, &req)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := u.db.Create(&user).Error; err != nil {
 		return nil, err
@@ -54,9 +44,24 @@ func (u *UserRepo) Register(item *serializers.RegisterReq) (*models.User, error)
 	return &user, nil
 }
 
-func (u *UserRepo) GetUserByID(uuid string) (*models.User, error) {
-	user := models.User{}
-	if dbs.Database.Where("uuid = ? ", uuid).First(&user).RecordNotFound() {
+func (u *UserRepo) GetUserByID(ctx context.Context, id string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var user models.User
+	if dbs.Database.Where("id = ? ", id).First(&user).RecordNotFound() {
+		return nil, errors.New("user not found")
+	}
+
+	return &user, nil
+}
+
+func (u *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var user models.User
+	if dbs.Database.Where("email = ? ", email).First(&user).RecordNotFound() {
 		return nil, errors.New("user not found")
 	}
 

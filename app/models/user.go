@@ -3,6 +3,8 @@ package models
 import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+
+	"goshop/pkg/utils"
 )
 
 type User struct {
@@ -14,5 +16,6 @@ type User struct {
 
 func (user *User) BeforeCreate(scope *gorm.Scope) error {
 	user.ID = uuid.New().String()
+	user.Password = utils.HashAndSalt([]byte(user.Password))
 	return nil
 }

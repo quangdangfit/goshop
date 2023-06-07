@@ -26,62 +26,66 @@ func NewUserAPI(service services.IUserService) *User {
 	}
 }
 
-func (u *User) checkPermission(uuid string, data map[string]interface{}) bool {
-	return data["uuid"] == uuid
-}
-
 func (u *User) Login(c *gin.Context) {
-	var item serializers.Login
-	if err := c.ShouldBindJSON(&item); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var params serializers.LoginReq
+	if err := c.ShouldBindJSON(&params); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	ctx := c.Request.Context()
-	user, _, err := u.service.Login(ctx, &item)
+	user, accessToken, refreshToken, err := u.service.Login(c, &params)
+	if err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	var res serializers.LoginRes
+	err = copier.Copy(&res.User, &user)
 	if err != nil {
 		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
 		return
 	}
-
-	var res serializers.User
-	copier.Copy(&res, &user)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	res.AccessToken = accessToken
+	res.RefreshToken = refreshToken
+	response.JSON(c, http.StatusOK, res)
 }
 
 func (u *User) Register(c *gin.Context) {
 	var params serializers.RegisterReq
 	if err := c.ShouldBindJSON(&params); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid Parameters")
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
 	if err := u.validator.ValidateStruct(params); err != nil {
-		response.Error(c, http.StatusBadRequest, err, "Invalid Parameters")
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	ctx := c.Request.Context()
-	user, token, err := u.service.Register(ctx, &params)
+	user, err := u.service.Register(c, &params)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Internal Server Error")
+		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
 		return
 	}
 
 	var res serializers.RegisterRes
-	copier.Copy(&res.User, &user)
-	res.AccessToken = token
-
+	err = copier.Copy(&res.User, &user)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
-func (u *User) GetUserByID(c *gin.Context) {
-	userUUID := c.Param("uuid")
-	ctx := c.Request.Context()
-	user, err := u.service.GetUserByID(ctx, userUUID)
+func (u *User) Me(c *gin.Context) {
+	userUUID := c.Param("id")
+	user, err := u.service.GetUserByID(c, userUUID)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), utils.ErrorNotExistUser))
@@ -89,6 +93,11 @@ func (u *User) GetUserByID(c *gin.Context) {
 	}
 
 	var res serializers.User
-	copier.Copy(&res, &user)
+	err = copier.Copy(&res, &user)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
+		return
+	}
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
