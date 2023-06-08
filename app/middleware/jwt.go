@@ -42,6 +42,7 @@ func JWTAuth() gin.HandlerFunc {
 		}
 
 		c.Set("userId", payload["id"])
+		c.Set("role", payload["role"])
 		c.Next()
 	}
 }
@@ -79,6 +80,7 @@ func JWTRefresh() gin.HandlerFunc {
 		}
 
 		c.Set("userId", payload["id"])
+		c.Set("role", payload["role"])
 		c.Next()
 	}
 }

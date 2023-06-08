@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/jinzhu/copier"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"goshop/app/models"
 	"goshop/app/serializers"
@@ -14,7 +14,7 @@ import (
 type IQuantityRepository interface {
 	GetQuantities(query *serializers.QuantityQueryParam) (*[]models.Quantity, error)
 	GetQuantityByID(uuid string) (*models.Quantity, error)
-	GetQuantityProductID(productUUID string) (*models.Quantity, error)
+	GetQuantityProductID(productID string) (*models.Quantity, error)
 	CreateQuantity(item *serializers.QuantityBodyParam) (*models.Quantity, error)
 	UpdateQuantity(uuid string, item *serializers.QuantityBodyParam) (*models.Quantity, error)
 }
@@ -29,8 +29,8 @@ func NewQuantityRepository() *QuantityRepo {
 
 func (r *QuantityRepo) GetQuantities(query *serializers.QuantityQueryParam) (*[]models.Quantity, error) {
 	var quantities []models.Quantity
-	if r.db.Find(&quantities, query).RecordNotFound() {
-		return nil, nil
+	if err := r.db.Find(&quantities, query).Error; err != nil {
+		return nil, err
 	}
 
 	return &quantities, nil
@@ -38,7 +38,7 @@ func (r *QuantityRepo) GetQuantities(query *serializers.QuantityQueryParam) (*[]
 
 func (r *QuantityRepo) GetQuantityByID(uuid string) (*models.Quantity, error) {
 	var quantity models.Quantity
-	if r.db.Where("uuid = ?", uuid).First(&quantity).RecordNotFound() {
+	if err := r.db.Where("uuid = ?", uuid).First(&quantity).Error; err != nil {
 		return nil, errors.New("not found quantity")
 	}
 
@@ -70,9 +70,9 @@ func (r *QuantityRepo) UpdateQuantity(uuid string, item *serializers.QuantityBod
 	return quantity, nil
 }
 
-func (r *QuantityRepo) GetQuantityProductID(productUUID string) (*models.Quantity, error) {
+func (r *QuantityRepo) GetQuantityProductID(productID string) (*models.Quantity, error) {
 	var quantity models.Quantity
-	if r.db.Where("product_uuid = ?", productUUID).First(&quantity).RecordNotFound() {
+	if err := r.db.Where("product_id = ?", productID).First(&quantity).Error; err != nil {
 		return nil, errors.New("not found quantity")
 	}
 

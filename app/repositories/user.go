@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"goshop/app/models"
 	"goshop/app/serializers"
@@ -49,7 +49,7 @@ func (u *UserRepo) GetUserByID(ctx context.Context, id string) (*models.User, er
 	defer cancel()
 
 	var user models.User
-	if dbs.Database.Where("id = ? ", id).First(&user).RecordNotFound() {
+	if err := dbs.Database.Where("id = ? ", id).First(&user).Error; err != nil {
 		return nil, errors.New("user not found")
 	}
 
@@ -61,7 +61,7 @@ func (u *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 	defer cancel()
 
 	var user models.User
-	if dbs.Database.Where("email = ? ", email).First(&user).RecordNotFound() {
+	if err := dbs.Database.Where("email = ? ", email).First(&user).Error; err != nil {
 		return nil, errors.New("user not found")
 	}
 

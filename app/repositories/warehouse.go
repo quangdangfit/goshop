@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/jinzhu/copier"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"goshop/app/models"
 	"goshop/app/serializers"
@@ -28,7 +28,7 @@ func NewWarehouseRepository() *WarehouseRepo {
 
 func (w *WarehouseRepo) GetWarehouses(query *serializers.WarehouseQueryParam) (*[]models.Warehouse, error) {
 	var warehouses []models.Warehouse
-	if w.db.Find(&warehouses, query).RecordNotFound() {
+	if err := w.db.Find(&warehouses, query).Error; err != nil {
 		return nil, nil
 	}
 
@@ -37,7 +37,7 @@ func (w *WarehouseRepo) GetWarehouses(query *serializers.WarehouseQueryParam) (*
 
 func (w *WarehouseRepo) GetWarehouseByID(uuid string) (*models.Warehouse, error) {
 	var warehouse models.Warehouse
-	if w.db.Where("uuid = ?", uuid).First(&warehouse).RecordNotFound() {
+	if err := w.db.Where("uuid = ?", uuid).First(&warehouse).Error; err != nil {
 		return nil, errors.New("not found warehouse")
 	}
 

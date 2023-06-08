@@ -3,29 +3,30 @@ package services
 import (
 	"context"
 
+	"github.com/jinzhu/copier"
+
 	"goshop/app/models"
 	"goshop/app/repositories"
 	"goshop/app/serializers"
 )
 
 type IProductService interface {
-	GetProducts(c context.Context, params serializers.ProductQueryParam) (*[]models.Product, error)
-	GetProductByID(ctx context.Context, uuid string) (*models.Product, error)
-	CreateProduct(ctx context.Context, item *serializers.ProductBodyParam) (*models.Product, error)
-	UpdateProduct(ctx context.Context, uuid string, item *serializers.ProductBodyParam) (*models.Product, error)
-	GetProductByCategoryID(ctx context.Context, uuid string) (*[]models.Product, error)
+	ListProducts(c context.Context, req serializers.ListProductReq) (*[]models.Product, error)
+	GetProductByID(ctx context.Context, id string) (*models.Product, error)
+	Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error)
+	Update(ctx context.Context, id string, req *serializers.CreateProductReq) (*models.Product, error)
 }
 
-type product struct {
+type ProductRepo struct {
 	repo repositories.IProductRepository
 }
 
 func NewProductService(repo repositories.IProductRepository) IProductService {
-	return &product{repo: repo}
+	return &ProductRepo{repo: repo}
 }
 
-func (p *product) GetProductByID(ctx context.Context, uuid string) (*models.Product, error) {
-	product, err := p.repo.GetProductByID(uuid)
+func (p *ProductRepo) GetProductByID(ctx context.Context, id string) (*models.Product, error) {
+	product, err := p.repo.GetProductByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +34,8 @@ func (p *product) GetProductByID(ctx context.Context, uuid string) (*models.Prod
 	return product, nil
 }
 
-func (p *product) GetProducts(ctx context.Context, params serializers.ProductQueryParam) (*[]models.Product, error) {
-	products, err := p.repo.GetProducts(params)
+func (p *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProductReq) (*[]models.Product, error) {
+	products, err := p.repo.ListProducts(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -42,26 +43,23 @@ func (p *product) GetProducts(ctx context.Context, params serializers.ProductQue
 	return products, nil
 }
 
-func (p *product) GetProductByCategoryID(ctx context.Context, uuid string) (*[]models.Product, error) {
-	products, err := p.repo.GetProductByCategoryID(uuid)
+func (p *ProductRepo) Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error) {
+	var product models.Product
+	err := copier.Copy(&product, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return products, nil
-}
-
-func (p *product) CreateProduct(ctx context.Context, item *serializers.ProductBodyParam) (*models.Product, error) {
-	product, err := p.repo.CreateProduct(item)
+	err = p.repo.Create(ctx, &product)
 	if err != nil {
 		return nil, err
 	}
 
-	return product, nil
+	return &product, nil
 }
 
-func (p *product) UpdateProduct(ctx context.Context, uuid string, item *serializers.ProductBodyParam) (*models.Product, error) {
-	product, err := p.repo.UpdateProduct(uuid, item)
+func (p *ProductRepo) Update(ctx context.Context, id string, req *serializers.CreateProductReq) (*models.Product, error) {
+	product, err := p.repo.Update(ctx, id, req)
 	if err != nil {
 		return nil, err
 	}

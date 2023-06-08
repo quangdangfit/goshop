@@ -1,10 +1,12 @@
 package repositories
 
 import (
+	"context"
 	"errors"
+	"time"
 
 	"github.com/jinzhu/copier"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"goshop/app/models"
 	"goshop/app/serializers"
@@ -12,11 +14,11 @@ import (
 )
 
 type IProductRepository interface {
-	GetProducts(params serializers.ProductQueryParam) (*[]models.Product, error)
-	GetProductByID(uuid string) (*models.Product, error)
-	GetProductByCategoryID(uuid string) (*[]models.Product, error)
-	CreateProduct(item *serializers.ProductBodyParam) (*models.Product, error)
-	UpdateProduct(uuid string, item *serializers.ProductBodyParam) (*models.Product, error)
+	Create(ctx context.Context, req *models.Product) error
+
+	ListProducts(ctx context.Context, req serializers.ListProductReq) (*[]models.Product, error)
+	GetProductByID(ctx context.Context, id string) (*models.Product, error)
+	Update(ctx context.Context, id string, req *serializers.CreateProductReq) (*models.Product, error)
 }
 
 type ProductRepo struct {
@@ -27,51 +29,51 @@ func NewProductRepository() *ProductRepo {
 	return &ProductRepo{db: dbs.Database}
 }
 
-func (r *ProductRepo) GetProducts(params serializers.ProductQueryParam) (*[]models.Product, error) {
+func (r *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProductReq) (*[]models.Product, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	var products []models.Product
-	if r.db.Where(params).Find(&products).RecordNotFound() {
+	if err := r.db.Where(req).Find(&products).Error; err != nil {
 		return nil, nil
 	}
 
 	return &products, nil
 }
 
-func (r *ProductRepo) GetProductByCategoryID(uuid string) (*[]models.Product, error) {
-	var products []models.Product
-	if r.db.Where("categ_uuid = ?", uuid).Find(&products).RecordNotFound() {
-		return nil, nil
-	}
+func (r *ProductRepo) GetProductByID(ctx context.Context, id string) (*models.Product, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-	return &products, nil
-}
-
-func (r *ProductRepo) GetProductByID(uuid string) (*models.Product, error) {
 	var product models.Product
-	if r.db.Where("uuid = ?", uuid).Find(&product).RecordNotFound() {
+	if err := r.db.Where("id = ?", id).Find(&product).Error; err != nil {
 		return nil, errors.New("not found product")
 	}
 
 	return &product, nil
 }
 
-func (r *ProductRepo) CreateProduct(item *serializers.ProductBodyParam) (*models.Product, error) {
-	var product models.Product
-	copier.Copy(&product, &item)
+func (r *ProductRepo) Create(ctx context.Context, product *models.Product) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
 	if err := r.db.Create(&product).Error; err != nil {
-		return nil, err
+		return err
 	}
 
-	return &product, nil
+	return nil
 }
 
-func (r *ProductRepo) UpdateProduct(uuid string, item *serializers.ProductBodyParam) (*models.Product, error) {
+func (r *ProductRepo) Update(ctx context.Context, id string, req *serializers.CreateProductReq) (*models.Product, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	var product models.Product
-	if r.db.Where("uuid = ? ", uuid).First(&product).RecordNotFound() {
+	if err := r.db.Where("id = ? ", id).First(&product).Error; err != nil {
 		return nil, errors.New("not found product")
 	}
 
-	copier.Copy(&product, &item)
+	copier.Copy(&product, &req)
 	if err := r.db.Save(&product).Error; err != nil {
 		return nil, err
 	}

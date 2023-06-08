@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/jinzhu/copier"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"goshop/app/models"
 	"goshop/app/serializers"
@@ -26,43 +26,43 @@ func NewOrderLineRepository() *OrderLineRepo {
 	return &OrderLineRepo{db: dbs.Database}
 }
 
-func (line *OrderLineRepo) GetOrderLines(query *serializers.OrderLineQueryParam) (*[]models.OrderLine, error) {
+func (l *OrderLineRepo) GetOrderLines(query *serializers.OrderLineQueryParam) (*[]models.OrderLine, error) {
 	var orderLines []models.OrderLine
-	if line.db.Find(&orderLines, query).RecordNotFound() {
+	if err := l.db.Find(&orderLines, query).Error; err != nil {
 		return nil, nil
 	}
 
 	return &orderLines, nil
 }
 
-func (line *OrderLineRepo) GetOrderLineByID(uuid string) (*models.OrderLine, error) {
+func (l *OrderLineRepo) GetOrderLineByID(uuid string) (*models.OrderLine, error) {
 	var orderLine models.OrderLine
-	if line.db.Where("uuid = ?", uuid).First(&orderLine).RecordNotFound() {
+	if err := l.db.Where("uuid = ?", uuid).First(&orderLine).Error; err != nil {
 		return nil, errors.New("not found orderLine")
 	}
 
 	return &orderLine, nil
 }
 
-func (line *OrderLineRepo) CreateOrderLine(item *serializers.OrderLineBodyParam) (*models.OrderLine, error) {
+func (l *OrderLineRepo) CreateOrderLine(item *serializers.OrderLineBodyParam) (*models.OrderLine, error) {
 	var orderLine models.OrderLine
 	copier.Copy(&orderLine, &item)
 
-	if err := line.db.Create(&orderLine).Error; err != nil {
+	if err := l.db.Create(&orderLine).Error; err != nil {
 		return nil, err
 	}
 
 	return &orderLine, nil
 }
 
-func (line *OrderLineRepo) UpdateOrderLine(uuid string, item *serializers.OrderLineBodyParam) (*models.OrderLine, error) {
-	orderLine, err := line.GetOrderLineByID(uuid)
+func (l *OrderLineRepo) UpdateOrderLine(uuid string, item *serializers.OrderLineBodyParam) (*models.OrderLine, error) {
+	orderLine, err := l.GetOrderLineByID(uuid)
 	if err != nil {
 		return nil, err
 	}
 
 	copier.Copy(orderLine, &item)
-	if err := line.db.Save(&orderLine).Error; err != nil {
+	if err := l.db.Save(&orderLine).Error; err != nil {
 		return nil, err
 	}
 

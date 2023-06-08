@@ -26,17 +26,22 @@ func NewUserAPI(service services.IUserService) *User {
 }
 
 func (u *User) Login(c *gin.Context) {
-	var params serializers.LoginReq
-	if err := c.ShouldBindJSON(&params); c.Request.Body == nil || err != nil {
+	var req serializers.LoginReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
 		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	user, accessToken, refreshToken, err := u.service.Login(c, &params)
+	if err := u.validator.ValidateStruct(req); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	user, accessToken, refreshToken, err := u.service.Login(c, &req)
 	if err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Something was wrong")
+		response.Error(c, http.StatusBadRequest, err, "Something went wrong")
 		return
 	}
 
@@ -44,7 +49,7 @@ func (u *User) Login(c *gin.Context) {
 	err = copier.Copy(&res.User, &user)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 	res.AccessToken = accessToken
@@ -53,22 +58,22 @@ func (u *User) Login(c *gin.Context) {
 }
 
 func (u *User) Register(c *gin.Context) {
-	var params serializers.RegisterReq
-	if err := c.ShouldBindJSON(&params); c.Request.Body == nil || err != nil {
+	var req serializers.RegisterReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
 		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	if err := u.validator.ValidateStruct(params); err != nil {
+	if err := u.validator.ValidateStruct(req); err != nil {
 		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	user, err := u.service.Register(c, &params)
+	user, err := u.service.Register(c, &req)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
@@ -76,7 +81,7 @@ func (u *User) Register(c *gin.Context) {
 	err = copier.Copy(&res.User, &user)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 	response.JSON(c, http.StatusOK, res)
@@ -87,7 +92,7 @@ func (u *User) GetMe(c *gin.Context) {
 	user, err := u.service.GetUserByID(c, userID)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
@@ -95,7 +100,7 @@ func (u *User) GetMe(c *gin.Context) {
 	err = copier.Copy(&res, &user)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 	response.JSON(c, http.StatusOK, res)
@@ -106,7 +111,7 @@ func (u *User) RefreshToken(c *gin.Context) {
 	accessToken, err := u.service.RefreshToken(c, userID)
 	if err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Something was wrong")
+		response.Error(c, http.StatusBadRequest, err, "Something went wrong")
 		return
 	}
 

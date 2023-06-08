@@ -47,6 +47,7 @@ func (u *user) Login(ctx context.Context, req *serializers.LoginReq) (*models.Us
 	tokenData := map[string]interface{}{
 		"id":    user.ID,
 		"email": user.Email,
+		"role":  user.Role,
 	}
 	accessToken := jtoken.GenerateAccessToken(tokenData)
 	refreshToken := jtoken.GenerateRefreshToken(tokenData)
@@ -82,6 +83,7 @@ func (u *user) RefreshToken(ctx context.Context, userID string) (string, error) 
 	tokenData := map[string]interface{}{
 		"id":    user.ID,
 		"email": user.Email,
+		"role":  user.Role,
 	}
 	accessToken := jtoken.GenerateAccessToken(tokenData)
 	return accessToken, nil

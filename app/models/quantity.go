@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Quantity struct {
@@ -11,7 +12,7 @@ type Quantity struct {
 	Quantity    uint   `json:"quantity"`
 }
 
-func (s *Quantity) BeforeCreate() error {
+func (s *Quantity) BeforeCreate(tx *gorm.DB) error {
 	s.ID = uuid.New().String()
 	return nil
 }
