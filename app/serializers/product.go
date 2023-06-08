@@ -35,3 +35,9 @@ type CreateProductReq struct {
 	Description string  `json:"description,omitempty"`
 	Price       float64 `json:"price,omitempty" validate:"gt=0"`
 }
+
+type UpdateProductReq struct {
+	Name        string  `json:"name,omitempty"`
+	Description string  `json:"description,omitempty"`
+	Price       float64 `json:"price,omitempty" validate:"gt=0"`
+}

@@ -108,23 +108,33 @@ func (p *Product) CreateProduct(c *gin.Context) {
 }
 
 func (p *Product) UpdateProduct(c *gin.Context) {
-	uuid := c.Param("uuid")
-	var req serializers.CreateProductReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Failed to parse request body: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	id := c.Param("id")
+	var req serializers.UpdateProductReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	if err := p.validator.ValidateStruct(req); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
 	ctx := c.Request.Context()
-	products, err := p.service.Update(ctx, uuid, &req)
+	product, err := p.service.Update(ctx, id, &req)
 	if err != nil {
-		logger.Error("Failed to update product: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		logger.Error("Failed to create product", err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
-	var res serializers.Product
-	copier.Copy(&res, &products)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res []serializers.Product
+	err = copier.Copy(&res, &product)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, res)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jinzhu/copier"
+	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/app/models"
 	"goshop/app/repositories"
@@ -14,7 +15,7 @@ type IProductService interface {
 	ListProducts(c context.Context, req serializers.ListProductReq) (*[]models.Product, error)
 	GetProductByID(ctx context.Context, id string) (*models.Product, error)
 	Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error)
-	Update(ctx context.Context, id string, req *serializers.CreateProductReq) (*models.Product, error)
+	Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error)
 }
 
 type ProductRepo struct {
@@ -52,15 +53,29 @@ func (p *ProductRepo) Create(ctx context.Context, req *serializers.CreateProduct
 
 	err = p.repo.Create(ctx, &product)
 	if err != nil {
+		logger.Errorf("Create fail, error: %s", err)
 		return nil, err
 	}
 
 	return &product, nil
 }
 
-func (p *ProductRepo) Update(ctx context.Context, id string, req *serializers.CreateProductReq) (*models.Product, error) {
-	product, err := p.repo.Update(ctx, id, req)
+func (p *ProductRepo) Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error) {
+	product, err := p.repo.GetProductByID(ctx, id)
 	if err != nil {
+		logger.Errorf("Update.GetUserByID fail, id: %s, error: %s", id, err)
+		return nil, err
+	}
+
+	err = copier.Copy(product, req)
+	if err != nil {
+		logger.Errorf("Update.Marshal fail, id: %s, error: %s", id, err)
+		return nil, err
+	}
+
+	err = p.repo.Update(ctx, product)
+	if err != nil {
+		logger.Errorf("Update fail, id: %s, error: %s", id, err)
 		return nil, err
 	}
 

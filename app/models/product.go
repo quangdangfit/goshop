@@ -16,9 +16,9 @@ type Product struct {
 	Active      bool    `json:"active" gorm:"default:true"`
 }
 
-func (product *Product) BeforeCreate(tx *gorm.DB) error {
-	product.ID = uuid.New().String()
-	product.Code = utils.GenerateCode("P")
-	product.Active = true
+func (m *Product) BeforeCreate(tx *gorm.DB) error {
+	m.ID = uuid.New().String()
+	m.Code = utils.GenerateCode("P")
+	m.Active = true
 	return nil
 }
