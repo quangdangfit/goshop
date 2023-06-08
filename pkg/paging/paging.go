@@ -32,8 +32,6 @@ func New(page int64, pageSize int64, total int64) *Pagination {
 	pageInfo.TotalPage = totalPage
 	if page < 1 || totalPage == 0 {
 		page = 1
-	} else if page > totalPage {
-		page = totalPage
 	}
 
 	pageInfo.CurrentPage = page

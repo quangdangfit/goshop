@@ -9,10 +9,11 @@ import (
 	"goshop/app/models"
 	"goshop/app/repositories"
 	"goshop/app/serializers"
+	"goshop/pkg/paging"
 )
 
 type IProductService interface {
-	ListProducts(c context.Context, req serializers.ListProductReq) (*[]models.Product, error)
+	ListProducts(c context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error)
 	GetProductByID(ctx context.Context, id string) (*models.Product, error)
 	Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error)
 	Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error)
@@ -35,13 +36,13 @@ func (p *ProductRepo) GetProductByID(ctx context.Context, id string) (*models.Pr
 	return product, nil
 }
 
-func (p *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProductReq) (*[]models.Product, error) {
-	products, err := p.repo.ListProducts(ctx, req)
+func (p *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
+	products, pagination, err := p.repo.ListProducts(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return products, nil
+	return products, pagination, nil
 }
 
 func (p *ProductRepo) Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error) {

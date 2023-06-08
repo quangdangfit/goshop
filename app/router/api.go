@@ -33,9 +33,9 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 		// Products
 		productAPI := api1.Group("/products")
 		{
-			productAPI.POST("/", product.CreateProduct)
+			productAPI.GET("", product.ListProducts)
+			productAPI.POST("", product.CreateProduct)
 			productAPI.PUT("/:id", product.UpdateProduct)
-			productAPI.GET("/", product.ListProducts)
 			productAPI.GET("/:id", product.GetProductByID)
 		}
 

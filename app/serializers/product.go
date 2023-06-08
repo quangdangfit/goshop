@@ -18,22 +18,23 @@ type Product struct {
 }
 
 type ListProductReq struct {
-	Name  string `json:"name,omitempty" form:"name"`
-	Code  string `json:"code,omitempty" form:"code"`
-	Page  int    `json:"page,omitempty" form:"page"`
-	Limit int    `json:"limit,omitempty" form:"limit"`
-	Sort  string `json:"sort,omitempty" form:"sort"`
+	Name      string `json:"name,omitempty" form:"name"`
+	Code      string `json:"code,omitempty" form:"code"`
+	Page      int64  `json:"-" form:"page"`
+	Limit     int64  `json:"-" form:"limit"`
+	OrderBy   string `json:"-" form:"order_by"`
+	OrderDesc bool   `json:"-" form:"order_desc"`
 }
 
 type ListProductRes struct {
-	Products   []Product         `json:"products,omitempty"`
-	Pagination paging.Pagination `json:"pagination,omitempty"`
+	Products   []*Product         `json:"products,omitempty"`
+	Pagination *paging.Pagination `json:"pagination,omitempty"`
 }
 
 type CreateProductReq struct {
-	Name        string  `json:"name,omitempty" validate:"required"`
-	Description string  `json:"description,omitempty"`
-	Price       float64 `json:"price,omitempty" validate:"gt=0"`
+	Name        string  `json:"name" validate:"required"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price" validate:"gt=0"`
 }
 
 type UpdateProductReq struct {

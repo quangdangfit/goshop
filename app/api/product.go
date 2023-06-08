@@ -31,8 +31,8 @@ func NewProductAPI(service services.IProductService) *Product {
 // @Produce json
 // @Param uuid path string true "Product UUID"
 // @Security ApiKeyAuth
-// @Success 200 {object} product.ProductResponse
-// @Router /api/v1/products/{uuid} [get]
+// @Success 200 {object} serializers.Product
+// @Router /api/v1/products/{id} [get]
 func (p *Product) GetProductByID(c *gin.Context) {
 	productId := c.Param("uuid")
 
@@ -53,29 +53,40 @@ func (p *Product) GetProductByID(c *gin.Context) {
 // @Summary Get list products
 // @Produce json
 // @Security ApiKeyAuth
-// @Success 200 {object} []product.ProductResponse
+// @Success 200 {object} serializers.ListProductRes
 // @Router /api/v1/products [get]
 func (p *Product) ListProducts(c *gin.Context) {
-	var params serializers.ListProductReq
-	if err := c.ShouldBindQuery(&params); err != nil {
+	var req serializers.ListProductReq
+	if err := c.ShouldBindQuery(&req); err != nil {
 		logger.Error("Failed to parse request query: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx := c.Request.Context()
-	rs, err := p.service.ListProducts(ctx, params)
+	products, pagination, err := p.service.ListProducts(c, req)
 	if err != nil {
-		logger.Error("Failed to get categories: ", err)
+		logger.Error("Failed to get products: ", err)
 		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
 		return
 	}
 
-	var res []serializers.Product
-	copier.Copy(&res, &rs)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res serializers.ListProductRes
+	err = copier.Copy(&res.Products, &products)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	res.Pagination = pagination
+	response.JSON(c, http.StatusOK, res)
 }
 
+// CreateProduct godoc
+// @Summary create product
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} serializers.Product
+// @Router /api/v1/products [post]
 func (p *Product) CreateProduct(c *gin.Context) {
 	var req serializers.CreateProductReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
@@ -107,6 +118,12 @@ func (p *Product) CreateProduct(c *gin.Context) {
 	response.JSON(c, http.StatusOK, res)
 }
 
+// UpdateProduct godoc
+// @Summary update product
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} serializers.Product
+// @Router /api/v1/products/{id} [put]
 func (p *Product) UpdateProduct(c *gin.Context) {
 	id := c.Param("id")
 	var req serializers.UpdateProductReq

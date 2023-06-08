@@ -1,8 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {},
-        "license": {}
+        "contact": {}
     },
     "paths": {
         "/api/v1/products": {
@@ -20,16 +19,32 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/product.ProductResponse"
-                            }
+                            "$ref": "#/definitions/serializers.ListProductRes"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "create product",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/serializers.Product"
                         }
                     }
                 }
             }
         },
-        "/api/v1/products/{uuid}": {
+        "/api/v1/products/{id}": {
             "get": {
                 "security": [
                     {
@@ -53,7 +68,26 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/product.ProductResponse"
+                            "$ref": "#/definitions/serializers.Product"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "update product",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/serializers.Product"
                         }
                     }
                 }
@@ -61,25 +95,65 @@
         }
     },
     "definitions": {
-        "product.ProductResponse": {
+        "paging.Pagination": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "skip": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_page": {
+                    "type": "integer"
+                }
+            }
+        },
+        "serializers.ListProductRes": {
+            "type": "object",
+            "properties": {
+                "pagination": {
+                    "$ref": "#/definitions/paging.Pagination"
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/serializers.Product"
+                    }
+                }
+            }
+        },
+        "serializers.Product": {
             "type": "object",
             "properties": {
                 "active": {
                     "type": "boolean"
                 },
-                "categ_uuid": {
+                "code": {
                     "type": "string"
                 },
-                "code": {
+                "created_at": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
-                "uuid": {
+                "price": {
+                    "type": "number"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }

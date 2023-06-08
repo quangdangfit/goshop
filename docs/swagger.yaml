@@ -1,22 +1,47 @@
 definitions:
-  product.ProductResponse:
+  paging.Pagination:
+    properties:
+      current_page:
+        type: integer
+      limit:
+        type: integer
+      skip:
+        type: integer
+      total:
+        type: integer
+      total_page:
+        type: integer
+    type: object
+  serializers.ListProductRes:
+    properties:
+      pagination:
+        $ref: '#/definitions/paging.Pagination'
+      products:
+        items:
+          $ref: '#/definitions/serializers.Product'
+        type: array
+    type: object
+  serializers.Product:
     properties:
       active:
         type: boolean
-      categ_uuid:
-        type: string
       code:
+        type: string
+      created_at:
         type: string
       description:
         type: string
+      id:
+        type: string
       name:
         type: string
-      uuid:
+      price:
+        type: number
+      updated_at:
         type: string
     type: object
 info:
   contact: {}
-  license: {}
 paths:
   /api/v1/products:
     get:
@@ -26,13 +51,22 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/product.ProductResponse'
-            type: array
+            $ref: '#/definitions/serializers.ListProductRes'
       security:
       - ApiKeyAuth: []
       summary: Get list products
-  /api/v1/products/{uuid}:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializers.Product'
+      security:
+      - ApiKeyAuth: []
+      summary: create product
+  /api/v1/products/{id}:
     get:
       parameters:
       - description: Product UUID
@@ -46,8 +80,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/product.ProductResponse'
+            $ref: '#/definitions/serializers.Product'
       security:
       - ApiKeyAuth: []
       summary: Get get product by uuid
+    put:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializers.Product'
+      security:
+      - ApiKeyAuth: []
+      summary: update product
 swagger: "2.0"
