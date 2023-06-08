@@ -17,6 +17,7 @@ type IUserService interface {
 	Login(ctx context.Context, req *serializers.LoginReq) (*models.User, string, string, error)
 	Register(ctx context.Context, req *serializers.RegisterReq) (*models.User, error)
 	GetUserByID(ctx context.Context, id string) (*models.User, error)
+	RefreshToken(ctx context.Context, userID string) (string, error)
 }
 
 type user struct {
@@ -30,7 +31,7 @@ func NewUserService(repo repositories.IUserRepository) IUserService {
 func (u *user) Login(ctx context.Context, req *serializers.LoginReq) (*models.User, string, string, error) {
 	user, err := u.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		logger.Errorf("GetUserByEmail fail, email: %s, error: %s", req.Email, err)
+		logger.Errorf("Login.GetUserByEmail fail, email: %s, error: %s", req.Email, err)
 		return nil, "", "", err
 	}
 
@@ -55,7 +56,7 @@ func (u *user) Login(ctx context.Context, req *serializers.LoginReq) (*models.Us
 func (u *user) Register(ctx context.Context, req *serializers.RegisterReq) (*models.User, error) {
 	user, err := u.repo.Create(ctx, req)
 	if err != nil {
-		logger.Errorf("Register fail, email: %s, error: %s", req.Email, err)
+		logger.Errorf("Register.Create fail, email: %s, error: %s", req.Email, err)
 		return nil, err
 	}
 	return user, nil
@@ -69,4 +70,19 @@ func (u *user) GetUserByID(ctx context.Context, id string) (*models.User, error)
 	}
 
 	return user, nil
+}
+
+func (u *user) RefreshToken(ctx context.Context, userID string) (string, error) {
+	user, err := u.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		logger.Errorf("RefreshToken.GetUserByID fail, id: %s, error: %s", userID, err)
+		return "", err
+	}
+
+	tokenData := map[string]interface{}{
+		"id":    user.ID,
+		"email": user.Email,
+	}
+	accessToken := jtoken.GenerateAccessToken(tokenData)
+	return accessToken, nil
 }

@@ -12,16 +12,18 @@ import (
 )
 
 const (
-	AccessTokenExpiredTime  = 5 * 60         // 5 minutes
-	RefreshTokenExpiredTime = 30 * 24 * 3600 // 30 days
+	AccessTokenExpiredTime  = 5 * 60 // 5 minutes
+	RefreshTokenExpiredTime = 30 * 24 * 3600
+	AccessTokenType         = "x-access"  // 5 minutes
+	RefreshTokenType        = "x-refresh" // 30 days
 )
 
-func GenerateAccessToken(payload interface{}) string {
+func GenerateAccessToken(payload map[string]interface{}) string {
 	cfg := config.GetConfig()
+	payload["type"] = AccessTokenType
 	tokenContent := jwt.MapClaims{
 		"payload": payload,
 		"exp":     time.Now().Add(time.Second * AccessTokenExpiredTime).Unix(),
-		"type":    "access",
 	}
 	jwtToken := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tokenContent)
 	token, err := jwtToken.SignedString([]byte(cfg.AuthSecret))
@@ -32,12 +34,13 @@ func GenerateAccessToken(payload interface{}) string {
 
 	return token
 }
-func GenerateRefreshToken(payload interface{}) string {
+
+func GenerateRefreshToken(payload map[string]interface{}) string {
 	cfg := config.GetConfig()
+	payload["type"] = RefreshTokenType
 	tokenContent := jwt.MapClaims{
 		"payload": payload,
 		"exp":     time.Now().Add(time.Second * RefreshTokenExpiredTime).Unix(),
-		"type":    "refresh",
 	}
 	jwtToken := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tokenContent)
 	token, err := jwtToken.SignedString([]byte(cfg.AuthSecret))

@@ -100,3 +100,18 @@ func (u *User) GetMe(c *gin.Context) {
 	}
 	response.JSON(c, http.StatusOK, res)
 }
+
+func (u *User) RefreshToken(c *gin.Context) {
+	userID := c.GetString("userId")
+	accessToken, err := u.service.RefreshToken(c, userID)
+	if err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Something was wrong")
+		return
+	}
+
+	res := serializers.RefreshTokenRes{
+		AccessToken: accessToken,
+	}
+	response.JSON(c, http.StatusOK, res)
+}

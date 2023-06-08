@@ -19,11 +19,13 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 		role *api.Role,
 		order *api.Order,
 	) error {
-		authMiddleware := middleware.JWT()
+		authMiddleware := middleware.JWTAuth()
+		refreshAuthMiddleware := middleware.JWTRefresh()
 		authRoute := r.Group("/auth")
 		{
 			authRoute.POST("/register", user.Register)
 			authRoute.POST("/login", user.Login)
+			authRoute.POST("/refresh", refreshAuthMiddleware, user.RefreshToken)
 			authRoute.GET("/me", authMiddleware, user.GetMe)
 		}
 
