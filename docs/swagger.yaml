@@ -69,9 +69,9 @@ paths:
   /api/v1/products/{id}:
     get:
       parameters:
-      - description: Product UUID
+      - description: Product ID
         in: path
-        name: uuid
+        name: id
         required: true
         type: string
       produces:
@@ -83,7 +83,7 @@ paths:
             $ref: '#/definitions/serializers.Product'
       security:
       - ApiKeyAuth: []
-      summary: Get get product by uuid
+      summary: Get product by id
     put:
       produces:
       - application/json

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,6 @@ import (
 	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 	"goshop/pkg/validation"
 )
 
@@ -27,26 +27,34 @@ func NewProductAPI(service services.IProductService) *Product {
 }
 
 // GetProductByID godoc
-// @Summary Get get product by uuid
+// @Summary Get product by id
 // @Produce json
-// @Param uuid path string true "Product UUID"
+// @Param id path string true "Product ID"
 // @Security ApiKeyAuth
 // @Success 200 {object} serializers.Product
 // @Router /api/v1/products/{id} [get]
 func (p *Product) GetProductByID(c *gin.Context) {
-	productId := c.Param("uuid")
-
-	ctx := c.Request.Context()
-	product, err := p.service.GetProductByID(ctx, productId)
-	if err != nil {
-		logger.Error("Failed to get product: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+	productId := c.Param("id")
+	if productId == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
 		return
 	}
 
-	var res serializers.Product
-	copier.Copy(&res, &product)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	product, err := p.service.GetProductByID(c, productId)
+	if err != nil {
+		logger.Error("Failed to get product detail: ", err)
+		response.Error(c, http.StatusNotFound, err, "Not found")
+		return
+	}
+
+	var res []serializers.Product
+	err = copier.Copy(&res, &product)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, res)
 }
 
 // ListProducts godoc
@@ -59,14 +67,14 @@ func (p *Product) ListProducts(c *gin.Context) {
 	var req serializers.ListProductReq
 	if err := c.ShouldBindQuery(&req); err != nil {
 		logger.Error("Failed to parse request query: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
 	products, pagination, err := p.service.ListProducts(c, req)
 	if err != nil {
-		logger.Error("Failed to get products: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		logger.Error("Failed to get list products: ", err)
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
@@ -125,7 +133,12 @@ func (p *Product) CreateProduct(c *gin.Context) {
 // @Success 200 {object} serializers.Product
 // @Router /api/v1/products/{id} [put]
 func (p *Product) UpdateProduct(c *gin.Context) {
-	id := c.Param("id")
+	productId := c.Param("id")
+	if productId == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
+		return
+	}
+
 	var req serializers.UpdateProductReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
@@ -139,7 +152,7 @@ func (p *Product) UpdateProduct(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	product, err := p.service.Update(ctx, id, &req)
+	product, err := p.service.Update(ctx, productId, &req)
 	if err != nil {
 		logger.Error("Failed to create product", err.Error())
 		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")

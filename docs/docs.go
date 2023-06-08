@@ -66,12 +66,12 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Get get product by uuid",
+                "summary": "Get product by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Product UUID",
-                        "name": "uuid",
+                        "description": "Product ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }

@@ -17,7 +17,6 @@ type IProductRepository interface {
 	Create(ctx context.Context, req *models.Product) error
 	Update(ctx context.Context, product *models.Product) error
 	ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error)
-
 	GetProductByID(ctx context.Context, id string) (*models.Product, error)
 }
 
@@ -56,8 +55,8 @@ func (r *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProd
 
 	var products []*models.Product
 	if err := query.
-		//Limit(int(pagination.Limit)).
-		//Offset(int(pagination.Skip)).
+		Limit(int(pagination.Limit)).
+		Offset(int(pagination.Skip)).
 		Order(order).
 		Find(&products).Error; err != nil {
 		return nil, nil, nil
@@ -71,7 +70,7 @@ func (r *ProductRepo) GetProductByID(ctx context.Context, id string) (*models.Pr
 	defer cancel()
 
 	var product models.Product
-	if err := r.db.Where("id = ?", id).Find(&product).Error; err != nil {
+	if err := r.db.Where("id = ?", id).First(&product).Error; err != nil {
 		return nil, errors.New("not found product")
 	}
 
