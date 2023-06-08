@@ -13,19 +13,19 @@ import (
 	"goshop/pkg/validation"
 )
 
-type User struct {
+type UserAPI struct {
 	validator validation.Validation
 	service   services.IUserService
 }
 
-func NewUserAPI(service services.IUserService) *User {
-	return &User{
+func NewUserAPI(service services.IUserService) *UserAPI {
+	return &UserAPI{
 		validator: validation.New(),
 		service:   service,
 	}
 }
 
-func (u *User) Login(c *gin.Context) {
+func (u *UserAPI) Login(c *gin.Context) {
 	var req serializers.LoginReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
@@ -57,7 +57,14 @@ func (u *User) Login(c *gin.Context) {
 	response.JSON(c, http.StatusOK, res)
 }
 
-func (u *User) Register(c *gin.Context) {
+// Register godoc
+//
+//	@Summary	Register new user
+//	@Produce	json
+//	@Param		b	body		serializers.RegisterReq	true	"Body"
+//	@Success	200	{object}	serializers.RegisterRes
+//	@Router		/auth/register [post]
+func (u *UserAPI) Register(c *gin.Context) {
 	var req serializers.RegisterReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
@@ -87,7 +94,7 @@ func (u *User) Register(c *gin.Context) {
 	response.JSON(c, http.StatusOK, res)
 }
 
-func (u *User) GetMe(c *gin.Context) {
+func (u *UserAPI) GetMe(c *gin.Context) {
 	userID := c.GetString("userId")
 	user, err := u.service.GetUserByID(c, userID)
 	if err != nil {
@@ -106,7 +113,7 @@ func (u *User) GetMe(c *gin.Context) {
 	response.JSON(c, http.StatusOK, res)
 }
 
-func (u *User) RefreshToken(c *gin.Context) {
+func (u *UserAPI) RefreshToken(c *gin.Context) {
 	userID := c.GetString("userId")
 	accessToken, err := u.service.RefreshToken(c, userID)
 	if err != nil {

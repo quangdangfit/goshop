@@ -5,16 +5,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 
 	"goshop/app/models"
-	"goshop/app/serializers"
 	"goshop/dbs"
 )
 
 type IUserRepository interface {
-	Create(ctx context.Context, req *serializers.RegisterReq) (*models.User, error)
+	Create(ctx context.Context, user *models.User) error
 	GetUserByID(ctx context.Context, id string) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 }
@@ -27,21 +25,15 @@ func NewUserRepository() *UserRepo {
 	return &UserRepo{db: dbs.Database}
 }
 
-func (u *UserRepo) Create(ctx context.Context, req *serializers.RegisterReq) (*models.User, error) {
+func (u *UserRepo) Create(ctx context.Context, user *models.User) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	var user models.User
-	err := copier.Copy(&user, &req)
-	if err != nil {
-		return nil, err
-	}
-
 	if err := u.db.Create(&user).Error; err != nil {
-		return nil, err
+		return err
 	}
 
-	return &user, nil
+	return nil
 }
 
 func (u *UserRepo) GetUserByID(ctx context.Context, id string) (*models.User, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 	"golang.org/x/crypto/bcrypt"
 
@@ -20,15 +21,15 @@ type IUserService interface {
 	RefreshToken(ctx context.Context, userID string) (string, error)
 }
 
-type user struct {
+type UserService struct {
 	repo repositories.IUserRepository
 }
 
 func NewUserService(repo repositories.IUserRepository) IUserService {
-	return &user{repo: repo}
+	return &UserService{repo: repo}
 }
 
-func (u *user) Login(ctx context.Context, req *serializers.LoginReq) (*models.User, string, string, error) {
+func (u *UserService) Login(ctx context.Context, req *serializers.LoginReq) (*models.User, string, string, error) {
 	user, err := u.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		logger.Errorf("Login.GetUserByEmail fail, email: %s, error: %s", req.Email, err)
@@ -54,16 +55,22 @@ func (u *user) Login(ctx context.Context, req *serializers.LoginReq) (*models.Us
 	return user, accessToken, refreshToken, nil
 }
 
-func (u *user) Register(ctx context.Context, req *serializers.RegisterReq) (*models.User, error) {
-	user, err := u.repo.Create(ctx, req)
+func (u *UserService) Register(ctx context.Context, req *serializers.RegisterReq) (*models.User, error) {
+	var user models.User
+	err := copier.Copy(&user, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = u.repo.Create(ctx, &user)
 	if err != nil {
 		logger.Errorf("Register.Create fail, email: %s, error: %s", req.Email, err)
 		return nil, err
 	}
-	return user, nil
+	return &user, nil
 }
 
-func (u *user) GetUserByID(ctx context.Context, id string) (*models.User, error) {
+func (u *UserService) GetUserByID(ctx context.Context, id string) (*models.User, error) {
 	user, err := u.repo.GetUserByID(ctx, id)
 	if err != nil {
 		logger.Errorf("GetUserByID fail, id: %s, error: %s", id, err)
@@ -73,7 +80,7 @@ func (u *user) GetUserByID(ctx context.Context, id string) (*models.User, error)
 	return user, nil
 }
 
-func (u *user) RefreshToken(ctx context.Context, userID string) (string, error) {
+func (u *UserService) RefreshToken(ctx context.Context, userID string) (string, error) {
 	user, err := u.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		logger.Errorf("RefreshToken.GetUserByID fail, id: %s, error: %s", userID, err)

@@ -19,15 +19,15 @@ type IProductService interface {
 	Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error)
 }
 
-type ProductRepo struct {
+type ProductService struct {
 	repo repositories.IProductRepository
 }
 
 func NewProductService(repo repositories.IProductRepository) IProductService {
-	return &ProductRepo{repo: repo}
+	return &ProductService{repo: repo}
 }
 
-func (p *ProductRepo) GetProductByID(ctx context.Context, id string) (*models.Product, error) {
+func (p *ProductService) GetProductByID(ctx context.Context, id string) (*models.Product, error) {
 	product, err := p.repo.GetProductByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (p *ProductRepo) GetProductByID(ctx context.Context, id string) (*models.Pr
 	return product, nil
 }
 
-func (p *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
+func (p *ProductService) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
 	products, pagination, err := p.repo.ListProducts(ctx, req)
 	if err != nil {
 		return nil, nil, err
@@ -45,7 +45,7 @@ func (p *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProd
 	return products, pagination, nil
 }
 
-func (p *ProductRepo) Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error) {
+func (p *ProductService) Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error) {
 	var product models.Product
 	err := copier.Copy(&product, req)
 	if err != nil {
@@ -61,7 +61,7 @@ func (p *ProductRepo) Create(ctx context.Context, req *serializers.CreateProduct
 	return &product, nil
 }
 
-func (p *ProductRepo) Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error) {
+func (p *ProductService) Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error) {
 	product, err := p.repo.GetProductByID(ctx, id)
 	if err != nil {
 		logger.Errorf("Update.GetUserByID fail, id: %s, error: %s", id, err)

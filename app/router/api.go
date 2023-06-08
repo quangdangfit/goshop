@@ -11,10 +11,10 @@ import (
 
 func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 	err := container.Invoke(func(
-		product *api.Product,
+		product *api.ProductAPI,
 		warehouse *api.Warehouse,
 		quantity *api.Quantity,
-		user *api.User,
+		user *api.UserAPI,
 		order *api.Order,
 	) error {
 		authMiddleware := middleware.JWTAuth()

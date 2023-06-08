@@ -1,8 +1,5 @@
-init:
-	cp config/config.sample.yaml config/config.yaml
-
 doc:
-	swag init
+	swag fmt && swag init
 
 unittest:
 	go test -timeout 9000s -a -v -coverpkg=./... ./test

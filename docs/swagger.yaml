@@ -40,6 +40,32 @@ definitions:
       updated_at:
         type: string
     type: object
+  serializers.RegisterReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  serializers.RegisterRes:
+    properties:
+      user:
+        $ref: '#/definitions/serializers.User'
+    type: object
+  serializers.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -95,4 +121,21 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: update product
+  /auth/register:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: b
+        required: true
+        schema:
+          $ref: '#/definitions/serializers.RegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializers.RegisterRes'
+      summary: Register new user
 swagger: "2.0"

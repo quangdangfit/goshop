@@ -104,6 +104,33 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/auth/register": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Register new user",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "b",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/serializers.RegisterReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/serializers.RegisterRes"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -164,6 +191,46 @@ const docTemplate = `{
                 },
                 "price": {
                     "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "serializers.RegisterReq": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "serializers.RegisterRes": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "$ref": "#/definitions/serializers.User"
+                }
+            }
+        },
+        "serializers.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "updated_at": {
                     "type": "string"

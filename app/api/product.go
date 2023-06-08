@@ -14,26 +14,27 @@ import (
 	"goshop/pkg/validation"
 )
 
-type Product struct {
+type ProductAPI struct {
 	validator validation.Validation
 	service   services.IProductService
 }
 
-func NewProductAPI(service services.IProductService) *Product {
-	return &Product{
+func NewProductAPI(service services.IProductService) *ProductAPI {
+	return &ProductAPI{
 		validator: validation.New(),
 		service:   service,
 	}
 }
 
 // GetProductByID godoc
-// @Summary Get product by id
-// @Produce json
-// @Param id path string true "Product ID"
-// @Security ApiKeyAuth
-// @Success 200 {object} serializers.Product
-// @Router /api/v1/products/{id} [get]
-func (p *Product) GetProductByID(c *gin.Context) {
+//
+//	@Summary	Get product by id
+//	@Produce	json
+//	@Param		id	path	string	true	"Product ID"
+//	@Security	ApiKeyAuth
+//	@Success	200	{object}	serializers.Product
+//	@Router		/api/v1/products/{id} [get]
+func (p *ProductAPI) GetProductByID(c *gin.Context) {
 	productId := c.Param("id")
 	if productId == "" {
 		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
@@ -58,12 +59,13 @@ func (p *Product) GetProductByID(c *gin.Context) {
 }
 
 // ListProducts godoc
-// @Summary Get list products
-// @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} serializers.ListProductRes
-// @Router /api/v1/products [get]
-func (p *Product) ListProducts(c *gin.Context) {
+//
+//	@Summary	Get list products
+//	@Produce	json
+//	@Security	ApiKeyAuth
+//	@Success	200	{object}	serializers.ListProductRes
+//	@Router		/api/v1/products [get]
+func (p *ProductAPI) ListProducts(c *gin.Context) {
 	var req serializers.ListProductReq
 	if err := c.ShouldBindQuery(&req); err != nil {
 		logger.Error("Failed to parse request query: ", err)
@@ -90,12 +92,13 @@ func (p *Product) ListProducts(c *gin.Context) {
 }
 
 // CreateProduct godoc
-// @Summary create product
-// @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} serializers.Product
-// @Router /api/v1/products [post]
-func (p *Product) CreateProduct(c *gin.Context) {
+//
+//	@Summary	create product
+//	@Produce	json
+//	@Security	ApiKeyAuth
+//	@Success	200	{object}	serializers.Product
+//	@Router		/api/v1/products [post]
+func (p *ProductAPI) CreateProduct(c *gin.Context) {
 	var req serializers.CreateProductReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
@@ -127,12 +130,13 @@ func (p *Product) CreateProduct(c *gin.Context) {
 }
 
 // UpdateProduct godoc
-// @Summary update product
-// @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} serializers.Product
-// @Router /api/v1/products/{id} [put]
-func (p *Product) UpdateProduct(c *gin.Context) {
+//
+//	@Summary	update product
+//	@Produce	json
+//	@Security	ApiKeyAuth
+//	@Success	200	{object}	serializers.Product
+//	@Router		/api/v1/products/{id} [put]
+func (p *ProductAPI) UpdateProduct(c *gin.Context) {
 	productId := c.Param("id")
 	if productId == "" {
 		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
