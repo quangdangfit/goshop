@@ -7,6 +7,8 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
+
+	"goshop/config"
 )
 
 const (
@@ -15,12 +17,14 @@ const (
 )
 
 func GenerateAccessToken(payload interface{}) string {
+	cfg := config.GetConfig()
 	tokenContent := jwt.MapClaims{
 		"payload": payload,
 		"exp":     time.Now().Add(time.Second * AccessTokenExpiredTime).Unix(),
+		"type":    "access",
 	}
 	jwtToken := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tokenContent)
-	token, err := jwtToken.SignedString([]byte("TokenPassword"))
+	token, err := jwtToken.SignedString([]byte(cfg.AuthSecret))
 	if err != nil {
 		logger.Error("Failed to generate access token: ", err)
 		return ""
@@ -29,12 +33,14 @@ func GenerateAccessToken(payload interface{}) string {
 	return token
 }
 func GenerateRefreshToken(payload interface{}) string {
+	cfg := config.GetConfig()
 	tokenContent := jwt.MapClaims{
 		"payload": payload,
 		"exp":     time.Now().Add(time.Second * RefreshTokenExpiredTime).Unix(),
+		"type":    "refresh",
 	}
 	jwtToken := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tokenContent)
-	token, err := jwtToken.SignedString([]byte("TokenPassword"))
+	token, err := jwtToken.SignedString([]byte(cfg.AuthSecret))
 	if err != nil {
 		logger.Error("Failed to generate refresh token: ", err)
 		return ""
@@ -44,10 +50,11 @@ func GenerateRefreshToken(payload interface{}) string {
 }
 
 func ValidateToken(jwtToken string) (map[string]interface{}, error) {
+	cfg := config.GetConfig()
 	cleanJWT := strings.Replace(jwtToken, "Bearer ", "", -1)
 	tokenData := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(cleanJWT, tokenData, func(token *jwt.Token) (interface{}, error) {
-		return []byte("TokenPassword"), nil
+		return []byte(cfg.AuthSecret), nil
 	})
 
 	if err != nil {
@@ -59,6 +66,10 @@ func ValidateToken(jwtToken string) (map[string]interface{}, error) {
 	}
 
 	var data map[string]interface{}
-	copier.Copy(&data, tokenData["payload"])
+	err = copier.Copy(&data, tokenData["payload"])
+	if err != nil {
+		return nil, err
+	}
+
 	return data, nil
 }

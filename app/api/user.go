@@ -10,7 +10,6 @@ import (
 	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 	"goshop/pkg/validation"
 )
 
@@ -37,7 +36,7 @@ func (u *User) Login(c *gin.Context) {
 	user, accessToken, refreshToken, err := u.service.Login(c, &params)
 	if err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		response.Error(c, http.StatusBadRequest, err, "Something was wrong")
 		return
 	}
 
@@ -83,12 +82,12 @@ func (u *User) Register(c *gin.Context) {
 	response.JSON(c, http.StatusOK, res)
 }
 
-func (u *User) Me(c *gin.Context) {
-	userUUID := c.Param("id")
-	user, err := u.service.GetUserByID(c, userUUID)
+func (u *User) GetMe(c *gin.Context) {
+	userID := c.GetString("userId")
+	user, err := u.service.GetUserByID(c, userID)
 	if err != nil {
 		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), utils.ErrorNotExistUser))
+		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
 		return
 	}
 
@@ -99,5 +98,5 @@ func (u *User) Me(c *gin.Context) {
 		response.Error(c, http.StatusInternalServerError, err, "Something was wrong")
 		return
 	}
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	response.JSON(c, http.StatusOK, res)
 }

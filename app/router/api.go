@@ -24,7 +24,7 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 		{
 			authRoute.POST("/register", user.Register)
 			authRoute.POST("/login", user.Login)
-			authRoute.POST("/me", authMiddleware, user.Login)
+			authRoute.GET("/me", authMiddleware, user.GetMe)
 		}
 
 		admin := r.Group("admin")

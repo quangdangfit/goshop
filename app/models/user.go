@@ -9,9 +9,9 @@ import (
 
 type User struct {
 	Base
-	Email    string `json:"email" gorm:"unique;not null;index"`
-	Password string `json:"password"`
-	RoleID   string `json:"role_id"`
+	Email    string `json:"email" gorm:"column:email;unique;not null;index"`
+	Password string `json:"password" gorm:"column:password"`
+	RoleID   string `json:"role_id" gorm:"column:role_id"`
 }
 
 func (user *User) BeforeCreate(scope *gorm.Scope) error {

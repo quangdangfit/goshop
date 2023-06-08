@@ -25,7 +25,7 @@ func JWT() gin.HandlerFunc {
 			return
 		}
 
-		_, err := jtoken.ValidateToken(token)
+		payload, err := jtoken.ValidateToken(token)
 		if err != nil {
 			switch err.(*jwt.ValidationError).Errors {
 			case jwt.ValidationErrorExpired:
@@ -42,6 +42,7 @@ func JWT() gin.HandlerFunc {
 			return
 		}
 
+		c.Set("userId", payload["id"])
 		c.Next()
 	}
 }

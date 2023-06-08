@@ -43,8 +43,12 @@ func (u *user) Login(ctx context.Context, req *serializers.LoginReq) (*models.Us
 		return nil, "", "", errors.New("wrong password")
 	}
 
-	accessToken := jtoken.GenerateAccessToken(user)
-	refreshToken := jtoken.GenerateRefreshToken(user)
+	tokenData := map[string]interface{}{
+		"id":    user.ID,
+		"email": user.Email,
+	}
+	accessToken := jtoken.GenerateAccessToken(tokenData)
+	refreshToken := jtoken.GenerateRefreshToken(tokenData)
 	return user, accessToken, refreshToken, nil
 }
 
