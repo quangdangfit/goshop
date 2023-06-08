@@ -44,9 +44,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-#      - name: Generate Mock
-#        run: go install github.com/golang/mock/mockgen@v1.6.0 && make mock
-
       - name: Install dependencies
         run: go mod download
 
