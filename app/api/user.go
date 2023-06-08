@@ -127,3 +127,26 @@ func (u *UserAPI) RefreshToken(c *gin.Context) {
 	}
 	response.JSON(c, http.StatusOK, res)
 }
+
+func (u *UserAPI) ChangePassword(c *gin.Context) {
+	var req serializers.ChangePasswordReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	if err := u.validator.ValidateStruct(req); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	userID := c.GetString("userId")
+	err := u.service.ChangePassword(c, userID, &req)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, nil)
+}

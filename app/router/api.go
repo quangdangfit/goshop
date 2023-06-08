@@ -25,6 +25,7 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 			authRoute.POST("/login", user.Login)
 			authRoute.POST("/refresh", refreshAuthMiddleware, user.RefreshToken)
 			authRoute.GET("/me", authMiddleware, user.GetMe)
+			authRoute.PUT("/change-password", authMiddleware, user.ChangePassword)
 		}
 
 		//--------------------------------API-----------------------------------
@@ -34,8 +35,8 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 		productAPI := api1.Group("/products")
 		{
 			productAPI.GET("", product.ListProducts)
-			productAPI.POST("", product.CreateProduct)
-			productAPI.PUT("/:id", product.UpdateProduct)
+			productAPI.POST("", authMiddleware, product.CreateProduct)
+			productAPI.PUT("/:id", authMiddleware, product.UpdateProduct)
 			productAPI.GET("/:id", product.GetProductByID)
 		}
 

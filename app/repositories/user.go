@@ -13,6 +13,7 @@ import (
 
 type IUserRepository interface {
 	Create(ctx context.Context, user *models.User) error
+	Update(ctx context.Context, user *models.User) error
 	GetUserByID(ctx context.Context, id string) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 }
@@ -30,6 +31,17 @@ func (u *UserRepo) Create(ctx context.Context, user *models.User) error {
 	defer cancel()
 
 	if err := u.db.Create(&user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserRepo) Update(ctx context.Context, user *models.User) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := u.db.Save(&user).Error; err != nil {
 		return err
 	}
 

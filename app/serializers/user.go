@@ -38,3 +38,8 @@ type RefreshTokenReq struct {
 type RefreshTokenRes struct {
 	AccessToken string `json:"access_token"`
 }
+
+type ChangePasswordReq struct {
+	Password    string `json:"password" validate:"required,password"`
+	NewPassword string `json:"new_password" validate:"required,password"`
+}

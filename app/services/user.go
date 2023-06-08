@@ -12,6 +12,7 @@ import (
 	"goshop/app/repositories"
 	"goshop/app/serializers"
 	"goshop/pkg/jtoken"
+	"goshop/pkg/utils"
 )
 
 type IUserService interface {
@@ -19,6 +20,7 @@ type IUserService interface {
 	Register(ctx context.Context, req *serializers.RegisterReq) (*models.User, error)
 	GetUserByID(ctx context.Context, id string) (*models.User, error)
 	RefreshToken(ctx context.Context, userID string) (string, error)
+	ChangePassword(ctx context.Context, id string, req *serializers.ChangePasswordReq) error
 }
 
 type UserService struct {
@@ -94,4 +96,26 @@ func (u *UserService) RefreshToken(ctx context.Context, userID string) (string, 
 	}
 	accessToken := jtoken.GenerateAccessToken(tokenData)
 	return accessToken, nil
+}
+
+func (u *UserService) ChangePassword(ctx context.Context, id string, req *serializers.ChangePasswordReq) error {
+	user, err := u.repo.GetUserByID(ctx, id)
+	if err != nil {
+		logger.Errorf("ChangePassword.GetUserByID fail, id: %s, error: %s", id, err)
+		return err
+	}
+
+	passErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if passErr == bcrypt.ErrMismatchedHashAndPassword && passErr != nil {
+		return errors.New("wrong password")
+	}
+
+	user.Password = utils.HashAndSalt([]byte(req.NewPassword))
+	err = u.repo.Update(ctx, user)
+	if err != nil {
+		logger.Errorf("ChangePassword.Update fail, id: %s, error: %s", id, err)
+		return err
+	}
+
+	return nil
 }
