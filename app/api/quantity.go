@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/utils"
 )
@@ -22,7 +22,7 @@ func NewQuantityAPI(service services.IQuantityService) *Quantity {
 }
 
 func (q *Quantity) GetQuantities(c *gin.Context) {
-	var query schema.QuantityQueryParam
+	var query serializers.QuantityQueryParam
 	if err := c.ShouldBindQuery(&query); err != nil {
 		logger.Error("Failed to parse request query: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -37,7 +37,7 @@ func (q *Quantity) GetQuantities(c *gin.Context) {
 		return
 	}
 
-	var res []schema.Quantity
+	var res []serializers.Quantity
 	copier.Copy(&res, &quantities)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
@@ -53,13 +53,13 @@ func (q *Quantity) GetQuantityByID(c *gin.Context) {
 		return
 	}
 
-	var res schema.Quantity
+	var res serializers.Quantity
 	copier.Copy(&res, &quantity)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (q *Quantity) CreateQuantity(c *gin.Context) {
-	var item schema.QuantityBodyParam
+	var item serializers.QuantityBodyParam
 	if err := c.Bind(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -82,14 +82,14 @@ func (q *Quantity) CreateQuantity(c *gin.Context) {
 		return
 	}
 
-	var res schema.Quantity
+	var res serializers.Quantity
 	copier.Copy(&res, &quantities)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }
 
 func (q *Quantity) UpdateQuantity(c *gin.Context) {
 	uuid := c.Param("uuid")
-	var item schema.QuantityBodyParam
+	var item serializers.QuantityBodyParam
 	if err := c.ShouldBindJSON(&item); err != nil {
 		logger.Error("Failed to parse request body: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -104,7 +104,7 @@ func (q *Quantity) UpdateQuantity(c *gin.Context) {
 		return
 	}
 
-	var res schema.Quantity
+	var res serializers.Quantity
 	copier.Copy(&res, &quantities)
 	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
 }

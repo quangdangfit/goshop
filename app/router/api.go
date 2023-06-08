@@ -6,64 +6,57 @@ import (
 	"go.uber.org/dig"
 
 	"goshop/app/api"
+	"goshop/app/middleware"
 )
 
 func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 	err := container.Invoke(func(
-		category *api.Category,
-		product *api.Product,
+		product *api.ProductAPI,
 		warehouse *api.Warehouse,
 		quantity *api.Quantity,
-		user *api.User,
-		role *api.Role,
+		user *api.UserAPI,
 		order *api.Order,
 	) error {
-		auth := r.Group("/auth")
+		authMiddleware := middleware.JWTAuth()
+		refreshAuthMiddleware := middleware.JWTRefresh()
+		authRoute := r.Group("/auth")
 		{
-			auth.POST("auth/register", user.Register)
-			auth.POST("auth/login", user.Login)
-		}
-
-		admin := r.Group("admin")
-		{
-			admin.POST("/roles", role.CreateRole)
+			authRoute.POST("/register", user.Register)
+			authRoute.POST("/login", user.Login)
+			authRoute.POST("/refresh", refreshAuthMiddleware, user.RefreshToken)
+			authRoute.GET("/me", authMiddleware, user.GetMe)
+			authRoute.PUT("/change-password", authMiddleware, user.ChangePassword)
 		}
 
 		//--------------------------------API-----------------------------------
-		apiV1 := r.Group("api/v1")
+		api1 := r.Group("/api/v1")
+
+		// Products
+		productAPI := api1.Group("/products")
 		{
-			apiV1.GET("/users/:uuid", user.GetUserByID)
+			productAPI.GET("", product.ListProducts)
+			productAPI.POST("", authMiddleware, product.CreateProduct)
+			productAPI.PUT("/:id", authMiddleware, product.UpdateProduct)
+			productAPI.GET("/:id", product.GetProductByID)
+		}
+
+		{
+			api1.GET("/warehouses", warehouse.GetWarehouses)
+			api1.POST("/warehouses", warehouse.CreateWarehouse)
+			api1.GET("/warehouses/:uuid", warehouse.GetWarehouseByID)
+			api1.PUT("/warehouses/:uuid", warehouse.UpdateWarehouse)
 		}
 		{
-			apiV1.GET("/products", product.GetProducts)
-			apiV1.POST("/products", product.CreateProduct)
-			apiV1.GET("/products/:uuid", product.GetProductByID)
-			apiV1.PUT("/products/:uuid", product.UpdateProduct)
+			api1.GET("/quantities", quantity.GetQuantities)
+			api1.POST("/quantities", quantity.CreateQuantity)
+			api1.GET("/quantities/:uuid", quantity.GetQuantityByID)
+			api1.PUT("/quantities/:uuid", quantity.UpdateQuantity)
 		}
 		{
-			apiV1.GET("/categories", category.GetCategories)
-			apiV1.POST("/categories", category.CreateCategory)
-			apiV1.GET("/categories/:uuid", category.GetCategoryByID)
-			apiV1.GET("/categories/:uuid/products", product.GetProductByCategoryID)
-			apiV1.PUT("/categories/:uuid", category.UpdateCategory)
-		}
-		{
-			apiV1.GET("/warehouses", warehouse.GetWarehouses)
-			apiV1.POST("/warehouses", warehouse.CreateWarehouse)
-			apiV1.GET("/warehouses/:uuid", warehouse.GetWarehouseByID)
-			apiV1.PUT("/warehouses/:uuid", warehouse.UpdateWarehouse)
-		}
-		{
-			apiV1.GET("/quantities", quantity.GetQuantities)
-			apiV1.POST("/quantities", quantity.CreateQuantity)
-			apiV1.GET("/quantities/:uuid", quantity.GetQuantityByID)
-			apiV1.PUT("/quantities/:uuid", quantity.UpdateQuantity)
-		}
-		{
-			apiV1.GET("/orders", order.GetOrders)
-			apiV1.POST("/orders", order.CreateOrder)
-			apiV1.GET("/orders/:uuid", order.GetOrderByID)
-			apiV1.PUT("/orders/:uuid", order.UpdateOrder)
+			api1.GET("/orders", order.GetOrders)
+			api1.POST("/orders", order.CreateOrder)
+			api1.GET("/orders/:uuid", order.GetOrderByID)
+			api1.PUT("/orders/:uuid", order.UpdateOrder)
 		}
 
 		return nil

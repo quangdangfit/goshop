@@ -7,95 +7,146 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
-	"goshop/pkg/utils"
+	"goshop/pkg/response"
+	"goshop/pkg/validation"
 )
 
-type User struct {
-	service services.IUserService
+type UserAPI struct {
+	validator validation.Validation
+	service   services.IUserService
 }
 
-func NewUserAPI(service services.IUserService) *User {
-	return &User{service: service}
+func NewUserAPI(service services.IUserService) *UserAPI {
+	return &UserAPI{
+		validator: validation.New(),
+		service:   service,
+	}
 }
 
-func (u *User) validate(r schema.Register) bool {
-	return utils.Validate(
-		[]utils.Validation{
-			{Value: r.Username, Valid: "username"},
-			{Value: r.Email, Valid: "email"},
-			{Value: r.Password, Valid: "password"},
-		})
-}
-
-func (u *User) checkPermission(uuid string, data map[string]interface{}) bool {
-	return data["uuid"] == uuid
-}
-
-func (u *User) Login(c *gin.Context) {
-	var item schema.Login
-	if err := c.ShouldBindJSON(&item); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (u *UserAPI) Login(c *gin.Context) {
+	var req serializers.LoginReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	ctx := c.Request.Context()
-	user, token, err := u.service.Login(ctx, &item)
+	if err := u.validator.ValidateStruct(req); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	user, accessToken, refreshToken, err := u.service.Login(c, &req)
+	if err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Something went wrong")
+		return
+	}
+
+	var res serializers.LoginRes
+	err = copier.Copy(&res.User, &user)
 	if err != nil {
 		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
-
-	var res schema.User
-	copier.Copy(&res, &user)
-	res.Extra = map[string]interface{}{
-		"token": token,
-	}
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	res.AccessToken = accessToken
+	res.RefreshToken = refreshToken
+	response.JSON(c, http.StatusOK, res)
 }
 
-func (u *User) Register(c *gin.Context) {
-	var item schema.Register
-	if err := c.ShouldBindJSON(&item); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// Register godoc
+//
+//	@Summary	Register new user
+//	@Produce	json
+//	@Param		b	body		serializers.RegisterReq	true	"Body"
+//	@Success	200	{object}	serializers.RegisterRes
+//	@Router		/auth/register [post]
+func (u *UserAPI) Register(c *gin.Context) {
+	var req serializers.RegisterReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	valid := u.validate(item)
-	if !valid {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is invalid"})
+	if err := u.validator.ValidateStruct(req); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	ctx := c.Request.Context()
-	user, token, err := u.service.Register(ctx, &item)
+	user, err := u.service.Register(c, &req)
 	if err != nil {
 		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
-	var res schema.User
-	copier.Copy(&res, &user)
-	res.Extra = map[string]interface{}{
-		"token": token,
+	var res serializers.RegisterRes
+	err = copier.Copy(&res.User, &user)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
 	}
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	response.JSON(c, http.StatusOK, res)
 }
 
-func (u *User) GetUserByID(c *gin.Context) {
-	userUUID := c.Param("uuid")
-	ctx := c.Request.Context()
-	user, err := u.service.GetUserByID(ctx, userUUID)
+func (u *UserAPI) GetMe(c *gin.Context) {
+	userID := c.GetString("userId")
+	user, err := u.service.GetUserByID(c, userID)
 	if err != nil {
 		logger.Error(err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), utils.ErrorNotExistUser))
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
-	var res schema.User
-	copier.Copy(&res, &user)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res serializers.User
+	err = copier.Copy(&res, &user)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, res)
+}
+
+func (u *UserAPI) RefreshToken(c *gin.Context) {
+	userID := c.GetString("userId")
+	accessToken, err := u.service.RefreshToken(c, userID)
+	if err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Something went wrong")
+		return
+	}
+
+	res := serializers.RefreshTokenRes{
+		AccessToken: accessToken,
+	}
+	response.JSON(c, http.StatusOK, res)
+}
+
+func (u *UserAPI) ChangePassword(c *gin.Context) {
+	var req serializers.ChangePasswordReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	if err := u.validator.ValidateStruct(req); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	userID := c.GetString("userId")
+	err := u.service.ChangePassword(c, userID, &req)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, nil)
 }

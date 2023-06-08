@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -29,14 +30,14 @@ func main() {
 	engine := router.InitGinEngine(container)
 
 	server := &http.Server{
-		Addr:    ":8888",
+		Addr:    fmt.Sprintf(":%d", cfg.Port),
 		Handler: engine,
 	}
 
 	go func() {
-		// service connections
+		logger.Infof("Listen at: %d\n", cfg.Port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatalf("Listen: %s\n", err)
+			logger.Fatalf("Failed to start server: %s\n", err)
 		}
 	}()
 

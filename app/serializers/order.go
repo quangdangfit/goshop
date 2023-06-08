@@ -1,4 +1,4 @@
-package schema
+package serializers
 
 type Order struct {
 	UUID       string      `json:"uuid"`

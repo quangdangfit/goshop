@@ -5,14 +5,14 @@ import (
 
 	"goshop/app/models"
 	"goshop/app/repositories"
-	"goshop/app/schema"
+	"goshop/app/serializers"
 )
 
 type IOrderSerivce interface {
-	GetOrders(ctx context.Context, query *schema.OrderQueryParam) (*[]models.Order, error)
+	GetOrders(ctx context.Context, query *serializers.OrderQueryParam) (*[]models.Order, error)
 	GetOrderByID(ctx context.Context, uuid string) (*models.Order, error)
-	CreateOrder(ctx context.Context, item *schema.OrderBodyParam) (*models.Order, error)
-	UpdateOrder(ctx context.Context, uuid string, item *schema.OrderBodyParam) (*models.Order, error)
+	CreateOrder(ctx context.Context, item *serializers.OrderBodyParam) (*models.Order, error)
+	UpdateOrder(ctx context.Context, uuid string, item *serializers.OrderBodyParam) (*models.Order, error)
 }
 
 type order struct {
@@ -23,7 +23,7 @@ func NewOrderService(repo repositories.IOrderRepository) IOrderSerivce {
 	return &order{repo: repo}
 }
 
-func (categ *order) GetOrders(ctx context.Context, query *schema.OrderQueryParam) (*[]models.Order, error) {
+func (categ *order) GetOrders(ctx context.Context, query *serializers.OrderQueryParam) (*[]models.Order, error) {
 	orders, err := categ.repo.GetOrders(query)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (categ *order) GetOrderByID(ctx context.Context, uuid string) (*models.Orde
 	return order, nil
 }
 
-func (categ *order) CreateOrder(ctx context.Context, item *schema.OrderBodyParam) (*models.Order, error) {
+func (categ *order) CreateOrder(ctx context.Context, item *serializers.OrderBodyParam) (*models.Order, error) {
 	order, err := categ.repo.CreateOrder(item)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (categ *order) CreateOrder(ctx context.Context, item *schema.OrderBodyParam
 	return order, nil
 }
 
-func (categ *order) UpdateOrder(ctx context.Context, uuid string, item *schema.OrderBodyParam) (*models.Order, error) {
+func (categ *order) UpdateOrder(ctx context.Context, uuid string, item *serializers.OrderBodyParam) (*models.Order, error) {
 	order, err := categ.repo.UpdateOrder(uuid, item)
 	if err != nil {
 		return nil, err
