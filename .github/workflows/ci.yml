@@ -16,10 +16,10 @@ jobs:
       database_uri: postgres://postgres:test@localhost:5432/postgres
 
     services:
-      mongodb:
+      postgres:
         image: postgres:12
         env:
-          POSTGRES_PASSWORD=test
+          - POSTGRES_PASSWORD="test"
         ports:
           - 5432:5432
 
