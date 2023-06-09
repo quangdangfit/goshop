@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jinzhu/copier"
 
@@ -15,8 +16,7 @@ type IOrderService interface {
 	PlaceOrder(ctx context.Context, req *serializers.PlaceOrderReq) (*models.Order, error)
 	GetOrderByID(ctx context.Context, id string) (*models.Order, error)
 	GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error)
-
-	UpdateOrder(ctx context.Context, id string, req *serializers.PlaceOrderReq) (*models.Order, error)
+	CancelOrder(ctx context.Context, orderID, userID string) (*models.Order, error)
 }
 
 type OrderService struct {
@@ -64,7 +64,7 @@ func (s *OrderService) PlaceOrder(ctx context.Context, req *serializers.PlaceOrd
 }
 
 func (s *OrderService) GetOrderByID(ctx context.Context, id string) (*models.Order, error) {
-	order, err := s.repo.GetOrderByID(ctx, id)
+	order, err := s.repo.GetOrderByID(ctx, id, true)
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +81,22 @@ func (s *OrderService) GetMyOrders(ctx context.Context, req *serializers.ListOrd
 	return orders, pagination, err
 }
 
-func (s *OrderService) UpdateOrder(ctx context.Context, id string, req *serializers.PlaceOrderReq) (*models.Order, error) {
-	order, err := s.repo.UpdateOrder(id, req)
+func (s *OrderService) CancelOrder(ctx context.Context, orderID, userID string) (*models.Order, error) {
+	order, err := s.repo.GetOrderByID(ctx, orderID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if userID != order.UserID {
+		return nil, errors.New("permission denied")
+	}
+
+	if order.Status == models.OrderStatusDone || order.Status == models.OrderStatusCancelled {
+		return nil, errors.New("invalid order status")
+	}
+
+	order.Status = models.OrderStatusCancelled
+	err = s.repo.UpdateOrder(ctx, order)
 	if err != nil {
 		return nil, err
 	}

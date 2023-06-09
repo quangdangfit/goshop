@@ -21,9 +21,9 @@ type Order struct {
 	Code       string `json:"code"`
 	UserID     string `json:"user_id"`
 	User       User
-	Lines      []*OrderLine `json:"lines"`
-	TotalPrice float64      `json:"total_price"`
-	Status     OrderStatus  `json:"status"`
+	Lines      []OrderLine `json:"lines"`
+	TotalPrice float64     `json:"total_price"`
+	Status     OrderStatus `json:"status"`
 }
 
 func (order *Order) BeforeCreate(tx *gorm.DB) error {

@@ -15,11 +15,9 @@ import (
 
 type IOrderRepository interface {
 	CreateOrder(ctx context.Context, userID string, lines []*models.OrderLine) (*models.Order, error)
-	GetOrderByID(ctx context.Context, id string) (*models.Order, error)
+	GetOrderByID(ctx context.Context, id string, preload bool) (*models.Order, error)
 	GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error)
-
-	UpdateOrder(id string, req *serializers.PlaceOrderReq) (*models.Order, error)
-	AssignOrder(id string) error
+	UpdateOrder(ctx context.Context, order *models.Order) error
 }
 
 type OrderRepo struct {
@@ -55,7 +53,11 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 		if err := r.db.CreateInBatches(&lines, len(lines)).Error; err != nil {
 			return err
 		}
-		order.Lines = lines
+
+		err := copier.Copy(&order.Lines, &lines)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
@@ -66,15 +68,16 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 	return order, nil
 }
 
-func (r *OrderRepo) GetOrderByID(ctx context.Context, id string) (*models.Order, error) {
+func (r *OrderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (*models.Order, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	var order models.Order
-	if err := r.db.Where("id = ?", id).
-		Preload("Lines").
-		Preload("Lines.Product").
-		First(&order).Error; err != nil {
+	query := r.db.Where("id = ?", id)
+	if preload {
+		query = query.Preload("Lines").Preload("Lines.Product")
+	}
+	if err := query.First(&order).Error; err != nil {
 		return nil, err
 	}
 
@@ -117,27 +120,10 @@ func (r *OrderRepo) GetMyOrders(ctx context.Context, req *serializers.ListOrderR
 	return orders, pagination, nil
 }
 
-func (r *OrderRepo) UpdateOrder(id string, req *serializers.PlaceOrderReq) (*models.Order, error) {
-	order, err := r.GetOrderByID(context.Background(), id)
-	if err != nil {
-		return nil, err
-	}
+func (r *OrderRepo) UpdateOrder(ctx context.Context, order *models.Order) error {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
 
-	copier.Copy(order, &req)
-	if err := r.db.Save(&order).Error; err != nil {
-		return nil, err
-	}
-
-	return order, nil
-}
-
-func (r *OrderRepo) AssignOrder(id string) error {
-	order, err := r.GetOrderByID(context.Background(), id)
-	if err != nil {
-		return err
-	}
-
-	order.Status = models.OrderStatusInProgress
 	if err := r.db.Save(&order).Error; err != nil {
 		return err
 	}

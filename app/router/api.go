@@ -38,12 +38,13 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 			productAPI.GET("/:id", product.GetProductByID)
 		}
 
+		// Orders
 		orderAPI := api1.Group("/orders", authMiddleware)
 		{
 			orderAPI.POST("", order.PlaceOrder)
 			orderAPI.GET("/:id", order.GetOrderByID)
 			orderAPI.GET("", order.GetOrders)
-			orderAPI.PUT("/:id", order.UpdateOrder)
+			orderAPI.PUT("/:id/cancel", order.CancelOrder)
 		}
 
 		return nil
