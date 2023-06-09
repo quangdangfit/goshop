@@ -10,13 +10,14 @@ import (
 	"goshop/app/serializers"
 	"goshop/config"
 	"goshop/dbs"
+	"goshop/pkg/paging"
 )
 
 type IOrderRepository interface {
-	CreateOrder(ctx context.Context, lines []*models.OrderLine) (*models.Order, error)
+	CreateOrder(ctx context.Context, userID string, lines []*models.OrderLine) (*models.Order, error)
 	GetOrderByID(ctx context.Context, id string) (*models.Order, error)
+	GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error)
 
-	GetOrders(query *serializers.OrderQueryParam) (*[]models.Order, error)
 	UpdateOrder(id string, req *serializers.PlaceOrderReq) (*models.Order, error)
 	AssignOrder(id string) error
 }
@@ -29,7 +30,7 @@ func NewOrderRepository() *OrderRepo {
 	return &OrderRepo{db: dbs.Database}
 }
 
-func (r *OrderRepo) CreateOrder(ctx context.Context, lines []*models.OrderLine) (*models.Order, error) {
+func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*models.OrderLine) (*models.Order, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
@@ -41,6 +42,7 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, lines []*models.OrderLine) 
 			totalPrice += line.Price
 		}
 		order.TotalPrice = totalPrice
+		order.UserID = userID
 
 		if err := r.db.Create(order).Error; err != nil {
 			return err
@@ -79,13 +81,40 @@ func (r *OrderRepo) GetOrderByID(ctx context.Context, id string) (*models.Order,
 	return &order, nil
 }
 
-func (r *OrderRepo) GetOrders(query *serializers.OrderQueryParam) (*[]models.Order, error) {
-	var orders []models.Order
-	if err := r.db.Find(&orders, query).Error; err != nil {
-		return nil, err
+func (r *OrderRepo) GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
+	query := r.db.Where("user_id = ?", req.UserID)
+	order := "id"
+	if req.Code != "" {
+		query = query.Where("code = ?", req.Code)
+	}
+	if req.Status != "" {
+		query = query.Where("status = ?", req.Status)
+	}
+	if req.OrderBy != "" {
+		order = req.OrderBy
+		if req.OrderDesc {
+			order += " DESC"
+		}
 	}
 
-	return &orders, nil
+	var total int64
+	if err := query.Model(&models.Order{}).Count(&total).Error; err != nil {
+		return nil, nil, err
+	}
+
+	pagination := paging.New(req.Page, req.Limit, total)
+
+	var orders []*models.Order
+	if err := query.Preload("Lines").
+		Preload("Lines.Product").
+		Find(&orders).Error; err != nil {
+		return nil, nil, err
+	}
+
+	return orders, pagination, nil
 }
 
 func (r *OrderRepo) UpdateOrder(id string, req *serializers.PlaceOrderReq) (*models.Order, error) {

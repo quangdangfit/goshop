@@ -18,7 +18,9 @@ const (
 
 type Order struct {
 	Base
-	Code       string       `json:"code"`
+	Code       string `json:"code"`
+	UserID     string `json:"user_id"`
+	User       User
 	Lines      []*OrderLine `json:"lines"`
 	TotalPrice float64      `json:"total_price"`
 	Status     OrderStatus  `json:"status"`

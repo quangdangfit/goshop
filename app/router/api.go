@@ -41,7 +41,7 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 
 		orderAPI := api1.Group("/orders", authMiddleware)
 		{
-			orderAPI.POST("", order.CreateOrder)
+			orderAPI.POST("", order.PlaceOrder)
 			orderAPI.GET("/:id", order.GetOrderByID)
 			orderAPI.GET("", order.GetOrders)
 			orderAPI.PUT("/:id", order.UpdateOrder)

@@ -8,13 +8,14 @@ import (
 	"goshop/app/models"
 	"goshop/app/repositories"
 	"goshop/app/serializers"
+	"goshop/pkg/paging"
 )
 
 type IOrderService interface {
 	PlaceOrder(ctx context.Context, req *serializers.PlaceOrderReq) (*models.Order, error)
 	GetOrderByID(ctx context.Context, id string) (*models.Order, error)
+	GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error)
 
-	GetOrders(ctx context.Context, query *serializers.OrderQueryParam) (*[]models.Order, error)
 	UpdateOrder(ctx context.Context, id string, req *serializers.PlaceOrderReq) (*models.Order, error)
 }
 
@@ -50,7 +51,7 @@ func (s *OrderService) PlaceOrder(ctx context.Context, req *serializers.PlaceOrd
 		productMap[line.ProductID] = product
 	}
 
-	order, err := s.repo.CreateOrder(ctx, lines)
+	order, err := s.repo.CreateOrder(ctx, req.UserID, lines)
 	if err != nil {
 		return nil, err
 	}
@@ -71,13 +72,13 @@ func (s *OrderService) GetOrderByID(ctx context.Context, id string) (*models.Ord
 	return order, nil
 }
 
-func (s *OrderService) GetOrders(ctx context.Context, query *serializers.OrderQueryParam) (*[]models.Order, error) {
-	orders, err := s.repo.GetOrders(query)
+func (s *OrderService) GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error) {
+	orders, pagination, err := s.repo.GetMyOrders(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return orders, err
+	return orders, pagination, err
 }
 
 func (s *OrderService) UpdateOrder(ctx context.Context, id string, req *serializers.PlaceOrderReq) (*models.Order, error) {
