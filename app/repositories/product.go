@@ -2,13 +2,12 @@ package repositories
 
 import (
 	"context"
-	"errors"
-	"time"
 
 	"gorm.io/gorm"
 
 	"goshop/app/models"
 	"goshop/app/serializers"
+	"goshop/config"
 	"goshop/dbs"
 	"goshop/pkg/paging"
 )
@@ -29,7 +28,7 @@ func NewProductRepository() *ProductRepo {
 }
 
 func (r *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	query := r.db
@@ -66,19 +65,19 @@ func (r *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProd
 }
 
 func (r *ProductRepo) GetProductByID(ctx context.Context, id string) (*models.Product, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	var product models.Product
 	if err := r.db.Where("id = ?", id).First(&product).Error; err != nil {
-		return nil, errors.New("not found product")
+		return nil, err
 	}
 
 	return &product, nil
 }
 
 func (r *ProductRepo) Create(ctx context.Context, product *models.Product) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	if err := r.db.Create(&product).Error; err != nil {
@@ -89,7 +88,7 @@ func (r *ProductRepo) Create(ctx context.Context, product *models.Product) error
 }
 
 func (r *ProductRepo) Update(ctx context.Context, product *models.Product) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	if err := r.db.Save(&product).Error; err != nil {

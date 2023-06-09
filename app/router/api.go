@@ -11,11 +11,11 @@ import (
 
 func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 	err := container.Invoke(func(
+		user *api.UserAPI,
 		product *api.ProductAPI,
+		order *api.OrderAPI,
 		warehouse *api.Warehouse,
 		quantity *api.Quantity,
-		user *api.UserAPI,
-		order *api.Order,
 	) error {
 		authMiddleware := middleware.JWTAuth()
 		refreshAuthMiddleware := middleware.JWTRefresh()
@@ -40,6 +40,14 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 			productAPI.GET("/:id", product.GetProductByID)
 		}
 
+		orderAPI := api1.Group("/orders", authMiddleware)
+		{
+			orderAPI.POST("", order.CreateOrder)
+			orderAPI.GET("", order.GetOrders)
+			orderAPI.GET("/:id", order.GetOrderByID)
+			orderAPI.PUT("/:id", order.UpdateOrder)
+		}
+
 		{
 			api1.GET("/warehouses", warehouse.GetWarehouses)
 			api1.POST("/warehouses", warehouse.CreateWarehouse)
@@ -51,12 +59,6 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 			api1.POST("/quantities", quantity.CreateQuantity)
 			api1.GET("/quantities/:uuid", quantity.GetQuantityByID)
 			api1.PUT("/quantities/:uuid", quantity.UpdateQuantity)
-		}
-		{
-			api1.GET("/orders", order.GetOrders)
-			api1.POST("/orders", order.CreateOrder)
-			api1.GET("/orders/:uuid", order.GetOrderByID)
-			api1.PUT("/orders/:uuid", order.UpdateOrder)
 		}
 
 		return nil

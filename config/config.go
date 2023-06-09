@@ -2,8 +2,13 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/viper"
+)
+
+const (
+	DatabaseTimeout = 5 * time.Second
 )
 
 type Schema struct {

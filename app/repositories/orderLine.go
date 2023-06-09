@@ -1,21 +1,17 @@
 package repositories
 
 import (
-	"errors"
+	"context"
 
-	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 
 	"goshop/app/models"
-	"goshop/app/serializers"
+	"goshop/config"
 	"goshop/dbs"
 )
 
 type IOrderLineRepository interface {
-	GetOrderLines(query *serializers.OrderLineQueryParam) (*[]models.OrderLine, error)
-	GetOrderLineByID(uuid string) (*models.OrderLine, error)
-	CreateOrderLine(item *serializers.OrderLineBodyParam) (*models.OrderLine, error)
-	UpdateOrderLine(uuid string, item *serializers.OrderLineBodyParam) (*models.OrderLine, error)
+	CreateOrderLines(ctx context.Context, req []*models.OrderLine) error
 }
 
 type OrderLineRepo struct {
@@ -26,45 +22,13 @@ func NewOrderLineRepository() *OrderLineRepo {
 	return &OrderLineRepo{db: dbs.Database}
 }
 
-func (l *OrderLineRepo) GetOrderLines(query *serializers.OrderLineQueryParam) (*[]models.OrderLine, error) {
-	var orderLines []models.OrderLine
-	if err := l.db.Find(&orderLines, query).Error; err != nil {
-		return nil, nil
+func (r *OrderLineRepo) CreateOrderLines(ctx context.Context, req []*models.OrderLine) error {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
+	if err := r.db.CreateInBatches(&req, len(req)).Error; err != nil {
+		return err
 	}
 
-	return &orderLines, nil
-}
-
-func (l *OrderLineRepo) GetOrderLineByID(uuid string) (*models.OrderLine, error) {
-	var orderLine models.OrderLine
-	if err := l.db.Where("uuid = ?", uuid).First(&orderLine).Error; err != nil {
-		return nil, errors.New("not found orderLine")
-	}
-
-	return &orderLine, nil
-}
-
-func (l *OrderLineRepo) CreateOrderLine(item *serializers.OrderLineBodyParam) (*models.OrderLine, error) {
-	var orderLine models.OrderLine
-	copier.Copy(&orderLine, &item)
-
-	if err := l.db.Create(&orderLine).Error; err != nil {
-		return nil, err
-	}
-
-	return &orderLine, nil
-}
-
-func (l *OrderLineRepo) UpdateOrderLine(uuid string, item *serializers.OrderLineBodyParam) (*models.OrderLine, error) {
-	orderLine, err := l.GetOrderLineByID(uuid)
-	if err != nil {
-		return nil, err
-	}
-
-	copier.Copy(orderLine, &item)
-	if err := l.db.Save(&orderLine).Error; err != nil {
-		return nil, err
-	}
-
-	return orderLine, nil
+	return nil
 }

@@ -7,19 +7,21 @@ import (
 	"goshop/pkg/utils"
 )
 
+type OrderStatus string
+
 const (
-	OrderStatusNew      = "new"
-	OrderStatusAssigned = "assigned"
-	OrderStatusDone     = "done"
-	OrderStatusCanceled = "canceled"
+	OrderStatusNew        OrderStatus = "new"
+	OrderStatusInProgress OrderStatus = "in-progress"
+	OrderStatusDone       OrderStatus = "done"
+	OrderStatusCancelled  OrderStatus = "cancelled"
 )
 
 type Order struct {
 	Base
-	Code       string      `json:"code"`
-	Lines      []OrderLine `json:"lines" gorm:"foreignkey:order_uuid;association_foreignkey:uuid;save_associations:false"`
-	TotalPrice float64     `json:"total_price"`
-	Status     string      `json:"status"`
+	Code       string       `json:"code"`
+	Lines      []*OrderLine `json:"lines"`
+	TotalPrice float64      `json:"total_price"`
+	Status     OrderStatus  `json:"status"`
 }
 
 func (order *Order) BeforeCreate(tx *gorm.DB) error {

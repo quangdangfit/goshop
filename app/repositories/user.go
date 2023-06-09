@@ -3,11 +3,11 @@ package repositories
 import (
 	"context"
 	"errors"
-	"time"
 
 	"gorm.io/gorm"
 
 	"goshop/app/models"
+	"goshop/config"
 	"goshop/dbs"
 )
 
@@ -27,7 +27,7 @@ func NewUserRepository() *UserRepo {
 }
 
 func (u *UserRepo) Create(ctx context.Context, user *models.User) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	if err := u.db.Create(&user).Error; err != nil {
@@ -38,7 +38,7 @@ func (u *UserRepo) Create(ctx context.Context, user *models.User) error {
 }
 
 func (u *UserRepo) Update(ctx context.Context, user *models.User) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	if err := u.db.Save(&user).Error; err != nil {
@@ -49,7 +49,7 @@ func (u *UserRepo) Update(ctx context.Context, user *models.User) error {
 }
 
 func (u *UserRepo) GetUserByID(ctx context.Context, id string) (*models.User, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	var user models.User
@@ -61,7 +61,7 @@ func (u *UserRepo) GetUserByID(ctx context.Context, id string) (*models.User, er
 }
 
 func (u *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
 	var user models.User
