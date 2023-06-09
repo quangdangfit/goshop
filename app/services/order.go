@@ -12,10 +12,10 @@ import (
 
 type IOrderService interface {
 	PlaceOrder(ctx context.Context, req *serializers.PlaceOrderReq) (*models.Order, error)
+	GetOrderByID(ctx context.Context, id string) (*models.Order, error)
 
 	GetOrders(ctx context.Context, query *serializers.OrderQueryParam) (*[]models.Order, error)
-	GetOrderByID(ctx context.Context, uuid string) (*models.Order, error)
-	UpdateOrder(ctx context.Context, uuid string, req *serializers.PlaceOrderReq) (*models.Order, error)
+	UpdateOrder(ctx context.Context, id string, req *serializers.PlaceOrderReq) (*models.Order, error)
 }
 
 type OrderService struct {
@@ -40,15 +40,30 @@ func (s *OrderService) PlaceOrder(ctx context.Context, req *serializers.PlaceOrd
 		return nil, err
 	}
 
+	productMap := make(map[string]*models.Product)
 	for _, line := range lines {
 		product, err := s.productRepo.GetProductByID(ctx, line.ProductID)
 		if err != nil {
 			return nil, err
 		}
 		line.Price = product.Price * float64(line.Quantity)
+		productMap[line.ProductID] = product
 	}
 
 	order, err := s.repo.CreateOrder(ctx, lines)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, line := range order.Lines {
+		line.Product = *productMap[line.ProductID]
+	}
+
+	return order, nil
+}
+
+func (s *OrderService) GetOrderByID(ctx context.Context, id string) (*models.Order, error) {
+	order, err := s.repo.GetOrderByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -65,17 +80,8 @@ func (s *OrderService) GetOrders(ctx context.Context, query *serializers.OrderQu
 	return orders, err
 }
 
-func (s *OrderService) GetOrderByID(ctx context.Context, uuid string) (*models.Order, error) {
-	order, err := s.repo.GetOrderByID(uuid)
-	if err != nil {
-		return nil, err
-	}
-
-	return order, nil
-}
-
-func (s *OrderService) UpdateOrder(ctx context.Context, uuid string, req *serializers.PlaceOrderReq) (*models.Order, error) {
-	order, err := s.repo.UpdateOrder(uuid, req)
+func (s *OrderService) UpdateOrder(ctx context.Context, id string, req *serializers.PlaceOrderReq) (*models.Order, error) {
+	order, err := s.repo.UpdateOrder(id, req)
 	if err != nil {
 		return nil, err
 	}

@@ -9,9 +9,9 @@ type Order struct {
 }
 
 type OrderLine struct {
-	ProductID string `json:"product_id"`
-	Quantity  uint   `json:"quantity"`
-	Price     uint   `json:"price"`
+	Product  Product `json:"product,omitempty"`
+	Quantity uint    `json:"quantity"`
+	Price    uint    `json:"price"`
 }
 
 type PlaceOrderReq struct {

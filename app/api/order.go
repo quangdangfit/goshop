@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -78,19 +79,28 @@ func (a *OrderAPI) GetOrders(c *gin.Context) {
 }
 
 func (a *OrderAPI) GetOrderByID(c *gin.Context) {
-	orderId := c.Param("uuid")
+	orderId := c.Param("id")
+	if orderId == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
+		return
+	}
 
 	ctx := c.Request.Context()
 	order, err := a.service.GetOrderByID(ctx, orderId)
 	if err != nil {
-		logger.Error("Failed to get OrderAPI: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		logger.Errorf("Failed to get order, id: %s, error: %s ", orderId, err)
+		response.Error(c, http.StatusNotFound, err, "Not found")
 		return
 	}
 
 	var res serializers.Order
-	copier.Copy(&res, &order)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	err = copier.Copy(&res, &order)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, res)
 }
 
 func (a *OrderAPI) UpdateOrder(c *gin.Context) {

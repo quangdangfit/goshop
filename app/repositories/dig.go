@@ -13,14 +13,6 @@ func Inject(container *dig.Container) error {
 		return err
 	}
 
-	if err := container.Provide(func() IOrderLineRepository { return NewOrderLineRepository() }); err != nil {
-		return err
-	}
-
-	if err := container.Provide(func() IQuantityRepository { return NewQuantityRepository() }); err != nil {
-		return err
-	}
-
 	if err := container.Provide(func() IUserRepository { return NewUserRepository() }); err != nil {
 		return err
 	}
