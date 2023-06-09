@@ -13,7 +13,6 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     env:
-      environment: testing
       database_uri: postgres://postgres:test@localhost:5432/postgres
 
     services:
@@ -56,7 +55,4 @@ jobs:
           CGO_ENABLED: 0
 
       - name: Run unit tests
-        env:
-          env: "localhost"
-          port: 8888
         run: make unittest

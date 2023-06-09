@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -28,7 +27,6 @@ type Schema struct {
 
 var (
 	ProductionEnv = "production"
-	TestingEnv    = "testing"
 	cfg           Schema
 )
 
@@ -39,13 +37,11 @@ func init() {
 	config.AddConfigPath("config/")    // Optionally look for config in the working directory.
 	config.AddConfigPath("../config/") // Look for config needed for tests.
 	config.AddConfigPath("../")        // Look for config needed for tests.
-
-	config.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
 	config.AutomaticEnv()
 
 	err := config.ReadInConfig() // Find and read the config file
 	// Handle errors reading the config file
-	if err != nil && viper.GetString("environment") != TestingEnv {
+	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 
@@ -53,7 +49,6 @@ func init() {
 	if err != nil { // Handle errors reading the config file
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
-	// fmt.Printf("Current Config: %+v", Config)
 }
 
 func GetConfig() *Schema {
