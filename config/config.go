@@ -28,6 +28,7 @@ type Schema struct {
 
 var (
 	ProductionEnv = "production"
+	TestingEnv    = "testing"
 	cfg           Schema
 )
 
@@ -43,7 +44,8 @@ func init() {
 	config.AutomaticEnv()
 
 	err := config.ReadInConfig() // Find and read the config file
-	if err != nil {              // Handle errors reading the config file
+	// Handle errors reading the config file
+	if err != nil && viper.GetString("environment") != TestingEnv {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 
