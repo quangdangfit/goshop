@@ -16,7 +16,7 @@ import (
 //	@termsOfService	http://swagger.io/terms/
 
 //	@contact.name	API Support
-//	@contact.email	martin7.heinz@gmail.com
+//	@contact.email	quangdangfit@gmail.com
 
 //	@license.name	MIT
 //	@license.url	https://github.com/MartinHeinz/go-project-blueprint/blob/master/LICENSE
