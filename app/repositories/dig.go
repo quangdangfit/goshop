@@ -17,8 +17,5 @@ func Inject(container *dig.Container) error {
 		return err
 	}
 
-	if err := container.Provide(func() IWarehouseRepository { return NewWarehouseRepository() }); err != nil {
-		return err
-	}
 	return nil
 }

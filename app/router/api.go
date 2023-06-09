@@ -14,7 +14,6 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 		user *api.UserAPI,
 		product *api.ProductAPI,
 		order *api.OrderAPI,
-		warehouse *api.Warehouse,
 	) error {
 		authMiddleware := middleware.JWTAuth()
 		refreshAuthMiddleware := middleware.JWTRefresh()
@@ -45,13 +44,6 @@ func RegisterRoute(r *gin.Engine, container *dig.Container) error {
 			orderAPI.GET("/:id", order.GetOrderByID)
 			orderAPI.GET("", order.GetOrders)
 			orderAPI.PUT("/:id", order.UpdateOrder)
-		}
-
-		{
-			api1.GET("/warehouses", warehouse.GetWarehouses)
-			api1.POST("/warehouses", warehouse.CreateWarehouse)
-			api1.GET("/warehouses/:uuid", warehouse.GetWarehouseByID)
-			api1.PUT("/warehouses/:uuid", warehouse.UpdateWarehouse)
 		}
 
 		return nil
