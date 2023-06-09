@@ -41,7 +41,7 @@ func (u *UserAPI) Login(c *gin.Context) {
 	user, accessToken, refreshToken, err := u.service.Login(c, &req)
 	if err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Something went wrong")
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
@@ -117,8 +117,8 @@ func (u *UserAPI) RefreshToken(c *gin.Context) {
 	userID := c.GetString("userId")
 	accessToken, err := u.service.RefreshToken(c, userID)
 	if err != nil {
-		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Something went wrong")
+		logger.Error("Failed to refresh token", err)
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
