@@ -12,10 +12,10 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/app"
+	"goshop/app/dbs"
 	"goshop/app/migrations"
 	"goshop/app/router"
 	"goshop/config"
-	"goshop/dbs"
 )
 
 func main() {

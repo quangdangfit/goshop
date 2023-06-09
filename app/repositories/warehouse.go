@@ -6,9 +6,9 @@ import (
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 
+	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
-	"goshop/dbs"
 )
 
 type IWarehouseRepository interface {
