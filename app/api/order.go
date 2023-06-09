@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,6 @@ import (
 	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 	"goshop/pkg/validation"
 )
 
@@ -26,7 +26,7 @@ func NewOrderAPI(service services.IOrderService) *OrderAPI {
 	}
 }
 
-func (a *OrderAPI) CreateOrder(c *gin.Context) {
+func (a *OrderAPI) PlaceOrder(c *gin.Context) {
 	var req serializers.PlaceOrderReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Failed to get body", err)
@@ -34,6 +34,7 @@ func (a *OrderAPI) CreateOrder(c *gin.Context) {
 		return
 	}
 
+	req.UserID = c.GetString("userId")
 	if err := a.validator.ValidateStruct(req); err != nil {
 		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
@@ -57,60 +58,79 @@ func (a *OrderAPI) CreateOrder(c *gin.Context) {
 }
 
 func (a *OrderAPI) GetOrders(c *gin.Context) {
-	var query serializers.OrderQueryParam
-	if err := c.ShouldBindQuery(&query); err != nil {
-		logger.Error("Failed to parse request query: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var req serializers.ListOrderReq
+	if err := c.ShouldBindQuery(&req); err != nil {
+		logger.Error("Failed to parse request req: ", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	ctx := c.Request.Context()
-	orders, err := a.service.GetOrders(ctx, &query)
+	req.UserID = c.GetString("userId")
+	orders, pagination, err := a.service.GetMyOrders(c, &req)
 	if err != nil {
 		logger.Error("Failed to get orders: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
-	var res []serializers.Order
-	copier.Copy(&res, &orders)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res serializers.ListOrderRes
+	res.Pagination = pagination
+	err = copier.Copy(&res.Orders, &orders)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+
+	response.JSON(c, http.StatusOK, res)
 }
 
 func (a *OrderAPI) GetOrderByID(c *gin.Context) {
-	orderId := c.Param("uuid")
+	orderId := c.Param("id")
+	if orderId == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
+		return
+	}
 
 	ctx := c.Request.Context()
 	order, err := a.service.GetOrderByID(ctx, orderId)
 	if err != nil {
-		logger.Error("Failed to get OrderAPI: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		logger.Errorf("Failed to get order, id: %s, error: %s ", orderId, err)
+		response.Error(c, http.StatusNotFound, err, "Not found")
 		return
 	}
 
 	var res serializers.Order
-	copier.Copy(&res, &order)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	err = copier.Copy(&res, &order)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, res)
 }
 
-func (a *OrderAPI) UpdateOrder(c *gin.Context) {
-	uuid := c.Param("uuid")
-	var req serializers.PlaceOrderReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Failed to parse request body: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (a *OrderAPI) CancelOrder(c *gin.Context) {
+	orderID := c.Param("id")
+	if orderID == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("missing order id"), "Invalid Parameters")
 		return
 	}
 
-	ctx := c.Request.Context()
-	orders, err := a.service.UpdateOrder(ctx, uuid, &req)
+	userID := c.GetString("userId")
+	order, err := a.service.CancelOrder(c, orderID, userID)
 	if err != nil {
-		logger.Error("Failed to update OrderAPI: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		logger.Errorf("Failed to cancel order, id: %s, error: %s", orderID, err)
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
 	var res serializers.Order
-	copier.Copy(&res, &orders)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	err = copier.Copy(&res, &order)
+	if err != nil {
+		logger.Error(err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, nil)
 }

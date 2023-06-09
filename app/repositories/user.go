@@ -6,9 +6,9 @@ import (
 
 	"gorm.io/gorm"
 
+	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/config"
-	"goshop/dbs"
 )
 
 type IUserRepository interface {

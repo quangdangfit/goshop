@@ -7,8 +7,8 @@ import (
 
 type OrderLine struct {
 	Base
-	OrderID   string `json:"order_id" gorm:"index"`
-	ProductID string `json:"product_id" gorm:"index"`
+	OrderID   string `json:"order_id"`
+	ProductID string `json:"product_id"`
 	Product   Product
 	Quantity  uint    `json:"quantity"`
 	Price     float64 `json:"price"`

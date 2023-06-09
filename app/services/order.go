@@ -2,20 +2,21 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jinzhu/copier"
 
 	"goshop/app/models"
 	"goshop/app/repositories"
 	"goshop/app/serializers"
+	"goshop/pkg/paging"
 )
 
 type IOrderService interface {
 	PlaceOrder(ctx context.Context, req *serializers.PlaceOrderReq) (*models.Order, error)
-
-	GetOrders(ctx context.Context, query *serializers.OrderQueryParam) (*[]models.Order, error)
-	GetOrderByID(ctx context.Context, uuid string) (*models.Order, error)
-	UpdateOrder(ctx context.Context, uuid string, req *serializers.PlaceOrderReq) (*models.Order, error)
+	GetOrderByID(ctx context.Context, id string) (*models.Order, error)
+	GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error)
+	CancelOrder(ctx context.Context, orderID, userID string) (*models.Order, error)
 }
 
 type OrderService struct {
@@ -40,15 +41,30 @@ func (s *OrderService) PlaceOrder(ctx context.Context, req *serializers.PlaceOrd
 		return nil, err
 	}
 
+	productMap := make(map[string]*models.Product)
 	for _, line := range lines {
 		product, err := s.productRepo.GetProductByID(ctx, line.ProductID)
 		if err != nil {
 			return nil, err
 		}
 		line.Price = product.Price * float64(line.Quantity)
+		productMap[line.ProductID] = product
 	}
 
-	order, err := s.repo.CreateOrder(ctx, lines)
+	order, err := s.repo.CreateOrder(ctx, req.UserID, lines)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, line := range order.Lines {
+		line.Product = *productMap[line.ProductID]
+	}
+
+	return order, nil
+}
+
+func (s *OrderService) GetOrderByID(ctx context.Context, id string) (*models.Order, error) {
+	order, err := s.repo.GetOrderByID(ctx, id, true)
 	if err != nil {
 		return nil, err
 	}
@@ -56,26 +72,31 @@ func (s *OrderService) PlaceOrder(ctx context.Context, req *serializers.PlaceOrd
 	return order, nil
 }
 
-func (s *OrderService) GetOrders(ctx context.Context, query *serializers.OrderQueryParam) (*[]models.Order, error) {
-	orders, err := s.repo.GetOrders(query)
+func (s *OrderService) GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error) {
+	orders, pagination, err := s.repo.GetMyOrders(ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return orders, pagination, err
+}
+
+func (s *OrderService) CancelOrder(ctx context.Context, orderID, userID string) (*models.Order, error) {
+	order, err := s.repo.GetOrderByID(ctx, orderID, false)
 	if err != nil {
 		return nil, err
 	}
 
-	return orders, err
-}
-
-func (s *OrderService) GetOrderByID(ctx context.Context, uuid string) (*models.Order, error) {
-	order, err := s.repo.GetOrderByID(uuid)
-	if err != nil {
-		return nil, err
+	if userID != order.UserID {
+		return nil, errors.New("permission denied")
 	}
 
-	return order, nil
-}
+	if order.Status == models.OrderStatusDone || order.Status == models.OrderStatusCancelled {
+		return nil, errors.New("invalid order status")
+	}
 
-func (s *OrderService) UpdateOrder(ctx context.Context, uuid string, req *serializers.PlaceOrderReq) (*models.Order, error) {
-	order, err := s.repo.UpdateOrder(uuid, req)
+	order.Status = models.OrderStatusCancelled
+	err = s.repo.UpdateOrder(ctx, order)
 	if err != nil {
 		return nil, err
 	}

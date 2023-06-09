@@ -2,36 +2,36 @@ package repositories
 
 import (
 	"context"
-	"errors"
 
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 
+	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
-	"goshop/dbs"
+	"goshop/config"
+	"goshop/pkg/paging"
 )
 
 type IOrderRepository interface {
-	CreateOrder(ctx context.Context, lines []*models.OrderLine) (*models.Order, error)
-
-	GetOrders(query *serializers.OrderQueryParam) (*[]models.Order, error)
-	GetOrderByID(id string) (*models.Order, error)
-	UpdateOrder(id string, req *serializers.PlaceOrderReq) (*models.Order, error)
-	AssignOrder(id string) error
+	CreateOrder(ctx context.Context, userID string, lines []*models.OrderLine) (*models.Order, error)
+	GetOrderByID(ctx context.Context, id string, preload bool) (*models.Order, error)
+	GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error)
+	UpdateOrder(ctx context.Context, order *models.Order) error
 }
 
 type OrderRepo struct {
-	db           *gorm.DB
-	lineRepo     IOrderLineRepository
-	quantityRepo IQuantityRepository
+	db *gorm.DB
 }
 
 func NewOrderRepository() *OrderRepo {
-	return &OrderRepo{db: dbs.Database, lineRepo: NewOrderLineRepository()}
+	return &OrderRepo{db: dbs.Database}
 }
 
-func (r *OrderRepo) CreateOrder(ctx context.Context, lines []*models.OrderLine) (*models.Order, error) {
+func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*models.OrderLine) (*models.Order, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
 	order := new(models.Order)
 	err := r.WithTransaction(func(*gorm.DB) error {
 		// Create Order
@@ -40,6 +40,7 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, lines []*models.OrderLine) 
 			totalPrice += line.Price
 		}
 		order.TotalPrice = totalPrice
+		order.UserID = userID
 
 		if err := r.db.Create(order).Error; err != nil {
 			return err
@@ -49,10 +50,14 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, lines []*models.OrderLine) 
 		for _, line := range lines {
 			line.OrderID = order.ID
 		}
-		if err := r.lineRepo.CreateOrderLines(ctx, lines); err != nil {
+		if err := r.db.CreateInBatches(&lines, len(lines)).Error; err != nil {
 			return err
 		}
-		order.Lines = lines
+
+		err := copier.Copy(&order.Lines, &lines)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
@@ -63,55 +68,62 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, lines []*models.OrderLine) 
 	return order, nil
 }
 
-func (r *OrderRepo) GetOrders(query *serializers.OrderQueryParam) (*[]models.Order, error) {
-	var orders []models.Order
-	if err := r.db.Find(&orders, query).Error; err != nil {
+func (r *OrderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (*models.Order, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
+	var order models.Order
+	query := r.db.Where("id = ?", id)
+	if preload {
+		query = query.Preload("Lines").Preload("Lines.Product")
+	}
+	if err := query.First(&order).Error; err != nil {
 		return nil, err
 	}
-
-	return &orders, nil
-}
-
-func (r *OrderRepo) GetOrderByID(id string) (*models.Order, error) {
-	var order models.Order
-	var lines []*models.OrderLine
-	if err := r.db.Where("id = ?", id).First(&order).Error; err != nil {
-		return nil, errors.New("not found order")
-	}
-	r.db.Where("order_id = ?", id).Find(&lines)
-	order.Lines = lines
 
 	return &order, nil
 }
 
-func (r *OrderRepo) UpdateOrder(id string, req *serializers.PlaceOrderReq) (*models.Order, error) {
-	order, err := r.GetOrderByID(id)
-	if err != nil {
-		return nil, err
+func (r *OrderRepo) GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
+	query := r.db.Where("user_id = ?", req.UserID)
+	order := "id"
+	if req.Code != "" {
+		query = query.Where("code = ?", req.Code)
 	}
-
-	copier.Copy(order, &req)
-	if err := r.db.Save(&order).Error; err != nil {
-		return nil, err
+	if req.Status != "" {
+		query = query.Where("status = ?", req.Status)
 	}
-
-	return order, nil
-}
-
-func (r *OrderRepo) AssignOrder(id string) error {
-	order, err := r.GetOrderByID(id)
-	if err != nil {
-		return err
-	}
-
-	for _, line := range order.Lines {
-		quantity, err := r.quantityRepo.GetQuantityProductID(line.ProductID)
-		if err != nil || quantity.Quantity < line.Quantity {
-			return errors.New("product quantity is not enough")
+	if req.OrderBy != "" {
+		order = req.OrderBy
+		if req.OrderDesc {
+			order += " DESC"
 		}
 	}
 
-	order.Status = models.OrderStatusInProgress
+	var total int64
+	if err := query.Model(&models.Order{}).Count(&total).Error; err != nil {
+		return nil, nil, err
+	}
+
+	pagination := paging.New(req.Page, req.Limit, total)
+
+	var orders []*models.Order
+	if err := query.Preload("Lines").
+		Preload("Lines.Product").
+		Find(&orders).Error; err != nil {
+		return nil, nil, err
+	}
+
+	return orders, pagination, nil
+}
+
+func (r *OrderRepo) UpdateOrder(ctx context.Context, order *models.Order) error {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
 	if err := r.db.Save(&order).Error; err != nil {
 		return err
 	}

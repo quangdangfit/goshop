@@ -5,10 +5,10 @@ import (
 
 	"gorm.io/gorm"
 
+	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
 	"goshop/config"
-	"goshop/dbs"
 	"goshop/pkg/paging"
 )
 
