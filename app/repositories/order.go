@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 
-	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 
 	"goshop/app/dbs"
@@ -11,6 +10,7 @@ import (
 	"goshop/app/serializers"
 	"goshop/config"
 	"goshop/pkg/paging"
+	"goshop/pkg/utils"
 )
 
 type IOrderRepository interface {
@@ -54,11 +54,7 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 			return err
 		}
 
-		err := copier.Copy(&order.Lines, &lines)
-		if err != nil {
-			return err
-		}
-
+		utils.Copy(&order.Lines, &lines)
 		return nil
 	})
 	if err != nil {
@@ -89,7 +85,7 @@ func (r *OrderRepo) GetMyOrders(ctx context.Context, req *serializers.ListOrderR
 	defer cancel()
 
 	query := r.db.Where("user_id = ?", req.UserID)
-	order := "id"
+	order := "created_at"
 	if req.Code != "" {
 		query = query.Where("code = ?", req.Code)
 	}

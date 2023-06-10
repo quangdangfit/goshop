@@ -1,16 +1,15 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/response"
+	"goshop/pkg/utils"
 	"goshop/pkg/validation"
 )
 
@@ -36,11 +35,6 @@ func NewProductAPI(service services.IProductService) *ProductAPI {
 //	@Router		/api/v1/products/{id} [get]
 func (p *ProductAPI) GetProductByID(c *gin.Context) {
 	productId := c.Param("id")
-	if productId == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
-		return
-	}
-
 	product, err := p.service.GetProductByID(c, productId)
 	if err != nil {
 		logger.Error("Failed to get product detail: ", err)
@@ -48,13 +42,8 @@ func (p *ProductAPI) GetProductByID(c *gin.Context) {
 		return
 	}
 
-	var res []serializers.Product
-	err = copier.Copy(&res, &product)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	var res serializers.Product
+	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -81,12 +70,7 @@ func (p *ProductAPI) ListProducts(c *gin.Context) {
 	}
 
 	var res serializers.ListProductRes
-	err = copier.Copy(&res.Products, &products)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res.Products, &products)
 	res.Pagination = pagination
 	response.JSON(c, http.StatusOK, res)
 }
@@ -119,13 +103,8 @@ func (p *ProductAPI) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	var res []serializers.Product
-	err = copier.Copy(&res, &product)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	var res serializers.Product
+	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -138,11 +117,6 @@ func (p *ProductAPI) CreateProduct(c *gin.Context) {
 //	@Router		/api/v1/products/{id} [put]
 func (p *ProductAPI) UpdateProduct(c *gin.Context) {
 	productId := c.Param("id")
-	if productId == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
-		return
-	}
-
 	var req serializers.UpdateProductReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
@@ -158,17 +132,12 @@ func (p *ProductAPI) UpdateProduct(c *gin.Context) {
 	ctx := c.Request.Context()
 	product, err := p.service.Update(ctx, productId, &req)
 	if err != nil {
-		logger.Error("Failed to create product", err.Error())
+		logger.Error("Failed to update product", err.Error())
 		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
-	var res []serializers.Product
-	err = copier.Copy(&res, &product)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	var res serializers.Product
+	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
 }

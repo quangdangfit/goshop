@@ -3,13 +3,13 @@ package services
 import (
 	"context"
 
-	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/app/models"
 	"goshop/app/repositories"
 	"goshop/app/serializers"
 	"goshop/pkg/paging"
+	"goshop/pkg/utils"
 )
 
 type IProductService interface {
@@ -47,12 +47,9 @@ func (p *ProductService) ListProducts(ctx context.Context, req serializers.ListP
 
 func (p *ProductService) Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error) {
 	var product models.Product
-	err := copier.Copy(&product, req)
-	if err != nil {
-		return nil, err
-	}
+	utils.Copy(&product, req)
 
-	err = p.repo.Create(ctx, &product)
+	err := p.repo.Create(ctx, &product)
 	if err != nil {
 		logger.Errorf("Create fail, error: %s", err)
 		return nil, err
@@ -68,12 +65,7 @@ func (p *ProductService) Update(ctx context.Context, id string, req *serializers
 		return nil, err
 	}
 
-	err = copier.Copy(product, req)
-	if err != nil {
-		logger.Errorf("Update.Marshal fail, id: %s, error: %s", id, err)
-		return nil, err
-	}
-
+	utils.Copy(product, req)
 	err = p.repo.Update(ctx, product)
 	if err != nil {
 		logger.Errorf("Update fail, id: %s, error: %s", id, err)

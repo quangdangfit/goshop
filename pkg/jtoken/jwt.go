@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/config"
+	"goshop/pkg/utils"
 )
 
 const (
@@ -69,10 +69,7 @@ func ValidateToken(jwtToken string) (map[string]interface{}, error) {
 	}
 
 	var data map[string]interface{}
-	err = copier.Copy(&data, tokenData["payload"])
-	if err != nil {
-		return nil, err
-	}
+	utils.Copy(&data, tokenData["payload"])
 
 	return data, nil
 }

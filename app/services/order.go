@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jinzhu/copier"
-
 	"goshop/app/models"
 	"goshop/app/repositories"
 	"goshop/app/serializers"
 	"goshop/pkg/paging"
+	"goshop/pkg/utils"
 )
 
 type IOrderService interface {
@@ -36,10 +35,7 @@ func NewOrderService(
 
 func (s *OrderService) PlaceOrder(ctx context.Context, req *serializers.PlaceOrderReq) (*models.Order, error) {
 	var lines []*models.OrderLine
-	err := copier.Copy(&lines, &req.Lines)
-	if err != nil {
-		return nil, err
-	}
+	utils.Copy(&lines, &req.Lines)
 
 	productMap := make(map[string]*models.Product)
 	for _, line := range lines {

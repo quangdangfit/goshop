@@ -1,4 +1,4 @@
-package api
+package test
 
 import (
 	"bytes"
@@ -13,10 +13,10 @@ import (
 
 	"goshop/app"
 	"goshop/app/dbs"
-	"goshop/app/migrations"
 	"goshop/app/models"
 	"goshop/app/serializers"
 	"goshop/config"
+	"goshop/pkg/utils"
 )
 
 var (
@@ -37,8 +37,6 @@ func setup() {
 	logger.Initialize(cfg.Environment)
 
 	dbs.Init()
-
-	migrations.Migrate()
 
 	container := app.BuildContainer()
 	testRouter = app.InitGinEngine(container)
@@ -87,4 +85,10 @@ func refreshToken() string {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	return response["result"]["refresh_token"]
+}
+
+func parseResponseResult(resData []byte, result interface{}) {
+	var response map[string]interface{}
+	_ = json.Unmarshal(resData, &response)
+	utils.Copy(result, response["result"])
 }

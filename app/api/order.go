@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/response"
+	"goshop/pkg/utils"
 	"goshop/pkg/validation"
 )
 
@@ -48,12 +48,7 @@ func (a *OrderAPI) PlaceOrder(c *gin.Context) {
 	}
 
 	var res serializers.Order
-	err = copier.Copy(&res, &order)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -75,13 +70,7 @@ func (a *OrderAPI) GetOrders(c *gin.Context) {
 
 	var res serializers.ListOrderRes
 	res.Pagination = pagination
-	err = copier.Copy(&res.Orders, &orders)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
-
+	utils.Copy(&res.Orders, &orders)
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -101,12 +90,7 @@ func (a *OrderAPI) GetOrderByID(c *gin.Context) {
 	}
 
 	var res serializers.Order
-	err = copier.Copy(&res, &order)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -126,11 +110,6 @@ func (a *OrderAPI) CancelOrder(c *gin.Context) {
 	}
 
 	var res serializers.Order
-	err = copier.Copy(&res, &order)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, nil)
 }

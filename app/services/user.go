@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 	"golang.org/x/crypto/bcrypt"
 
@@ -59,12 +58,8 @@ func (u *UserService) Login(ctx context.Context, req *serializers.LoginReq) (*mo
 
 func (u *UserService) Register(ctx context.Context, req *serializers.RegisterReq) (*models.User, error) {
 	var user models.User
-	err := copier.Copy(&user, &req)
-	if err != nil {
-		return nil, err
-	}
-
-	err = u.repo.Create(ctx, &user)
+	utils.Copy(&user, &req)
+	err := u.repo.Create(ctx, &user)
 	if err != nil {
 		logger.Errorf("Register.Create fail, email: %s, error: %s", req.Email, err)
 		return nil, err

@@ -13,7 +13,6 @@ import (
 
 	"goshop/app"
 	"goshop/app/dbs"
-	"goshop/app/migrations"
 	"goshop/config"
 )
 
@@ -22,8 +21,6 @@ func main() {
 	logger.Initialize(cfg.Environment)
 
 	dbs.Init()
-
-	migrations.Migrate()
 
 	container := app.BuildContainer()
 	engine := app.InitGinEngine(container)
