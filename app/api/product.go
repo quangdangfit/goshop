@@ -95,8 +95,7 @@ func (p *ProductAPI) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
-	product, err := p.service.Create(ctx, &req)
+	product, err := p.service.Create(c, &req)
 	if err != nil {
 		logger.Error("Failed to create product", err.Error())
 		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
@@ -129,8 +128,7 @@ func (p *ProductAPI) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
-	product, err := p.service.Update(ctx, productId, &req)
+	product, err := p.service.Update(c, productId, &req)
 	if err != nil {
 		logger.Error("Failed to update product", err.Error())
 		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")

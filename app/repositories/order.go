@@ -109,6 +109,9 @@ func (r *OrderRepo) GetMyOrders(ctx context.Context, req *serializers.ListOrderR
 	var orders []*models.Order
 	if err := query.Preload("Lines").
 		Preload("Lines.Product").
+		Limit(int(pagination.Limit)).
+		Offset(int(pagination.Skip)).
+		Order(order).
 		Find(&orders).Error; err != nil {
 		return nil, nil, err
 	}

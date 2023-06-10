@@ -53,7 +53,7 @@ func (s *OrderService) PlaceOrder(ctx context.Context, req *serializers.PlaceOrd
 	}
 
 	for _, line := range order.Lines {
-		line.Product = *productMap[line.ProductID]
+		line.Product = productMap[line.ProductID]
 	}
 
 	return order, nil

@@ -8,19 +8,19 @@ type Order struct {
 	ID         string       `json:"id"`
 	Code       string       `json:"code"`
 	Lines      []*OrderLine `json:"lines"`
-	TotalPrice uint         `json:"total_price"`
+	TotalPrice float64      `json:"total_price"`
 	Status     string       `json:"status"`
 }
 
 type OrderLine struct {
 	Product  Product `json:"product,omitempty"`
 	Quantity uint    `json:"quantity"`
-	Price    uint    `json:"price"`
+	Price    float64 `json:"price"`
 }
 
 type PlaceOrderReq struct {
 	UserID string              `json:"user_id" validate:"required"`
-	Lines  []PlaceOrderLineReq `json:"lines,omitempty" validate:"required,gt=0,lte=5"`
+	Lines  []PlaceOrderLineReq `json:"lines,omitempty" validate:"required,gt=0,lte=5,dive"`
 }
 
 type PlaceOrderLineReq struct {

@@ -83,6 +83,9 @@ func TestUserAPI_RegisterSuccess(t *testing.T) {
 	}
 	writer := makeRequest("POST", "/auth/register", user, "")
 	assert.Equal(t, http.StatusOK, writer.Code)
+
+	// clean up
+	dbs.Database.Where("1 = 1").Delete(&user)
 }
 
 func TestUserAPI_RegisterInvalidFieldType(t *testing.T) {
@@ -217,6 +220,9 @@ func TestUserAPI_ChangePasswordSuccess(t *testing.T) {
 
 	writer := makeRequest("PUT", "/auth/change-password", req, token)
 	assert.Equal(t, http.StatusOK, writer.Code)
+
+	// clean up
+	dbs.Database.Where("1 = 1").Delete(&user)
 }
 
 func TestUserAPI_ChangePasswordUnauthorized(t *testing.T) {

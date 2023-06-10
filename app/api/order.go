@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -76,13 +75,7 @@ func (a *OrderAPI) GetOrders(c *gin.Context) {
 
 func (a *OrderAPI) GetOrderByID(c *gin.Context) {
 	orderId := c.Param("id")
-	if orderId == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
-		return
-	}
-
-	ctx := c.Request.Context()
-	order, err := a.service.GetOrderByID(ctx, orderId)
+	order, err := a.service.GetOrderByID(c, orderId)
 	if err != nil {
 		logger.Errorf("Failed to get order, id: %s, error: %s ", orderId, err)
 		response.Error(c, http.StatusNotFound, err, "Not found")
@@ -96,11 +89,6 @@ func (a *OrderAPI) GetOrderByID(c *gin.Context) {
 
 func (a *OrderAPI) CancelOrder(c *gin.Context) {
 	orderID := c.Param("id")
-	if orderID == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("missing order id"), "Invalid Parameters")
-		return
-	}
-
 	userID := c.GetString("userId")
 	order, err := a.service.CancelOrder(c, orderID, userID)
 	if err != nil {
