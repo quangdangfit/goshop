@@ -8,6 +8,7 @@ import (
 	"go.uber.org/dig"
 
 	"goshop/app/middleware"
+	_ "goshop/docs"
 )
 
 //	@title			Blueprint Swagger API
