@@ -6,6 +6,8 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"goshop/app/middleware"
+
+	_ "goshop/docs"
 )
 
 //	@title			Blueprint Swagger API

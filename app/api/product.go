@@ -29,8 +29,7 @@ func NewProductAPI(validator validation.Validation, service services.IProductSer
 //
 //	@Summary	Get product by id
 //	@Produce	json
-//	@Param		id	path	string	true	"Product ID"
-//	@Security	ApiKeyAuth
+//	@Param		id	path		string	true	"Product ID"
 //	@Success	200	{object}	serializers.Product
 //	@Router		/api/v1/products/{id} [get]
 func (p *ProductAPI) GetProductByID(c *gin.Context) {
@@ -51,7 +50,6 @@ func (p *ProductAPI) GetProductByID(c *gin.Context) {
 //
 //	@Summary	Get list products
 //	@Produce	json
-//	@Security	ApiKeyAuth
 //	@Success	200	{object}	serializers.ListProductRes
 //	@Router		/api/v1/products [get]
 func (p *ProductAPI) ListProducts(c *gin.Context) {
@@ -80,6 +78,7 @@ func (p *ProductAPI) ListProducts(c *gin.Context) {
 //	@Summary	create product
 //	@Produce	json
 //	@Security	ApiKeyAuth
+//	@Param		_	body		serializers.CreateProductReq	true	"Body"
 //	@Success	200	{object}	serializers.Product
 //	@Router		/api/v1/products [post]
 func (p *ProductAPI) CreateProduct(c *gin.Context) {
@@ -112,6 +111,8 @@ func (p *ProductAPI) CreateProduct(c *gin.Context) {
 //	@Summary	update product
 //	@Produce	json
 //	@Security	ApiKeyAuth
+//	@Param		id	path		string							true	"Product ID"
+//	@Param		_	body		serializers.UpdateProductReq	true	"Body"
 //	@Success	200	{object}	serializers.Product
 //	@Router		/api/v1/products/{id} [put]
 func (p *ProductAPI) UpdateProduct(c *gin.Context) {
