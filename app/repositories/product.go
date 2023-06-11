@@ -1,80 +1,114 @@
 package repositories
 
 import (
-	"errors"
+	"context"
 
-	"github.com/jinzhu/copier"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
+	"goshop/app/dbs"
 	"goshop/app/models"
-	"goshop/app/schema"
-	"goshop/dbs"
+	"goshop/app/serializers"
+	"goshop/config"
+	"goshop/pkg/paging"
 )
 
 type IProductRepository interface {
-	GetProducts(params schema.ProductQueryParam) (*[]models.Product, error)
-	GetProductByID(uuid string) (*models.Product, error)
-	GetProductByCategoryID(uuid string) (*[]models.Product, error)
-	CreateProduct(item *schema.ProductBodyParam) (*models.Product, error)
-	UpdateProduct(uuid string, item *schema.ProductBodyParam) (*models.Product, error)
+	Create(ctx context.Context, product *models.Product) error
+	Update(ctx context.Context, product *models.Product) error
+	ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error)
+	GetProductByID(ctx context.Context, id string) (*models.Product, error)
 }
 
-type productRepo struct {
+type ProductRepo struct {
 	db *gorm.DB
 }
 
-func NewProductRepository() IProductRepository {
-	return &productRepo{db: dbs.Database}
+func NewProductRepository() *ProductRepo {
+	return &ProductRepo{db: dbs.Database}
 }
 
-func (r *productRepo) GetProducts(params schema.ProductQueryParam) (*[]models.Product, error) {
-	var products []models.Product
-	if r.db.Where(params).Find(&products).RecordNotFound() {
-		return nil, nil
+func (r *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
+	query := r.db
+	order := "created_at"
+	if req.Name != "" {
+		query = query.Where("name LIKE ?", "%"+req.Name+"%")
+	}
+	if req.Code != "" {
+		query = query.Where("code = ?", req.Code)
+	}
+	if req.OrderBy != "" {
+		order = req.OrderBy
+		if req.OrderDesc {
+			order += " DESC"
+		}
+	}
+	var total int64
+	if err := query.Model(&models.Product{}).Count(&total).Error; err != nil {
+		return nil, nil, err
 	}
 
-	return &products, nil
-}
+	pagination := paging.New(req.Page, req.Limit, total)
 
-func (r *productRepo) GetProductByCategoryID(uuid string) (*[]models.Product, error) {
-	var products []models.Product
-	if r.db.Where("categ_uuid = ?", uuid).Find(&products).RecordNotFound() {
-		return nil, nil
+	var products []*models.Product
+	if err := query.
+		Limit(int(pagination.Limit)).
+		Offset(int(pagination.Skip)).
+		Order(order).
+		Find(&products).Error; err != nil {
+		return nil, nil, nil
 	}
 
-	return &products, nil
+	return products, pagination, nil
 }
 
-func (r *productRepo) GetProductByID(uuid string) (*models.Product, error) {
+func (r *ProductRepo) GetProductByID(ctx context.Context, id string) (*models.Product, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
 	var product models.Product
-	if r.db.Where("uuid = ?", uuid).Find(&product).RecordNotFound() {
-		return nil, errors.New("not found product")
+	if err := r.db.Where("id = ?", id).First(&product).Error; err != nil {
+		return nil, err
 	}
 
 	return &product, nil
 }
 
-func (r *productRepo) CreateProduct(item *schema.ProductBodyParam) (*models.Product, error) {
-	var product models.Product
-	copier.Copy(&product, &item)
+func (r *ProductRepo) Create(ctx context.Context, product *models.Product) error {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
 
 	if err := r.db.Create(&product).Error; err != nil {
-		return nil, err
+		return err
 	}
 
-	return &product, nil
+	return nil
 }
 
-func (r *productRepo) UpdateProduct(uuid string, item *schema.ProductBodyParam) (*models.Product, error) {
-	var product models.Product
-	if r.db.Where("uuid = ? ", uuid).First(&product).RecordNotFound() {
-		return nil, errors.New("not found product")
-	}
+func (r *ProductRepo) Update(ctx context.Context, product *models.Product) error {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
 
-	copier.Copy(&product, &item)
 	if err := r.db.Save(&product).Error; err != nil {
-		return nil, err
+		return err
 	}
 
-	return &product, nil
+	return nil
+}
+
+func (r *ProductRepo) WithTransaction(callback func(*gorm.DB) error) error {
+	tx := r.db.Begin()
+
+	if err := callback(tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

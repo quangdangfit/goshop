@@ -1,55 +1,42 @@
 package config
 
 import (
-	"fmt"
-	"strings"
+	"log"
+	"os"
+	"time"
 
-	"github.com/spf13/viper"
+	"github.com/caarlos0/env"
+	"github.com/joho/godotenv"
+)
+
+const (
+	ProductionEnv = "production"
+	TestEnv       = "testing"
+
+	DatabaseTimeout = 5 * time.Second
 )
 
 type Schema struct {
-	Environment string `mapstructure:"environment"`
-	DatabaseURI string `mapstructure:"database_uri"`
-
-	Redis struct {
-		Host     string `mapstructure:"host"`
-		Port     int    `mapstructure:"port"`
-		Password string `mapstructure:"password"`
-		Database int    `mapstructure:"database"`
-	} `mapstructure:"redis"`
-
-	Cache struct {
-		Enable     bool `mapstructure:"enable"`
-		ExpiryTime int  `mapstructure:"expiry_time"`
-	} `mapstructure:"cache"`
+	Environment string `env:"environment"`
+	Port        int    `env:"port"`
+	AuthSecret  string `env:"auth_secret"`
+	DatabaseURI string `env:"database_uri"`
 }
 
 var (
-	ProductionEnv = "production"
-	cfg           Schema
+	cfg Schema
 )
 
 func init() {
-	config := viper.New()
-	config.SetConfigName("config")
-	config.AddConfigPath(".")          // Look for config in current directory
-	config.AddConfigPath("config/")    // Optionally look for config in the working directory.
-	config.AddConfigPath("../config/") // Look for config needed for tests.
-	config.AddConfigPath("../")        // Look for config needed for tests.
-
-	config.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
-	config.AutomaticEnv()
-
-	err := config.ReadInConfig() // Find and read the config file
-	if err != nil {              // Handle errors reading the config file
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	environment := os.Getenv("environment")
+	err := godotenv.Load("config/config.yaml")
+	if err != nil && environment != TestEnv {
+		log.Fatalf("Error on load configuration file, error: %v", err)
 	}
 
-	err = config.Unmarshal(&cfg)
-	if err != nil { // Handle errors reading the config file
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	if err := env.Parse(&cfg); err != nil {
+		log.Fatalf("Error on parsing configuration file, error: %v", err)
 	}
-	// fmt.Printf("Current Config: %+v", Config)
 }
 
 func GetConfig() *Schema {

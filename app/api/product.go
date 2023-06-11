@@ -4,136 +4,138 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
-	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
+	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/app/schema"
+	"goshop/app/serializers"
 	"goshop/app/services"
+	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )
 
-type Product struct {
-	service services.IProductService
+type ProductAPI struct {
+	validator validation.Validation
+	service   services.IProductService
 }
 
-func NewProductAPI(service services.IProductService) *Product {
-	return &Product{service: service}
+func NewProductAPI(service services.IProductService) *ProductAPI {
+	return &ProductAPI{
+		validator: validation.New(),
+		service:   service,
+	}
 }
 
 // GetProductByID godoc
-// @Summary Get get product by uuid
-// @Produce json
-// @Param uuid path string true "Product UUID"
-// @Security ApiKeyAuth
-// @Success 200 {object} product.ProductResponse
-// @Router /api/v1/products/{uuid} [get]
-func (p *Product) GetProductByID(c *gin.Context) {
-	productId := c.Param("uuid")
-
-	ctx := c.Request.Context()
-	product, err := p.service.GetProductByID(ctx, productId)
+//
+//	@Summary	Get product by id
+//	@Produce	json
+//	@Param		id	path	string	true	"Product ID"
+//	@Security	ApiKeyAuth
+//	@Success	200	{object}	serializers.Product
+//	@Router		/api/v1/products/{id} [get]
+func (p *ProductAPI) GetProductByID(c *gin.Context) {
+	productId := c.Param("id")
+	product, err := p.service.GetProductByID(c, productId)
 	if err != nil {
-		logger.Error("Failed to get product: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		logger.Error("Failed to get product detail: ", err)
+		response.Error(c, http.StatusNotFound, err, "Not found")
 		return
 	}
 
-	var res schema.Product
-	copier.Copy(&res, &product)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res serializers.Product
+	utils.Copy(&res, &product)
+	response.JSON(c, http.StatusOK, res)
 }
 
-// GetProducts godoc
-// @Summary Get list products
-// @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} []product.ProductResponse
-// @Router /api/v1/products [get]
-func (categ *Product) GetProducts(c *gin.Context) {
-	var params schema.ProductQueryParam
-	if err := c.ShouldBindQuery(&params); err != nil {
+// ListProducts godoc
+//
+//	@Summary	Get list products
+//	@Produce	json
+//	@Security	ApiKeyAuth
+//	@Success	200	{object}	serializers.ListProductRes
+//	@Router		/api/v1/products [get]
+func (p *ProductAPI) ListProducts(c *gin.Context) {
+	var req serializers.ListProductReq
+	if err := c.ShouldBindQuery(&req); err != nil {
 		logger.Error("Failed to parse request query: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	ctx := c.Request.Context()
-	rs, err := categ.service.GetProducts(ctx, params)
+	products, pagination, err := p.service.ListProducts(c, req)
 	if err != nil {
-		logger.Error("Failed to get categories: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		logger.Error("Failed to get list products: ", err)
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
-	var res []schema.Product
-	copier.Copy(&res, &rs)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res serializers.ListProductRes
+	utils.Copy(&res.Products, &products)
+	res.Pagination = pagination
+	response.JSON(c, http.StatusOK, res)
 }
 
-func (p *Product) GetProductByCategoryID(c *gin.Context) {
-	categUUID := c.Param("uuid")
-
-	ctx := c.Request.Context()
-	products, err := p.service.GetProductByCategoryID(ctx, categUUID)
-	if err != nil {
-		logger.Error("Failed to get products: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+// CreateProduct godoc
+//
+//	@Summary	create product
+//	@Produce	json
+//	@Security	ApiKeyAuth
+//	@Success	200	{object}	serializers.Product
+//	@Router		/api/v1/products [post]
+func (p *ProductAPI) CreateProduct(c *gin.Context) {
+	var req serializers.CreateProductReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	var res []schema.Product
-	copier.Copy(&res, &products)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
-}
-
-func (p *Product) CreateProduct(c *gin.Context) {
-	var item schema.ProductBodyParam
-	if err := c.Bind(&item); err != nil {
-		logger.Error("Failed to parse request body: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := p.validator.ValidateStruct(req); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	validate := validator.New()
-	err := validate.Struct(item)
-	if err != nil {
-		logger.Error("Request body is invalid: ", err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
-		return
-	}
-
-	ctx := c.Request.Context()
-	products, err := p.service.CreateProduct(ctx, &item)
+	product, err := p.service.Create(c, &req)
 	if err != nil {
 		logger.Error("Failed to create product", err.Error())
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
-	var res []schema.Product
-	copier.Copy(&res, &products)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res serializers.Product
+	utils.Copy(&res, &product)
+	response.JSON(c, http.StatusOK, res)
 }
 
-func (p *Product) UpdateProduct(c *gin.Context) {
-	uuid := c.Param("uuid")
-	var item schema.ProductBodyParam
-	if err := c.ShouldBindJSON(&item); err != nil {
-		logger.Error("Failed to parse request body: ", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// UpdateProduct godoc
+//
+//	@Summary	update product
+//	@Produce	json
+//	@Security	ApiKeyAuth
+//	@Success	200	{object}	serializers.Product
+//	@Router		/api/v1/products/{id} [put]
+func (p *ProductAPI) UpdateProduct(c *gin.Context) {
+	productId := c.Param("id")
+	var req serializers.UpdateProductReq
+	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
+		logger.Error("Failed to get body", err)
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
-	ctx := c.Request.Context()
-	products, err := p.service.UpdateProduct(ctx, uuid, &item)
+	if err := p.validator.ValidateStruct(req); err != nil {
+		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		return
+	}
+
+	product, err := p.service.Update(c, productId, &req)
 	if err != nil {
-		logger.Error("Failed to update product: ", err)
-		c.JSON(http.StatusBadRequest, utils.PrepareResponse(nil, err.Error(), ""))
+		logger.Error("Failed to update product", err.Error())
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
-	var res schema.Product
-	copier.Copy(&res, &products)
-	c.JSON(http.StatusOK, utils.PrepareResponse(res, "OK", ""))
+	var res serializers.Product
+	utils.Copy(&res, &product)
+	response.JSON(c, http.StatusOK, res)
 }

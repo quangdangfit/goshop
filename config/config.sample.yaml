@@ -1,13 +1,5 @@
 environment: production
+port: 8888
+auth_secret: ######
+
 database_uri: postgres://username:password@host:5432/database
-
-redis:
-  enable: true
-  host: localhost
-  port:
-  password:
-  database: 0
-
-cache:
-  enable: true
-  expiry_time: 3600

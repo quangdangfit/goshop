@@ -2,26 +2,19 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
-
-	"goshop/dbs"
+	"gorm.io/gorm"
 )
 
 type OrderLine struct {
-	UUID        string `json:"uuid" gorm:"unique;not null;index;primary_key"`
-	ProductUUID string `json:"product_uuid"`
-	OrderUUID   string `json:"order_uuid"`
-	Quantity    uint   `json:"quantity"`
-	Price       uint   `json:"price"`
-
-	gorm.Model
+	Base
+	OrderID   string `json:"order_id"`
+	ProductID string `json:"product_id"`
+	Product   *Product
+	Quantity  uint    `json:"quantity"`
+	Price     float64 `json:"price"`
 }
 
-func (line *OrderLine) BeforeCreate(scope *gorm.Scope) error {
-	line.UUID = uuid.New().String()
-	var product Product
-	dbs.Database.Where("uuid = ?", line.ProductUUID).First(&product)
-	line.Price = product.Price * line.Quantity
-
+func (line *OrderLine) BeforeCreate(tx *gorm.DB) error {
+	line.ID = uuid.New().String()
 	return nil
 }

@@ -2,32 +2,37 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"goshop/pkg/utils"
 )
 
+type OrderStatus string
+
 const (
-	OrderStatusNew      = "new"
-	OrderStatusAssigned = "assigned"
-	OrderStatusDone     = "done"
-	OrderStatusCanceled = "canceled"
+	OrderStatusNew        OrderStatus = "new"
+	OrderStatusInProgress OrderStatus = "in-progress"
+	OrderStatusDone       OrderStatus = "done"
+	OrderStatusCancelled  OrderStatus = "cancelled"
 )
 
 type Order struct {
-	UUID       string      `json:"uuid" gorm:"unique;not null;index;primary_key"`
-	Code       string      `json:"code"`
-	Lines      []OrderLine `json:"lines" gorm:"foreignkey:order_uuid;association_foreignkey:uuid;save_associations:false"`
-	TotalPrice uint        `json:"total_price"`
-	Status     string      `json:"status"`
-
-	gorm.Model
+	Base
+	Code       string `json:"code"`
+	UserID     string `json:"user_id"`
+	User       *User
+	Lines      []*OrderLine `json:"lines"`
+	TotalPrice float64      `json:"total_price"`
+	Status     OrderStatus  `json:"status"`
 }
 
-func (order *Order) BeforeCreate(scope *gorm.Scope) error {
-	order.UUID = uuid.New().String()
+func (order *Order) BeforeCreate(tx *gorm.DB) error {
+	order.ID = uuid.New().String()
 	order.Code = utils.GenerateCode("SO")
-	order.Status = OrderStatusNew
+
+	if order.Status == "" {
+		order.Status = OrderStatusNew
+	}
 
 	return nil
 }

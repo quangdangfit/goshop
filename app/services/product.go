@@ -3,29 +3,32 @@ package services
 import (
 	"context"
 
+	"github.com/quangdangfit/gocommon/logger"
+
 	"goshop/app/models"
 	"goshop/app/repositories"
-	"goshop/app/schema"
+	"goshop/app/serializers"
+	"goshop/pkg/paging"
+	"goshop/pkg/utils"
 )
 
 type IProductService interface {
-	GetProducts(c context.Context, params schema.ProductQueryParam) (*[]models.Product, error)
-	GetProductByID(ctx context.Context, uuid string) (*models.Product, error)
-	CreateProduct(ctx context.Context, item *schema.ProductBodyParam) (*models.Product, error)
-	UpdateProduct(ctx context.Context, uuid string, item *schema.ProductBodyParam) (*models.Product, error)
-	GetProductByCategoryID(ctx context.Context, uuid string) (*[]models.Product, error)
+	ListProducts(c context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error)
+	GetProductByID(ctx context.Context, id string) (*models.Product, error)
+	Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error)
+	Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error)
 }
 
-type product struct {
+type ProductService struct {
 	repo repositories.IProductRepository
 }
 
-func NewProductService(repo repositories.IProductRepository) IProductService {
-	return &product{repo: repo}
+func NewProductService(repo repositories.IProductRepository) *ProductService {
+	return &ProductService{repo: repo}
 }
 
-func (p *product) GetProductByID(ctx context.Context, uuid string) (*models.Product, error) {
-	product, err := p.repo.GetProductByID(uuid)
+func (p *ProductService) GetProductByID(ctx context.Context, id string) (*models.Product, error) {
+	product, err := p.repo.GetProductByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -33,36 +36,39 @@ func (p *product) GetProductByID(ctx context.Context, uuid string) (*models.Prod
 	return product, nil
 }
 
-func (p *product) GetProducts(ctx context.Context, params schema.ProductQueryParam) (*[]models.Product, error) {
-	products, err := p.repo.GetProducts(params)
+func (p *ProductService) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
+	products, pagination, err := p.repo.ListProducts(ctx, req)
 	if err != nil {
+		return nil, nil, err
+	}
+
+	return products, pagination, nil
+}
+
+func (p *ProductService) Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error) {
+	var product models.Product
+	utils.Copy(&product, req)
+
+	err := p.repo.Create(ctx, &product)
+	if err != nil {
+		logger.Errorf("Create fail, error: %s", err)
 		return nil, err
 	}
 
-	return products, nil
+	return &product, nil
 }
 
-func (p *product) GetProductByCategoryID(ctx context.Context, uuid string) (*[]models.Product, error) {
-	products, err := p.repo.GetProductByCategoryID(uuid)
+func (p *ProductService) Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error) {
+	product, err := p.repo.GetProductByID(ctx, id)
 	if err != nil {
+		logger.Errorf("Update.GetUserByID fail, id: %s, error: %s", id, err)
 		return nil, err
 	}
 
-	return products, nil
-}
-
-func (p *product) CreateProduct(ctx context.Context, item *schema.ProductBodyParam) (*models.Product, error) {
-	product, err := p.repo.CreateProduct(item)
+	utils.Copy(product, req)
+	err = p.repo.Update(ctx, product)
 	if err != nil {
-		return nil, err
-	}
-
-	return product, nil
-}
-
-func (p *product) UpdateProduct(ctx context.Context, uuid string, item *schema.ProductBodyParam) (*models.Product, error) {
-	product, err := p.repo.UpdateProduct(uuid, item)
-	if err != nil {
+		logger.Errorf("Update fail, id: %s, error: %s", id, err)
 		return nil, err
 	}
 

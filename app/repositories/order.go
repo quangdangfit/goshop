@@ -1,116 +1,144 @@
 package repositories
 
 import (
-	"errors"
+	"context"
 
-	"github.com/jinzhu/copier"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
+	"goshop/app/dbs"
 	"goshop/app/models"
-	"goshop/app/schema"
-	"goshop/dbs"
+	"goshop/app/serializers"
+	"goshop/config"
+	"goshop/pkg/paging"
+	"goshop/pkg/utils"
 )
 
-type OrderRepository interface {
-	GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error)
-	GetOrderByID(uuid string) (*models.Order, error)
-	CreateOrder(item *schema.OrderBodyParam) (*models.Order, error)
-	UpdateOrder(uuid string, item *schema.OrderBodyParam) (*models.Order, error)
-	AssignOrder(uuid string) error
+type IOrderRepository interface {
+	CreateOrder(ctx context.Context, userID string, lines []*models.OrderLine) (*models.Order, error)
+	GetOrderByID(ctx context.Context, id string, preload bool) (*models.Order, error)
+	GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error)
+	UpdateOrder(ctx context.Context, order *models.Order) error
 }
 
-type orderRepo struct {
-	db           *gorm.DB
-	lineRepo     OrderLineRepository
-	quantityRepo QuantityRepository
+type OrderRepo struct {
+	db *gorm.DB
 }
 
-func NewOrderRepository() OrderRepository {
-	return &orderRepo{db: dbs.Database, lineRepo: NewOrderLineRepository()}
+func NewOrderRepository() *OrderRepo {
+	return &OrderRepo{db: dbs.Database}
 }
 
-func (r *orderRepo) GetOrders(query *schema.OrderQueryParam) (*[]models.Order, error) {
-	var orders []models.Order
-	if r.db.Find(&orders, query).RecordNotFound() {
-		return nil, nil
-	}
+func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*models.OrderLine) (*models.Order, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
 
-	return &orders, nil
-}
-
-func (r *orderRepo) GetOrderByID(uuid string) (*models.Order, error) {
-	var order models.Order
-	var lines []models.OrderLine
-	if r.db.Where("uuid = ?", uuid).First(&order).RecordNotFound() {
-		return nil, errors.New("not found order")
-	}
-	r.db.Where("order_uuid = ?", uuid).Find(&lines)
-	order.Lines = lines
-
-	return &order, nil
-}
-
-func (r *orderRepo) CreateOrder(item *schema.OrderBodyParam) (*models.Order, error) {
-	var order models.Order
-	copier.Copy(&order, &item)
-
-	if order.Lines == nil {
-		return nil, errors.New("order lines must be not empty")
-	}
-
-	if err := r.db.Create(&order).Error; err != nil {
-		return nil, err
-	}
-
-	var lines []models.OrderLine
-	var totalPrice uint
-	for _, line := range order.Lines {
-		line.OrderUUID = order.UUID
-		if err := r.db.Create(&line).Error; err != nil {
-			return nil, err
+	order := new(models.Order)
+	err := r.WithTransaction(func(*gorm.DB) error {
+		// Create Order
+		var totalPrice float64
+		for _, line := range lines {
+			totalPrice += line.Price
 		}
-		lines = append(lines, line)
-		totalPrice += line.Price
-	}
-	order.TotalPrice = totalPrice
-	order.Lines = lines
+		order.TotalPrice = totalPrice
+		order.UserID = userID
 
-	if err := r.db.Save(&order).Error; err != nil {
-		return nil, err
-	}
+		if err := r.db.Create(order).Error; err != nil {
+			return err
+		}
 
-	return &order, nil
-}
+		// Create order lines
+		for _, line := range lines {
+			line.OrderID = order.ID
+		}
+		if err := r.db.CreateInBatches(&lines, len(lines)).Error; err != nil {
+			return err
+		}
 
-func (r *orderRepo) UpdateOrder(uuid string, item *schema.OrderBodyParam) (*models.Order, error) {
-	order, err := r.GetOrderByID(uuid)
+		utils.Copy(&order.Lines, &lines)
+		return nil
+	})
 	if err != nil {
-		return nil, err
-	}
-
-	copier.Copy(order, &item)
-	if err := r.db.Save(&order).Error; err != nil {
 		return nil, err
 	}
 
 	return order, nil
 }
 
-func (r *orderRepo) AssignOrder(uuid string) error {
-	order, err := r.GetOrderByID(uuid)
-	if err != nil {
-		return err
+func (r *OrderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (*models.Order, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
+	var order models.Order
+	query := r.db.Where("id = ?", id)
+	if preload {
+		query = query.Preload("Lines").Preload("Lines.Product")
+	}
+	if err := query.First(&order).Error; err != nil {
+		return nil, err
 	}
 
-	for _, line := range order.Lines {
-		quantity, err := r.quantityRepo.GetQuantityProductID(line.ProductUUID)
-		if err != nil || quantity.Quantity < line.Quantity {
-			return errors.New("product quantity is not enough")
+	return &order, nil
+}
+
+func (r *OrderRepo) GetMyOrders(ctx context.Context, req *serializers.ListOrderReq) ([]*models.Order, *paging.Pagination, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
+	query := r.db.Where("user_id = ?", req.UserID)
+	order := "created_at"
+	if req.Code != "" {
+		query = query.Where("code = ?", req.Code)
+	}
+	if req.Status != "" {
+		query = query.Where("status = ?", req.Status)
+	}
+	if req.OrderBy != "" {
+		order = req.OrderBy
+		if req.OrderDesc {
+			order += " DESC"
 		}
 	}
 
-	order.Status = models.OrderStatusAssigned
+	var total int64
+	if err := query.Model(&models.Order{}).Count(&total).Error; err != nil {
+		return nil, nil, err
+	}
+
+	pagination := paging.New(req.Page, req.Limit, total)
+
+	var orders []*models.Order
+	if err := query.Preload("Lines").
+		Preload("Lines.Product").
+		Limit(int(pagination.Limit)).
+		Offset(int(pagination.Skip)).
+		Order(order).
+		Find(&orders).Error; err != nil {
+		return nil, nil, err
+	}
+
+	return orders, pagination, nil
+}
+
+func (r *OrderRepo) UpdateOrder(ctx context.Context, order *models.Order) error {
+	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
+	defer cancel()
+
 	if err := r.db.Save(&order).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *OrderRepo) WithTransaction(callback func(*gorm.DB) error) error {
+	tx := r.db.Begin()
+
+	if err := callback(tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return err
 	}
 
