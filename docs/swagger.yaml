@@ -12,6 +12,37 @@ definitions:
       total_page:
         type: integer
     type: object
+  serializers.ChangePasswordReq:
+    properties:
+      new_password:
+        type: string
+      password:
+        type: string
+    required:
+    - new_password
+    - password
+    type: object
+  serializers.CreateProductReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    required:
+    - description
+    - name
+    type: object
+  serializers.ListOrderRes:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/serializers.Order'
+        type: array
+      pagination:
+        $ref: '#/definitions/paging.Pagination'
+    type: object
   serializers.ListProductRes:
     properties:
       pagination:
@@ -20,6 +51,72 @@ definitions:
         items:
           $ref: '#/definitions/serializers.Product'
         type: array
+    type: object
+  serializers.LoginReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  serializers.LoginRes:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/serializers.User'
+    type: object
+  serializers.Order:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      lines:
+        items:
+          $ref: '#/definitions/serializers.OrderLine'
+        type: array
+      status:
+        type: string
+      total_price:
+        type: number
+    type: object
+  serializers.OrderLine:
+    properties:
+      price:
+        type: number
+      product:
+        $ref: '#/definitions/serializers.Product'
+      quantity:
+        type: integer
+    type: object
+  serializers.PlaceOrderLineReq:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  serializers.PlaceOrderReq:
+    properties:
+      lines:
+        items:
+          $ref: '#/definitions/serializers.PlaceOrderLineReq'
+        maxItems: 5
+        type: array
+      user_id:
+        type: string
+    required:
+    - lines
+    - user_id
     type: object
   serializers.Product:
     properties:
@@ -55,6 +152,16 @@ definitions:
       user:
         $ref: '#/definitions/serializers.User'
     type: object
+  serializers.UpdateProductReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        minimum: 0
+        type: number
+    type: object
   serializers.User:
     properties:
       created_at:
@@ -69,6 +176,75 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/orders:
+    get:
+      parameters:
+      - in: query
+        name: code
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializers.ListOrderRes'
+      security:
+      - ApiKeyAuth: []
+      summary: get my orders
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/serializers.PlaceOrderReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializers.Order'
+      security:
+      - ApiKeyAuth: []
+      summary: place order
+  /api/v1/orders/{id}:
+    get:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializers.Order'
+      security:
+      - ApiKeyAuth: []
+      summary: get order details
+  /api/v1/orders/{id}/cancel:
+    put:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: cancel order
   /api/v1/products:
     get:
       produces:
@@ -78,10 +254,15 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/serializers.ListProductRes'
-      security:
-      - ApiKeyAuth: []
       summary: Get list products
     post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/serializers.CreateProductReq'
       produces:
       - application/json
       responses:
@@ -107,10 +288,20 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/serializers.Product'
-      security:
-      - ApiKeyAuth: []
       summary: Get product by id
     put:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/serializers.UpdateProductReq'
       produces:
       - application/json
       responses:
@@ -121,12 +312,56 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: update product
+  /auth/change-password:
+    put:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/serializers.ChangePasswordReq'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: changes the password
+  /auth/login:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/serializers.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializers.LoginRes'
+      summary: Login
+  /auth/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serializers.User'
+      security:
+      - ApiKeyAuth: []
+      summary: get my profile
   /auth/register:
     post:
       parameters:
       - description: Body
         in: body
-        name: b
+        name: _
         required: true
         schema:
           $ref: '#/definitions/serializers.RegisterReq'
