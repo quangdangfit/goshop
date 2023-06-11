@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 
+	"goshop/app/models"
 	"goshop/config"
 )
 
@@ -28,4 +29,15 @@ func Init() {
 	sqlDB.SetMaxIdleConns(20)
 	sqlDB.SetMaxOpenConns(200)
 	Database = database
+
+	Migrate()
+}
+
+func Migrate() {
+	User := models.User{}
+	Product := models.Product{}
+	Order := models.Order{}
+	OrderLine := models.OrderLine{}
+
+	Database.AutoMigrate(&Product, &User, Order, OrderLine)
 }

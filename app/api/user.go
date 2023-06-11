@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/response"
+	"goshop/pkg/utils"
 	"goshop/pkg/validation"
 )
 
@@ -41,17 +41,12 @@ func (u *UserAPI) Login(c *gin.Context) {
 	user, accessToken, refreshToken, err := u.service.Login(c, &req)
 	if err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Something went wrong")
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 
 	var res serializers.LoginRes
-	err = copier.Copy(&res.User, &user)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res.User, &user)
 	res.AccessToken = accessToken
 	res.RefreshToken = refreshToken
 	response.JSON(c, http.StatusOK, res)
@@ -85,12 +80,7 @@ func (u *UserAPI) Register(c *gin.Context) {
 	}
 
 	var res serializers.RegisterRes
-	err = copier.Copy(&res.User, &user)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res.User, &user)
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -104,12 +94,7 @@ func (u *UserAPI) GetMe(c *gin.Context) {
 	}
 
 	var res serializers.User
-	err = copier.Copy(&res, &user)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res, &user)
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -117,8 +102,8 @@ func (u *UserAPI) RefreshToken(c *gin.Context) {
 	userID := c.GetString("userId")
 	accessToken, err := u.service.RefreshToken(c, userID)
 	if err != nil {
-		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Something went wrong")
+		logger.Error("Failed to refresh token", err)
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 

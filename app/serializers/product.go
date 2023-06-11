@@ -27,18 +27,18 @@ type ListProductReq struct {
 }
 
 type ListProductRes struct {
-	Products   []*Product         `json:"products,omitempty"`
-	Pagination *paging.Pagination `json:"pagination,omitempty"`
+	Products   []*Product         `json:"products"`
+	Pagination *paging.Pagination `json:"pagination"`
 }
 
 type CreateProductReq struct {
 	Name        string  `json:"name" validate:"required"`
-	Description string  `json:"description"`
+	Description string  `json:"description" validate:"required"`
 	Price       float64 `json:"price" validate:"gt=0"`
 }
 
 type UpdateProductReq struct {
 	Name        string  `json:"name,omitempty"`
 	Description string  `json:"description,omitempty"`
-	Price       float64 `json:"price,omitempty" validate:"gt=0"`
+	Price       float64 `json:"price,omitempty" validate:"gte=0"`
 }

@@ -1,44 +1,94 @@
 package test
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
-	"go.uber.org/dig"
 
 	"goshop/app"
+	"goshop/app/dbs"
+	"goshop/app/models"
+	"goshop/app/serializers"
+	"goshop/config"
+	"goshop/pkg/utils"
 )
 
 var (
-	container *dig.Container
+	testRouter *gin.Engine
 )
 
 func TestMain(m *testing.M) {
-	logger.Initialize("test")
-	container = app.BuildContainer()
-
+	gin.SetMode(gin.TestMode)
 	setup()
-	code := m.Run()
+	exitCode := m.Run()
 	teardown()
 
-	os.Exit(code)
+	os.Exit(exitCode)
 }
 
 func setup() {
-	fmt.Println("============> Setup for testing")
-	clearAll()
-	createData()
+	cfg := config.GetConfig()
+	logger.Initialize(cfg.Environment)
+
+	dbs.Init()
+
+	container := app.BuildContainer()
+	testRouter = app.InitGinEngine(container)
+
+	dbs.Database.Create(&models.User{
+		Email:    "test@test.com",
+		Password: "test123456",
+	})
 }
 
 func teardown() {
-	fmt.Println("============> Teardown")
-	clearAll()
+	migrator := dbs.Database.Migrator()
+	migrator.DropTable(&models.User{}, &models.Product{}, &models.Order{}, &models.OrderLine{})
 }
 
-func createData() {
+func makeRequest(method, url string, body interface{}, token string) *httptest.ResponseRecorder {
+	requestBody, _ := json.Marshal(body)
+	request, _ := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
+	if token != "" {
+		request.Header.Add("Authorization", "Bearer "+token)
+	}
+	writer := httptest.NewRecorder()
+	testRouter.ServeHTTP(writer, request)
+	return writer
 }
 
-func clearAll() {
+func accessToken() string {
+	user := serializers.LoginReq{
+		Email:    "test@test.com",
+		Password: "test123456",
+	}
+
+	writer := makeRequest("POST", "/auth/login", user, "")
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	return response["result"]["access_token"]
+}
+
+func refreshToken() string {
+	user := serializers.LoginReq{
+		Email:    "test@test.com",
+		Password: "test123456",
+	}
+
+	writer := makeRequest("POST", "/auth/login", user, "")
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	return response["result"]["refresh_token"]
+}
+
+func parseResponseResult(resData []byte, result interface{}) {
+	var response map[string]interface{}
+	_ = json.Unmarshal(resData, &response)
+	utils.Copy(result, response["result"])
 }

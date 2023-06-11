@@ -1,20 +1,41 @@
-package router
+package api
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/dig"
 
-	"goshop/app/api"
 	"goshop/app/middleware"
+	_ "goshop/docs"
 )
 
-func RegisterRoute(r *gin.Engine, container *dig.Container) error {
+//	@title			Blueprint Swagger API
+//	@version		1.0
+//	@description	Swagger API for Golang Project Blueprint.
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.email	quangdangfit@gmail.com
+
+//	@license.name	MIT
+//	@license.url	https://github.com/MartinHeinz/go-project-blueprint/blob/master/LICENSE
+
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						Authorization
+
+//	@BasePath	/api/v1
+
+func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 	err := container.Invoke(func(
-		user *api.UserAPI,
-		product *api.ProductAPI,
-		order *api.OrderAPI,
+		user *UserAPI,
+		product *ProductAPI,
+		order *OrderAPI,
 	) error {
+		r.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 		authMiddleware := middleware.JWTAuth()
 		refreshAuthMiddleware := middleware.JWTRefresh()
 		authRoute := r.Group("/auth")

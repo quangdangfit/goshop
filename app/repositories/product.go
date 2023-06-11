@@ -32,7 +32,7 @@ func (r *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProd
 	defer cancel()
 
 	query := r.db
-	order := "id"
+	order := "created_at"
 	if req.Name != "" {
 		query = query.Where("name LIKE ?", "%"+req.Name+"%")
 	}

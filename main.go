@@ -13,8 +13,6 @@ import (
 
 	"goshop/app"
 	"goshop/app/dbs"
-	"goshop/app/migrations"
-	"goshop/app/router"
 	"goshop/config"
 )
 
@@ -24,10 +22,8 @@ func main() {
 
 	dbs.Init()
 
-	migrations.Migrate()
-
 	container := app.BuildContainer()
-	engine := router.InitGinEngine(container)
+	engine := app.InitGinEngine(container)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),

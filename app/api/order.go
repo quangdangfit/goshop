@@ -1,16 +1,15 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/copier"
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/response"
+	"goshop/pkg/utils"
 	"goshop/pkg/validation"
 )
 
@@ -48,12 +47,7 @@ func (a *OrderAPI) PlaceOrder(c *gin.Context) {
 	}
 
 	var res serializers.Order
-	err = copier.Copy(&res, &order)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -75,25 +69,13 @@ func (a *OrderAPI) GetOrders(c *gin.Context) {
 
 	var res serializers.ListOrderRes
 	res.Pagination = pagination
-	err = copier.Copy(&res.Orders, &orders)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
-
+	utils.Copy(&res.Orders, &orders)
 	response.JSON(c, http.StatusOK, res)
 }
 
 func (a *OrderAPI) GetOrderByID(c *gin.Context) {
 	orderId := c.Param("id")
-	if orderId == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Invalid Parameters")
-		return
-	}
-
-	ctx := c.Request.Context()
-	order, err := a.service.GetOrderByID(ctx, orderId)
+	order, err := a.service.GetOrderByID(c, orderId)
 	if err != nil {
 		logger.Errorf("Failed to get order, id: %s, error: %s ", orderId, err)
 		response.Error(c, http.StatusNotFound, err, "Not found")
@@ -101,22 +83,12 @@ func (a *OrderAPI) GetOrderByID(c *gin.Context) {
 	}
 
 	var res serializers.Order
-	err = copier.Copy(&res, &order)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, res)
 }
 
 func (a *OrderAPI) CancelOrder(c *gin.Context) {
 	orderID := c.Param("id")
-	if orderID == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("missing order id"), "Invalid Parameters")
-		return
-	}
-
 	userID := c.GetString("userId")
 	order, err := a.service.CancelOrder(c, orderID, userID)
 	if err != nil {
@@ -126,11 +98,6 @@ func (a *OrderAPI) CancelOrder(c *gin.Context) {
 	}
 
 	var res serializers.Order
-	err = copier.Copy(&res, &order)
-	if err != nil {
-		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
-		return
-	}
+	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, nil)
 }
