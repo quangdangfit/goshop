@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
-	"go.uber.org/dig"
+	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/app/dbs"
 	"goshop/app/models"
@@ -22,7 +22,11 @@ import (
 )
 
 var (
-	testRouter *gin.Engine
+	testRouter     *gin.Engine
+	mockTestRouter *gin.Engine
+	testUserAPI    *UserAPI
+	testProductAPI *ProductAPI
+	testOrderAPI   *OrderAPI
 )
 
 func TestMain(m *testing.M) {
@@ -35,18 +39,25 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	cfg := config.GetConfig()
-	logger.Initialize(cfg.Environment)
+	logger.Initialize(config.TestEnv)
 
 	dbs.Init()
 
-	container := buildContainer()
-	testRouter = initGinEngine(container)
+	validator := validation.New()
 
-	dbs.Database.Create(&models.User{
-		Email:    "test@test.com",
-		Password: "test123456",
-	})
+	userRepo := repositories.NewUserRepository()
+	productRepo := repositories.NewProductRepository()
+	orderRepo := repositories.NewOrderRepository()
+
+	userSvc := services.NewUserService(userRepo)
+	productSvc := services.NewProductService(productRepo)
+	orderSvc := services.NewOrderService(orderRepo, productRepo)
+
+	testUserAPI = NewUserAPI(validator, userSvc)
+	testProductAPI = NewProductAPI(validator, productSvc)
+	testOrderAPI = NewOrderAPI(validator, orderSvc)
+
+	testRouter = initGinEngine(testUserAPI, testProductAPI, testOrderAPI)
 }
 
 func teardown() {
@@ -66,10 +77,16 @@ func makeRequest(method, url string, body interface{}, token string) *httptest.R
 }
 
 func accessToken() string {
+	dbs.Database.Create(&models.User{
+		Email:    "test@test.com",
+		Password: "test123456",
+	})
+
 	user := serializers.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
 	}
+	defer dbs.Database.Delete(user)
 
 	writer := makeRequest("POST", "/auth/login", user, "")
 	var response map[string]map[string]string
@@ -78,10 +95,16 @@ func accessToken() string {
 }
 
 func refreshToken() string {
+	dbs.Database.Create(&models.User{
+		Email:    "test@test.com",
+		Password: "test123456",
+	})
+
 	user := serializers.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
 	}
+	defer dbs.Database.Delete(user)
 
 	writer := makeRequest("POST", "/auth/login", user, "")
 	var response map[string]map[string]string
@@ -95,29 +118,33 @@ func parseResponseResult(resData []byte, result interface{}) {
 	utils.Copy(result, response["result"])
 }
 
-func buildContainer() *dig.Container {
-	container := dig.New()
-
-	// Inject repositories
-	repositories.Inject(container)
-
-	// Inject services
-	services.Inject(container)
-
-	// Inject APIs
-	Inject(container)
-
-	return container
-}
-func initGinEngine(container *dig.Container) *gin.Engine {
+func initGinEngine(userAPI *UserAPI,
+	productAPI *ProductAPI,
+	orderAPI *OrderAPI,
+) *gin.Engine {
 	cfg := config.GetConfig()
 	if cfg.Environment == config.ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	app := gin.Default()
-	err := RegisterAPI(app, container)
-	if err != nil {
-		logger.Fatal("Failed to init GIN Engine", err)
-	}
+	RegisterAPI(app, userAPI, productAPI, orderAPI)
 	return app
+}
+
+func makeMockRequest(method, url string, body interface{}, token string) *httptest.ResponseRecorder {
+	requestBody, _ := json.Marshal(body)
+	request, _ := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
+	if token != "" {
+		request.Header.Add("Authorization", "Bearer "+token)
+	}
+	writer := httptest.NewRecorder()
+	mockTestRouter.ServeHTTP(writer, request)
+	return writer
+}
+
+func cleanData() {
+	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
+	dbs.Database.Where("1 = 1").Delete(&models.Product{})
+	dbs.Database.Where("1 = 1").Delete(&models.Order{})
+	dbs.Database.Where("1 = 1").Delete(&models.User{})
 }

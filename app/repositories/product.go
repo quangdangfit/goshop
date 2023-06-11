@@ -97,18 +97,3 @@ func (r *ProductRepo) Update(ctx context.Context, product *models.Product) error
 
 	return nil
 }
-
-func (r *ProductRepo) WithTransaction(callback func(*gorm.DB) error) error {
-	tx := r.db.Begin()
-
-	if err := callback(tx); err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return err
-	}
-
-	return nil
-}

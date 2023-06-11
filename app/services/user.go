@@ -37,10 +37,6 @@ func (u *UserService) Login(ctx context.Context, req *serializers.LoginReq) (*mo
 		return nil, "", "", err
 	}
 
-	if user == nil {
-		return nil, "", "", errors.New("user not found")
-	}
-
 	passErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if passErr == bcrypt.ErrMismatchedHashAndPassword && passErr != nil {
 		return nil, "", "", errors.New("wrong password")
