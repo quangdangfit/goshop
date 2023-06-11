@@ -24,12 +24,12 @@ import (
 
 func TestUserAPI_LoginSuccess(t *testing.T) {
 	dbs.Database.Create(&models.User{
-		Email:    "test@test.com",
+		Email:    "login@test.com",
 		Password: "test123456",
 	})
 
 	user := &serializers.LoginReq{
-		Email:    "test@test.com",
+		Email:    "login@test.com",
 		Password: "test123456",
 	}
 	writer := makeRequest("POST", "/auth/login", user, "")
@@ -150,12 +150,12 @@ func TestUserAPI_RegisterEmailExist(t *testing.T) {
 	defer cleanData()
 
 	dbs.Database.Create(&models.User{
-		Email:    "test@test.com",
+		Email:    "emailexist@test.com",
 		Password: "password",
 	})
 
 	user := map[string]interface{}{
-		"email":    "test@test.com",
+		"email":    "emailexist@test.com",
 		"password": "test123456",
 	}
 	writer := makeRequest("POST", "/auth/register", user, "")

@@ -40,7 +40,34 @@ func TestProductAPI_GetProductByIDSuccess(t *testing.T) {
 	assert.Equal(t, float64(1), res.Price)
 }
 
+func TestProductAPI_GetProductByIDSuccessFromCache(t *testing.T) {
+	defer cleanData()
+
+	p := models.Product{
+		Name:        "test-product",
+		Description: "test-product",
+		Price:       1,
+	}
+	dbs.Database.Create(&p)
+
+	writer := makeRequest("GET", fmt.Sprintf("/api/v1/products/%s", p.ID), nil, accessToken())
+	var res models.Product
+	parseResponseResult(writer.Body.Bytes(), &res)
+	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, "test-product", res.Name)
+	assert.Equal(t, "test-product", res.Description)
+	assert.Equal(t, float64(1), res.Price)
+
+	writer = makeRequest("GET", fmt.Sprintf("/api/v1/products/%s", p.ID), nil, accessToken())
+	parseResponseResult(writer.Body.Bytes(), &res)
+	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, "test-product", res.Name)
+	assert.Equal(t, "test-product", res.Description)
+	assert.Equal(t, float64(1), res.Price)
+}
+
 func TestProductAPI_GetProductByIDNotFound(t *testing.T) {
+	defer cleanData()
 	writer := makeRequest("GET", "/api/v1/products/notfound", nil, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -75,7 +102,44 @@ func TestProductAPI_ListProductsSuccess(t *testing.T) {
 	assert.Equal(t, float64(1), res.Products[0].Price)
 }
 
+func TestProductAPI_ListProductsSuccessFromCache(t *testing.T) {
+	defer cleanData()
+
+	p := models.Product{
+		Name:        "test-product",
+		Description: "test-product",
+		Price:       1,
+	}
+	dbs.Database.Create(&p)
+
+	writer := makeRequest("GET", "/api/v1/products", nil, accessToken())
+	var res serializers.ListProductRes
+	parseResponseResult(writer.Body.Bytes(), &res)
+	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, int64(1), res.Pagination.Total)
+	assert.Equal(t, int64(1), res.Pagination.CurrentPage)
+	assert.Equal(t, int64(1), res.Pagination.TotalPage)
+	assert.Equal(t, int64(20), res.Pagination.Limit)
+	assert.Equal(t, 1, len(res.Products))
+	assert.Equal(t, "test-product", res.Products[0].Name)
+	assert.Equal(t, "test-product", res.Products[0].Description)
+	assert.Equal(t, float64(1), res.Products[0].Price)
+
+	writer = makeRequest("GET", "/api/v1/products", nil, accessToken())
+	parseResponseResult(writer.Body.Bytes(), &res)
+	assert.Equal(t, http.StatusOK, writer.Code)
+	assert.Equal(t, int64(1), res.Pagination.Total)
+	assert.Equal(t, int64(1), res.Pagination.CurrentPage)
+	assert.Equal(t, int64(1), res.Pagination.TotalPage)
+	assert.Equal(t, int64(20), res.Pagination.Limit)
+	assert.Equal(t, 1, len(res.Products))
+	assert.Equal(t, "test-product", res.Products[0].Name)
+	assert.Equal(t, "test-product", res.Products[0].Description)
+	assert.Equal(t, float64(1), res.Products[0].Price)
+}
+
 func TestProductAPI_ListProductsNotFound(t *testing.T) {
+	defer cleanData()
 	writer := makeRequest("GET", "/api/v1/products", nil, accessToken())
 	var res serializers.ListProductRes
 	parseResponseResult(writer.Body.Bytes(), &res)
@@ -84,6 +148,7 @@ func TestProductAPI_ListProductsNotFound(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsInvalidFieldType(t *testing.T) {
+	defer cleanData()
 	writer := makeRequest("GET", "/api/v1/products?page=a", nil, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -264,7 +329,7 @@ func TestProductAPI_ListProductsFail(t *testing.T) {
 	mockRepo := mocks.NewMockIProductRepository(mockCtrl)
 
 	productSvc := services.NewProductService(mockRepo)
-	mockTestProductAPI := NewProductAPI(validation.New(), productSvc)
+	mockTestProductAPI := NewProductAPI(validation.New(), testRedis, productSvc)
 	mockTestRouter = initGinEngine(testUserAPI, mockTestProductAPI, testOrderAPI)
 
 	mockRepo.EXPECT().ListProducts(gomock.Any(), gomock.Any()).Return(nil, nil, errors.New("update order fail")).Times(1)
@@ -452,6 +517,7 @@ func TestProductAPI_UpdateProductPriceLessThanZero(t *testing.T) {
 }
 
 func TestProductAPI_UpdateProductNotFound(t *testing.T) {
+	defer cleanData()
 	update := &serializers.UpdateProductReq{
 		Price: 1,
 	}
@@ -481,7 +547,7 @@ func TestProductAPI_UpdateProductFail(t *testing.T) {
 	mockRepo := mocks.NewMockIProductRepository(mockCtrl)
 
 	productSvc := services.NewProductService(mockRepo)
-	mockTestProductAPI := NewProductAPI(validation.New(), productSvc)
+	mockTestProductAPI := NewProductAPI(validation.New(), testRedis, productSvc)
 	mockTestRouter = initGinEngine(testUserAPI, mockTestProductAPI, testOrderAPI)
 
 	mockRepo.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(&models.Product{}, nil).Times(1)

@@ -5,22 +5,30 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
+	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/app/serializers"
 	"goshop/app/services"
+	"goshop/config"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )
 
 type ProductAPI struct {
 	validator validation.Validation
+	cache     redis.IRedis
 	service   services.IProductService
 }
 
-func NewProductAPI(validator validation.Validation, service services.IProductService) *ProductAPI {
+func NewProductAPI(
+	validator validation.Validation,
+	cache redis.IRedis,
+	service services.IProductService,
+) *ProductAPI {
 	return &ProductAPI{
 		validator: validator,
+		cache:     cache,
 		service:   service,
 	}
 }
@@ -33,6 +41,13 @@ func NewProductAPI(validator validation.Validation, service services.IProductSer
 //	@Success	200	{object}	serializers.Product
 //	@Router		/api/v1/products/{id} [get]
 func (p *ProductAPI) GetProductByID(c *gin.Context) {
+	var res serializers.Product
+	err := p.cache.Get(c.Request.URL.Path, &res)
+	if err == nil {
+		response.JSON(c, http.StatusOK, res)
+		return
+	}
+
 	productId := c.Param("id")
 	product, err := p.service.GetProductByID(c, productId)
 	if err != nil {
@@ -41,9 +56,9 @@ func (p *ProductAPI) GetProductByID(c *gin.Context) {
 		return
 	}
 
-	var res serializers.Product
 	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
+	_ = p.cache.SetWithExpiration(c.Request.URL.Path, res, config.ProductCachingTime)
 }
 
 // ListProducts godoc
@@ -60,6 +75,13 @@ func (p *ProductAPI) ListProducts(c *gin.Context) {
 		return
 	}
 
+	var res serializers.ListProductRes
+	err := p.cache.Get(c.Request.URL.Path, &res)
+	if err == nil {
+		response.JSON(c, http.StatusOK, res)
+		return
+	}
+
 	products, pagination, err := p.service.ListProducts(c, req)
 	if err != nil {
 		logger.Error("Failed to get list products: ", err)
@@ -67,10 +89,10 @@ func (p *ProductAPI) ListProducts(c *gin.Context) {
 		return
 	}
 
-	var res serializers.ListProductRes
 	utils.Copy(&res.Products, &products)
 	res.Pagination = pagination
 	response.JSON(c, http.StatusOK, res)
+	_ = p.cache.SetWithExpiration(c.Request.URL.Path, res, config.ProductCachingTime)
 }
 
 // CreateProduct godoc
@@ -104,6 +126,7 @@ func (p *ProductAPI) CreateProduct(c *gin.Context) {
 	var res serializers.Product
 	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
+	_ = p.cache.RemovePattern("*product*")
 }
 
 // UpdateProduct godoc
@@ -139,4 +162,5 @@ func (p *ProductAPI) UpdateProduct(c *gin.Context) {
 	var res serializers.Product
 	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
+	_ = p.cache.RemovePattern("*product*")
 }
