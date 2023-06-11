@@ -4,9 +4,8 @@ import (
 	"go.uber.org/dig"
 )
 
-func Inject(container *dig.Container) error {
+func Inject(container *dig.Container) {
 	_ = container.Provide(NewProductAPI)
 	_ = container.Provide(NewUserAPI)
 	_ = container.Provide(NewOrderAPI)
-	return nil
 }

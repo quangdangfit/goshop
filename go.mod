@@ -10,7 +10,6 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.1.1
-	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/joho/godotenv v1.5.1
 	github.com/quangdangfit/gocommon v1.0.1
 	github.com/stretchr/testify v1.8.3
