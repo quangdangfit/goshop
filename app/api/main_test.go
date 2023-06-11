@@ -58,11 +58,6 @@ func setup() {
 	testOrderAPI = NewOrderAPI(validator, orderSvc)
 
 	testRouter = initGinEngine(testUserAPI, testProductAPI, testOrderAPI)
-
-	dbs.Database.Create(&models.User{
-		Email:    "test@test.com",
-		Password: "test123456",
-	})
 }
 
 func teardown() {
@@ -82,10 +77,16 @@ func makeRequest(method, url string, body interface{}, token string) *httptest.R
 }
 
 func accessToken() string {
+	dbs.Database.Create(&models.User{
+		Email:    "test@test.com",
+		Password: "test123456",
+	})
+
 	user := serializers.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
 	}
+	defer dbs.Database.Delete(user)
 
 	writer := makeRequest("POST", "/auth/login", user, "")
 	var response map[string]map[string]string
@@ -94,10 +95,16 @@ func accessToken() string {
 }
 
 func refreshToken() string {
+	dbs.Database.Create(&models.User{
+		Email:    "test@test.com",
+		Password: "test123456",
+	})
+
 	user := serializers.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
 	}
+	defer dbs.Database.Delete(user)
 
 	writer := makeRequest("POST", "/auth/login", user, "")
 	var response map[string]map[string]string
@@ -133,4 +140,11 @@ func makeMockRequest(method, url string, body interface{}, token string) *httpte
 	writer := httptest.NewRecorder()
 	mockTestRouter.ServeHTTP(writer, request)
 	return writer
+}
+
+func cleanData() {
+	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
+	dbs.Database.Where("1 = 1").Delete(&models.Product{})
+	dbs.Database.Where("1 = 1").Delete(&models.Order{})
+	dbs.Database.Where("1 = 1").Delete(&models.User{})
 }

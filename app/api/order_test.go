@@ -23,6 +23,8 @@ import (
 // =================================================================================================
 
 func TestOrderAPI_PlaceOrderSuccess(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -63,14 +65,11 @@ func TestOrderAPI_PlaceOrderSuccess(t *testing.T) {
 	assert.Equal(t, req.Lines[1].ProductID, res.Lines[1].Product.ID)
 	assert.Equal(t, req.Lines[1].Quantity, res.Lines[1].Quantity)
 	assert.Equal(t, float64(6), res.Lines[1].Price)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
 
 func TestOrderAPI_PlaceOrderInvalidFieldType(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -102,14 +101,11 @@ func TestOrderAPI_PlaceOrderInvalidFieldType(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
 	assert.Equal(t, "Invalid parameters", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
 
 func TestOrderAPI_PlaceOrderInvalidMissProductID(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -140,14 +136,11 @@ func TestOrderAPI_PlaceOrderInvalidMissProductID(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
 	assert.Equal(t, "Invalid parameters", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
 
 func TestOrderAPI_PlaceOrderInvalidMissQuantity(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -178,14 +171,11 @@ func TestOrderAPI_PlaceOrderInvalidMissQuantity(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
 	assert.Equal(t, "Invalid parameters", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
 
 func TestOrderAPI_PlaceOrderInvalidProductNotFound(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -217,14 +207,11 @@ func TestOrderAPI_PlaceOrderInvalidProductNotFound(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
 
 func TestOrderAPI_PlaceOrderUnauthorized(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -254,14 +241,11 @@ func TestOrderAPI_PlaceOrderUnauthorized(t *testing.T) {
 
 	writer := makeRequest("POST", "/api/v1/orders", req, "")
 	assert.Equal(t, http.StatusUnauthorized, writer.Code)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
 
 func TestOrderAPI_PlaceOrderCreateOrderFail(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -295,17 +279,14 @@ func TestOrderAPI_PlaceOrderCreateOrderFail(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
 
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-
 }
 
 // Get Order Detail
 // =================================================================================================
 
 func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@gmail.com",
 		Password: "test123456",
@@ -353,11 +334,6 @@ func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
 
 	assert.Equal(t, o.Lines[1].ProductID, res.Lines[1].Product.ID)
 	assert.Equal(t, o.Lines[1].Quantity, res.Lines[1].Quantity)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
 
 func TestOrderAPI_GetOrderByIDNotFound(t *testing.T) {
@@ -372,6 +348,8 @@ func TestOrderAPI_GetOrderByIDNotFound(t *testing.T) {
 // =================================================================================================
 
 func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -410,12 +388,6 @@ func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
 
 	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, token)
 	assert.Equal(t, http.StatusOK, writer.Code)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_CancelOrderNotFound(t *testing.T) {
@@ -427,6 +399,8 @@ func TestOrderAPI_CancelOrderNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -469,15 +443,11 @@ func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -520,15 +490,11 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -570,15 +536,11 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_CancelOrderUpdateOrderFail(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -636,18 +598,14 @@ func TestOrderAPI_CancelOrderUpdateOrderFail(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 // List My Orders
 // =================================================================================================
 
 func TestOrderAPI_ListProductsSuccess(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -707,15 +665,11 @@ func TestOrderAPI_ListProductsSuccess(t *testing.T) {
 
 	assert.Equal(t, o2.Lines[0].ProductID, res.Orders[1].Lines[0].Product.ID)
 	assert.Equal(t, o2.Lines[0].Quantity, res.Orders[1].Lines[0].Quantity)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsNotFound(t *testing.T) {
+	defer cleanData()
+
 	writer := makeRequest("GET", "/api/v1/orders", nil, accessToken())
 	var res serializers.ListProductRes
 	parseResponseResult(writer.Body.Bytes(), &res)
@@ -732,6 +686,8 @@ func TestOrderAPI_ListProductsInvalidFieldType(t *testing.T) {
 }
 
 func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -788,15 +744,11 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 	assert.Equal(t, 1, len(res.Orders))
 	assert.Equal(t, o2.Lines[0].ProductID, res.Orders[0].Lines[0].Product.ID)
 	assert.Equal(t, o2.Lines[0].Quantity, res.Orders[0].Lines[0].Quantity)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsFindByStatusNotFound(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -847,15 +799,11 @@ func TestOrderAPI_ListProductsFindByStatusNotFound(t *testing.T) {
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Orders))
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsFindByCodeSuccess(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -912,15 +860,11 @@ func TestOrderAPI_ListProductsFindByCodeSuccess(t *testing.T) {
 	assert.Equal(t, 1, len(res.Orders))
 	assert.Equal(t, o1.Lines[0].ProductID, res.Orders[0].Lines[0].Product.ID)
 	assert.Equal(t, o1.Lines[0].Quantity, res.Orders[0].Lines[0].Quantity)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsFindByCodeNotFound(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -971,15 +915,11 @@ func TestOrderAPI_ListProductsFindByCodeNotFound(t *testing.T) {
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Orders))
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsWithPagination(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -1036,15 +976,11 @@ func TestOrderAPI_ListProductsWithPagination(t *testing.T) {
 	assert.Equal(t, 1, len(res.Orders))
 	assert.Equal(t, o2.Lines[0].ProductID, res.Orders[0].Lines[0].Product.ID)
 	assert.Equal(t, o2.Lines[0].Quantity, res.Orders[0].Lines[0].Quantity)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsWithOrder(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -1104,15 +1040,11 @@ func TestOrderAPI_ListProductsWithOrder(t *testing.T) {
 
 	assert.Equal(t, o1.Lines[0].ProductID, res.Orders[1].Lines[0].Product.ID)
 	assert.Equal(t, o1.Lines[0].Quantity, res.Orders[1].Lines[0].Quantity)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
+	defer cleanData()
+
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -1162,12 +1094,6 @@ func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Orders))
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
-	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_GetMyOrdersFail(t *testing.T) {
