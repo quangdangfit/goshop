@@ -8,7 +8,6 @@ import (
 	"go.uber.org/dig"
 
 	"goshop/app/middleware"
-	_ "goshop/docs"
 )
 
 //	@title			Blueprint Swagger API
@@ -76,4 +75,10 @@ func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 	}
 
 	return err
+}
+
+func Inject(container *dig.Container) {
+	_ = container.Provide(NewProductAPI)
+	_ = container.Provide(NewUserAPI)
+	_ = container.Provide(NewOrderAPI)
 }

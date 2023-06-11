@@ -1,4 +1,4 @@
-package test
+package api
 
 import (
 	"bytes"
@@ -10,11 +10,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
+	"go.uber.org/dig"
 
-	"goshop/app"
 	"goshop/app/dbs"
 	"goshop/app/models"
+	"goshop/app/repositories"
 	"goshop/app/serializers"
+	"goshop/app/services"
 	"goshop/config"
 	"goshop/pkg/utils"
 )
@@ -38,8 +40,8 @@ func setup() {
 
 	dbs.Init()
 
-	container := app.BuildContainer()
-	testRouter = app.InitGinEngine(container)
+	container := buildContainer()
+	testRouter = initGinEngine(container)
 
 	dbs.Database.Create(&models.User{
 		Email:    "test@test.com",
@@ -91,4 +93,31 @@ func parseResponseResult(resData []byte, result interface{}) {
 	var response map[string]interface{}
 	_ = json.Unmarshal(resData, &response)
 	utils.Copy(result, response["result"])
+}
+
+func buildContainer() *dig.Container {
+	container := dig.New()
+
+	// Inject repositories
+	repositories.Inject(container)
+
+	// Inject services
+	services.Inject(container)
+
+	// Inject APIs
+	Inject(container)
+
+	return container
+}
+func initGinEngine(container *dig.Container) *gin.Engine {
+	cfg := config.GetConfig()
+	if cfg.Environment == config.ProductionEnv {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	app := gin.Default()
+	err := RegisterAPI(app, container)
+	if err != nil {
+		logger.Fatal("Failed to init GIN Engine", err)
+	}
+	return app
 }
