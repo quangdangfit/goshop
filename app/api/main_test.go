@@ -86,7 +86,6 @@ func accessToken() string {
 		Email:    "test@test.com",
 		Password: "test123456",
 	}
-	defer dbs.Database.Delete(user)
 
 	writer := makeRequest("POST", "/auth/login", user, "")
 	var response map[string]map[string]string
@@ -104,7 +103,6 @@ func refreshToken() string {
 		Email:    "test@test.com",
 		Password: "test123456",
 	}
-	defer dbs.Database.Delete(user)
 
 	writer := makeRequest("POST", "/auth/login", user, "")
 	var response map[string]map[string]string
