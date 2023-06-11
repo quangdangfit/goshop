@@ -13,6 +13,7 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     env:
+      environment: testing
       database_uri: postgres://postgres:test@localhost:5432/postgres
 
     services:
