@@ -183,6 +183,13 @@ func TestUserAPI_GetMeUserNotFound(t *testing.T) {
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
 }
 
+func TestUserAPI_GetMeInvalidTokenType(t *testing.T) {
+	writer := makeRequest("GET", "/auth/me", nil, refreshToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusUnauthorized, writer.Code)
+}
+
 // Refresh Token
 // =================================================================================================
 
