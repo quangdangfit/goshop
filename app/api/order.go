@@ -18,9 +18,9 @@ type OrderAPI struct {
 	service   services.IOrderService
 }
 
-func NewOrderAPI(service services.IOrderService) *OrderAPI {
+func NewOrderAPI(validator validation.Validation, service services.IOrderService) *OrderAPI {
 	return &OrderAPI{
-		validator: validation.New(),
+		validator: validator,
 		service:   service,
 	}
 }

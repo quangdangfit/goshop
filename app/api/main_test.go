@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
-	"go.uber.org/dig"
+	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/app/dbs"
 	"goshop/app/models"
@@ -22,8 +22,7 @@ import (
 )
 
 var (
-	testContainer *dig.Container
-	testRouter    *gin.Engine
+	testRouter *gin.Engine
 )
 
 func TestMain(m *testing.M) {
@@ -40,8 +39,21 @@ func setup() {
 
 	dbs.Init()
 
-	testContainer = buildContainer()
-	testRouter = initGinEngine(testContainer)
+	validator := validation.New()
+
+	userRepo := repositories.NewUserRepository()
+	productRepo := repositories.NewProductRepository()
+	orderRepo := repositories.NewOrderRepository()
+
+	userSvc := services.NewUserService(userRepo)
+	productSvc := services.NewProductService(productRepo)
+	orderSvc := services.NewOrderService(orderRepo, productRepo)
+
+	userAPI := NewUserAPI(validator, userSvc)
+	productAPI := NewProductAPI(validator, productSvc)
+	orderAPI := NewOrderAPI(validator, orderSvc)
+
+	testRouter = initGinEngine(userAPI, productAPI, orderAPI)
 
 	dbs.Database.Create(&models.User{
 		Email:    "test@test.com",
@@ -95,22 +107,15 @@ func parseResponseResult(resData []byte, result interface{}) {
 	utils.Copy(result, response["result"])
 }
 
-func buildContainer() *dig.Container {
-	container := dig.New()
-
-	// Inject repositories
-	repositories.Inject(container)
-
-	// Inject services
-	services.Inject(container)
-
-	// Inject APIs
-	Inject(container)
-
-	return container
-}
-func initGinEngine(container *dig.Container) *gin.Engine {
+func initGinEngine(userAPI *UserAPI,
+	productAPI *ProductAPI,
+	orderAPI *OrderAPI,
+) *gin.Engine {
+	cfg := config.GetConfig()
+	if cfg.Environment == config.ProductionEnv {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	app := gin.Default()
-	RegisterAPI(app, container)
+	RegisterAPI(app, userAPI, productAPI, orderAPI)
 	return app
 }

@@ -2,35 +2,21 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
-	"go.uber.org/dig"
 
 	"goshop/app/api"
-	"goshop/app/repositories"
-	"goshop/app/services"
 	"goshop/config"
 )
 
-func BuildContainer() *dig.Container {
-	container := dig.New()
-
-	// Inject repositories
-	repositories.Inject(container)
-
-	// Inject services
-	services.Inject(container)
-
-	// Inject APIs
-	api.Inject(container)
-
-	return container
-}
-
-func InitGinEngine(container *dig.Container) *gin.Engine {
+func InitGinEngine(
+	userAPI *api.UserAPI,
+	productAPI *api.ProductAPI,
+	orderAPI *api.OrderAPI,
+) *gin.Engine {
 	cfg := config.GetConfig()
 	if cfg.Environment == config.ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	app := gin.Default()
-	api.RegisterAPI(app, container)
+	api.RegisterAPI(app, userAPI, productAPI, orderAPI)
 	return app
 }
