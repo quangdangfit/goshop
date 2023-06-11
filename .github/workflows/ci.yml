@@ -15,6 +15,7 @@ jobs:
     env:
       environment: testing
       database_uri: postgres://postgres:test@localhost:5432/postgres
+      redis_uri: localhost:6379
 
     services:
       postgres:
@@ -23,6 +24,10 @@ jobs:
           POSTGRES_PASSWORD: "test"
         ports:
           - 5432:5432
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout source code
