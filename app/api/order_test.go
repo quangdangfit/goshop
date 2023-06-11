@@ -2,15 +2,20 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/quangdangfit/gocommon/validation"
 	"github.com/stretchr/testify/assert"
 
 	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
+	"goshop/app/services"
+	"goshop/mocks"
 	"goshop/pkg/jtoken"
 )
 
@@ -103,6 +108,7 @@ func TestOrderAPI_PlaceOrderInvalidFieldType(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
+
 func TestOrderAPI_PlaceOrderInvalidMissProductID(t *testing.T) {
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -140,6 +146,7 @@ func TestOrderAPI_PlaceOrderInvalidMissProductID(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
+
 func TestOrderAPI_PlaceOrderInvalidMissQuantity(t *testing.T) {
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -177,6 +184,7 @@ func TestOrderAPI_PlaceOrderInvalidMissQuantity(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
+
 func TestOrderAPI_PlaceOrderInvalidProductNotFound(t *testing.T) {
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -215,6 +223,7 @@ func TestOrderAPI_PlaceOrderInvalidProductNotFound(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
 }
+
 func TestOrderAPI_PlaceOrderUnauthorized(t *testing.T) {
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -250,6 +259,47 @@ func TestOrderAPI_PlaceOrderUnauthorized(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
+}
+
+func TestOrderAPI_PlaceOrderCreateOrderFail(t *testing.T) {
+	p1 := models.Product{
+		Name:        "test-product-1",
+		Description: "test-product-1",
+		Price:       1,
+	}
+	dbs.Database.Create(&p1)
+	req := &serializers.PlaceOrderReq{
+		Lines: []serializers.PlaceOrderLineReq{
+			{
+				ProductID: p1.ID,
+				Quantity:  2,
+			},
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockRepo := mocks.NewMockIOrderRepository(mockCtrl)
+	mockProductRepo := mocks.NewMockIProductRepository(mockCtrl)
+
+	orderSvc := services.NewOrderService(mockRepo, mockProductRepo)
+	mockTestOrderAPI := NewOrderAPI(validation.New(), orderSvc)
+	mockTestRouter = initGinEngine(testUserAPI, testProductAPI, mockTestOrderAPI)
+
+	mockProductRepo.EXPECT().GetProductByID(gomock.Any(), p1.ID).Return(&models.Product{}, nil).Times(1)
+	mockRepo.EXPECT().CreateOrder(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).Times(1)
+
+	writer := makeMockRequest("POST", "/api/v1/orders", req, accessToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
+
+	// clean up
+	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
+	dbs.Database.Where("1 = 1").Delete(&models.Product{})
+	dbs.Database.Where("1 = 1").Delete(&models.Order{})
+
 }
 
 // Get Order Detail
@@ -365,7 +415,7 @@ func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_CancelOrderNotFound(t *testing.T) {
@@ -424,7 +474,7 @@ func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
@@ -475,7 +525,7 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
@@ -525,7 +575,73 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
+}
+
+func TestOrderAPI_CancelOrderUpdateOrderFail(t *testing.T) {
+	u := models.User{
+		Email:    "test1@test.com",
+		Password: "test123456",
+	}
+	dbs.Database.Create(&u)
+	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+
+	p1 := models.Product{
+		Name:        "test-product-1",
+		Description: "test-product-1",
+		Price:       1,
+	}
+	dbs.Database.Create(&p1)
+
+	p2 := models.Product{
+		Name:        "test-product-2",
+		Description: "test-product-2",
+		Price:       2,
+	}
+	dbs.Database.Create(&p2)
+
+	o := models.Order{
+		UserID: u.ID,
+		Lines: []*models.OrderLine{
+			{
+				ProductID: p1.ID,
+				Quantity:  2,
+			},
+			{
+				ProductID: p2.ID,
+				Quantity:  3,
+			},
+		},
+		Status: models.OrderStatusNew,
+	}
+	dbs.Database.Create(&o)
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockRepo := mocks.NewMockIOrderRepository(mockCtrl)
+	mockProductRepo := mocks.NewMockIProductRepository(mockCtrl)
+
+	orderSvc := services.NewOrderService(mockRepo, mockProductRepo)
+	mockTestOrderAPI := NewOrderAPI(validation.New(), orderSvc)
+	mockTestRouter = initGinEngine(testUserAPI, testProductAPI, mockTestOrderAPI)
+
+	mockRepo.EXPECT().GetOrderByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&models.Order{
+		Status: models.OrderStatusNew,
+		UserID: u.ID,
+	}, nil).Times(1)
+	mockRepo.EXPECT().UpdateOrder(gomock.Any(), gomock.Any()).Return(errors.New("update order fail")).Times(1)
+
+	writer := makeMockRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, token)
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
+
+	// clean up
+	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
+	dbs.Database.Where("1 = 1").Delete(&models.Product{})
+	dbs.Database.Where("1 = 1").Delete(&models.Order{})
+	dbs.Database.Delete(u)
 }
 
 // List My Orders
@@ -596,7 +712,7 @@ func TestOrderAPI_ListProductsSuccess(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsNotFound(t *testing.T) {
@@ -677,7 +793,7 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsFindByStatusNotFound(t *testing.T) {
@@ -736,7 +852,7 @@ func TestOrderAPI_ListProductsFindByStatusNotFound(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsFindByCodeSuccess(t *testing.T) {
@@ -801,7 +917,7 @@ func TestOrderAPI_ListProductsFindByCodeSuccess(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsFindByCodeNotFound(t *testing.T) {
@@ -860,7 +976,7 @@ func TestOrderAPI_ListProductsFindByCodeNotFound(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsWithPagination(t *testing.T) {
@@ -925,7 +1041,7 @@ func TestOrderAPI_ListProductsWithPagination(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
 func TestOrderAPI_ListProductsWithOrder(t *testing.T) {
@@ -993,10 +1109,10 @@ func TestOrderAPI_ListProductsWithOrder(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
 }
 
-func TestOrderAPI_ListProductsNotMine(t *testing.T) {
+func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -1051,5 +1167,24 @@ func TestOrderAPI_ListProductsNotMine(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(u)
+	dbs.Database.Delete(u)
+}
+
+func TestOrderAPI_GetMyOrdersFail(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockRepo := mocks.NewMockIOrderRepository(mockCtrl)
+	mockProductRepo := mocks.NewMockIProductRepository(mockCtrl)
+
+	orderSvc := services.NewOrderService(mockRepo, mockProductRepo)
+	mockTestOrderAPI := NewOrderAPI(validation.New(), orderSvc)
+	mockTestRouter = initGinEngine(testUserAPI, testProductAPI, mockTestOrderAPI)
+
+	mockRepo.EXPECT().GetMyOrders(gomock.Any(), gomock.Any()).Return(nil, nil, errors.New("error")).Times(1)
+
+	writer := makeMockRequest("GET", "/api/v1/orders", nil, accessToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
 }

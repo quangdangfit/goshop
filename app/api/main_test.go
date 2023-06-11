@@ -22,7 +22,11 @@ import (
 )
 
 var (
-	testRouter *gin.Engine
+	testRouter     *gin.Engine
+	mockTestRouter *gin.Engine
+	testUserAPI    *UserAPI
+	testProductAPI *ProductAPI
+	testOrderAPI   *OrderAPI
 )
 
 func TestMain(m *testing.M) {
@@ -49,11 +53,11 @@ func setup() {
 	productSvc := services.NewProductService(productRepo)
 	orderSvc := services.NewOrderService(orderRepo, productRepo)
 
-	userAPI := NewUserAPI(validator, userSvc)
-	productAPI := NewProductAPI(validator, productSvc)
-	orderAPI := NewOrderAPI(validator, orderSvc)
+	testUserAPI = NewUserAPI(validator, userSvc)
+	testProductAPI = NewProductAPI(validator, productSvc)
+	testOrderAPI = NewOrderAPI(validator, orderSvc)
 
-	testRouter = initGinEngine(userAPI, productAPI, orderAPI)
+	testRouter = initGinEngine(testUserAPI, testProductAPI, testOrderAPI)
 
 	dbs.Database.Create(&models.User{
 		Email:    "test@test.com",
@@ -118,4 +122,15 @@ func initGinEngine(userAPI *UserAPI,
 	app := gin.Default()
 	RegisterAPI(app, userAPI, productAPI, orderAPI)
 	return app
+}
+
+func makeMockRequest(method, url string, body interface{}, token string) *httptest.ResponseRecorder {
+	requestBody, _ := json.Marshal(body)
+	request, _ := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
+	if token != "" {
+		request.Header.Add("Authorization", "Bearer "+token)
+	}
+	writer := httptest.NewRecorder()
+	mockTestRouter.ServeHTTP(writer, request)
+	return writer
 }
