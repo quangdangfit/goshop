@@ -195,6 +195,8 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: get my orders
+      tags:
+      - orders
     post:
       parameters:
       - description: Body
@@ -213,6 +215,8 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: place order
+      tags:
+      - orders
   /api/v1/orders/{id}:
     get:
       parameters:
@@ -231,6 +235,8 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: get order details
+      tags:
+      - orders
   /api/v1/orders/{id}/cancel:
     put:
       parameters:
@@ -245,6 +251,8 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: cancel order
+      tags:
+      - orders
   /api/v1/products:
     get:
       produces:
@@ -255,6 +263,8 @@ paths:
           schema:
             $ref: '#/definitions/serializers.ListProductRes'
       summary: Get list products
+      tags:
+      - products
     post:
       parameters:
       - description: Body
@@ -273,6 +283,8 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: create product
+      tags:
+      - products
   /api/v1/products/{id}:
     get:
       parameters:
@@ -289,6 +301,8 @@ paths:
           schema:
             $ref: '#/definitions/serializers.Product'
       summary: Get product by id
+      tags:
+      - products
     put:
       parameters:
       - description: Product ID
@@ -312,6 +326,8 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: update product
+      tags:
+      - products
   /auth/change-password:
     put:
       parameters:
@@ -327,6 +343,8 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: changes the password
+      tags:
+      - users
   /auth/login:
     post:
       parameters:
@@ -344,6 +362,8 @@ paths:
           schema:
             $ref: '#/definitions/serializers.LoginRes'
       summary: Login
+      tags:
+      - users
   /auth/me:
     get:
       produces:
@@ -356,6 +376,8 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: get my profile
+      tags:
+      - users
   /auth/register:
     post:
       parameters:
@@ -373,4 +395,6 @@ paths:
           schema:
             $ref: '#/definitions/serializers.RegisterRes'
       summary: Register new user
+      tags:
+      - users
 swagger: "2.0"

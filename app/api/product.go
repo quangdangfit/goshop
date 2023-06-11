@@ -36,6 +36,7 @@ func NewProductAPI(
 // GetProductByID godoc
 //
 //	@Summary	Get product by id
+//	@Tags		products
 //	@Produce	json
 //	@Param		id	path		string	true	"Product ID"
 //	@Success	200	{object}	serializers.Product
@@ -64,6 +65,7 @@ func (p *ProductAPI) GetProductByID(c *gin.Context) {
 // ListProducts godoc
 //
 //	@Summary	Get list products
+//	@Tags		products
 //	@Produce	json
 //	@Success	200	{object}	serializers.ListProductRes
 //	@Router		/api/v1/products [get]
@@ -98,6 +100,7 @@ func (p *ProductAPI) ListProducts(c *gin.Context) {
 // CreateProduct godoc
 //
 //	@Summary	create product
+//	@Tags		products
 //	@Produce	json
 //	@Security	ApiKeyAuth
 //	@Param		_	body		serializers.CreateProductReq	true	"Body"
@@ -132,6 +135,7 @@ func (p *ProductAPI) CreateProduct(c *gin.Context) {
 // UpdateProduct godoc
 //
 //	@Summary	update product
+//	@Tags		products
 //	@Produce	json
 //	@Security	ApiKeyAuth
 //	@Param		id	path		string							true	"Product ID"
