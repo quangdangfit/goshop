@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/caarlos0/env"
@@ -9,6 +10,9 @@ import (
 )
 
 const (
+	ProductionEnv = "production"
+	TestEnv       = "testing"
+
 	DatabaseTimeout = 5 * time.Second
 )
 
@@ -20,13 +24,13 @@ type Schema struct {
 }
 
 var (
-	ProductionEnv = "production"
-	cfg           Schema
+	cfg Schema
 )
 
 func init() {
-	err := godotenv.Load("./config/config.yaml")
-	if err != nil {
+	environment := os.Getenv("environment")
+	err := godotenv.Load("config/config.yaml")
+	if err != nil && environment != TestEnv {
 		log.Fatalf("Error on load configuration file, error: %v", err)
 	}
 

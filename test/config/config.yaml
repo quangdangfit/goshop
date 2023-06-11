@@ -1,4 +1,0 @@
-environment: testing
-port: 8888
-
-database_uri: postgres://postgres:8Rd2y1VLSubXflPa@localhost:5432/goshoptest

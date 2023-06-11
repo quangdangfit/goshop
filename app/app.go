@@ -15,22 +15,13 @@ func BuildContainer() *dig.Container {
 	container := dig.New()
 
 	// Inject repositories
-	err := repositories.Inject(container)
-	if err != nil {
-		logger.Error("Failed to inject repositories", err)
-	}
+	repositories.Inject(container)
 
 	// Inject services
-	err = services.Inject(container)
-	if err != nil {
-		logger.Error("Failed to inject services", err)
-	}
+	services.Inject(container)
 
 	// Inject APIs
-	err = api.Inject(container)
-	if err != nil {
-		logger.Error("Failed to inject APIs", err)
-	}
+	api.Inject(container)
 
 	return container
 }

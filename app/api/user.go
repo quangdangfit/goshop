@@ -5,12 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
+	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/app/serializers"
 	"goshop/app/services"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
-	"goshop/pkg/validation"
 )
 
 type UserAPI struct {
