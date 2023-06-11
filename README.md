@@ -21,6 +21,9 @@ environment: production
 port: 8888
 auth_secret: ######
 database_uri: postgres://username:password@host:5432/database
+redis_uri: localhost:6379
+redis_password:
+redis_db: 0
 ```
 
 ### Run
