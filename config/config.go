@@ -13,14 +13,18 @@ const (
 	ProductionEnv = "production"
 	TestEnv       = "testing"
 
-	DatabaseTimeout = 5 * time.Second
+	DatabaseTimeout    = 5 * time.Second
+	ProductCachingTime = 5 * time.Minute
 )
 
 type Schema struct {
-	Environment string `env:"environment"`
-	Port        int    `env:"port"`
-	AuthSecret  string `env:"auth_secret"`
-	DatabaseURI string `env:"database_uri"`
+	Environment   string `env:"environment"`
+	Port          int    `env:"port"`
+	AuthSecret    string `env:"auth_secret"`
+	DatabaseURI   string `env:"database_uri"`
+	RedisURI      string `env:"redis_uri"`
+	RedisPassword string `env:"redis_password"`
+	RedisDB       int    `env:"redis_db"`
 }
 
 var (

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/quangdangfit/gocommon/logger"
+	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/app"
@@ -27,6 +28,11 @@ func main() {
 	dbs.Init()
 
 	validator := validation.New()
+	cache := redis.New(redis.Config{
+		Address:  cfg.RedisURI,
+		Password: cfg.RedisPassword,
+		Database: cfg.RedisDB,
+	})
 
 	userRepo := repositories.NewUserRepository()
 	productRepo := repositories.NewProductRepository()
@@ -37,7 +43,7 @@ func main() {
 	orderSvc := services.NewOrderService(orderRepo, productRepo)
 
 	userAPI := api.NewUserAPI(validator, userSvc)
-	productAPI := api.NewProductAPI(validator, productSvc)
+	productAPI := api.NewProductAPI(validator, cache, productSvc)
 	orderAPI := api.NewOrderAPI(validator, orderSvc)
 
 	engine := app.InitGinEngine(userAPI, productAPI, orderAPI)

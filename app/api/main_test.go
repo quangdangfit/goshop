@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
+	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/app/dbs"
@@ -27,6 +28,7 @@ var (
 	testUserAPI    *UserAPI
 	testProductAPI *ProductAPI
 	testOrderAPI   *OrderAPI
+	testRedis      redis.IRedis
 )
 
 func TestMain(m *testing.M) {
@@ -39,11 +41,17 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
+	cfg := config.GetConfig()
 	logger.Initialize(config.TestEnv)
 
 	dbs.Init()
 
 	validator := validation.New()
+	testRedis = redis.New(redis.Config{
+		Address:  cfg.RedisURI,
+		Password: cfg.RedisPassword,
+		Database: cfg.RedisDB,
+	})
 
 	userRepo := repositories.NewUserRepository()
 	productRepo := repositories.NewProductRepository()
@@ -54,10 +62,15 @@ func setup() {
 	orderSvc := services.NewOrderService(orderRepo, productRepo)
 
 	testUserAPI = NewUserAPI(validator, userSvc)
-	testProductAPI = NewProductAPI(validator, productSvc)
+	testProductAPI = NewProductAPI(validator, testRedis, productSvc)
 	testOrderAPI = NewOrderAPI(validator, orderSvc)
 
 	testRouter = initGinEngine(testUserAPI, testProductAPI, testOrderAPI)
+
+	dbs.Database.Create(&models.User{
+		Email:    "test@test.com",
+		Password: "test123456",
+	})
 }
 
 func teardown() {
@@ -77,11 +90,6 @@ func makeRequest(method, url string, body interface{}, token string) *httptest.R
 }
 
 func accessToken() string {
-	dbs.Database.Create(&models.User{
-		Email:    "test@test.com",
-		Password: "test123456",
-	})
-
 	user := serializers.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
@@ -94,11 +102,6 @@ func accessToken() string {
 }
 
 func refreshToken() string {
-	dbs.Database.Create(&models.User{
-		Email:    "test@test.com",
-		Password: "test123456",
-	})
-
 	user := serializers.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
@@ -140,9 +143,14 @@ func makeMockRequest(method, url string, body interface{}, token string) *httpte
 	return writer
 }
 
-func cleanData() {
+func cleanData(records ...interface{}) {
 	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
 	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 	dbs.Database.Where("1 = 1").Delete(&models.Order{})
-	dbs.Database.Where("1 = 1").Delete(&models.User{})
+
+	for _, record := range records {
+		dbs.Database.Delete(record)
+	}
+
+	testRedis.RemovePattern("*")
 }

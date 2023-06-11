@@ -285,14 +285,13 @@ func TestOrderAPI_PlaceOrderCreateOrderFail(t *testing.T) {
 // =================================================================================================
 
 func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@gmail.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -348,14 +347,13 @@ func TestOrderAPI_GetOrderByIDNotFound(t *testing.T) {
 // =================================================================================================
 
 func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -399,14 +397,13 @@ func TestOrderAPI_CancelOrderNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -446,14 +443,13 @@ func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -493,13 +489,12 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -539,14 +534,13 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderUpdateOrderFail(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -604,14 +598,13 @@ func TestOrderAPI_CancelOrderUpdateOrderFail(t *testing.T) {
 // =================================================================================================
 
 func TestOrderAPI_ListProductsSuccess(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -686,14 +679,13 @@ func TestOrderAPI_ListProductsInvalidFieldType(t *testing.T) {
 }
 
 func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -747,14 +739,13 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 }
 
 func TestOrderAPI_ListProductsFindByStatusNotFound(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -802,14 +793,13 @@ func TestOrderAPI_ListProductsFindByStatusNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_ListProductsFindByCodeSuccess(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -863,14 +853,13 @@ func TestOrderAPI_ListProductsFindByCodeSuccess(t *testing.T) {
 }
 
 func TestOrderAPI_ListProductsFindByCodeNotFound(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -918,14 +907,13 @@ func TestOrderAPI_ListProductsFindByCodeNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_ListProductsWithPagination(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -979,14 +967,13 @@ func TestOrderAPI_ListProductsWithPagination(t *testing.T) {
 }
 
 func TestOrderAPI_ListProductsWithOrder(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
@@ -1043,13 +1030,12 @@ func TestOrderAPI_ListProductsWithOrder(t *testing.T) {
 }
 
 func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
-	defer cleanData()
-
 	u := models.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
 	dbs.Database.Create(&u)
+	defer cleanData(&u)
 
 	p1 := models.Product{
 		Name:        "test-product-1",
