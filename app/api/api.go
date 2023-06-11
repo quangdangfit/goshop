@@ -27,12 +27,12 @@ import (
 
 //	@BasePath	/api/v1
 
-func RegisterAPI(r *gin.Engine, container *dig.Container) error {
+func RegisterAPI(r *gin.Engine, container *dig.Container) {
 	err := container.Invoke(func(
 		user *UserAPI,
 		product *ProductAPI,
 		order *OrderAPI,
-	) error {
+	) {
 		r.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 		authMiddleware := middleware.JWTAuth()
@@ -66,15 +66,11 @@ func RegisterAPI(r *gin.Engine, container *dig.Container) error {
 			orderAPI.GET("", order.GetOrders)
 			orderAPI.PUT("/:id/cancel", order.CancelOrder)
 		}
-
-		return nil
 	})
 
 	if err != nil {
-		logger.Error(err)
+		logger.Fatal(err)
 	}
-
-	return err
 }
 
 func Inject(container *dig.Container) {

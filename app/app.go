@@ -2,7 +2,6 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/quangdangfit/gocommon/logger"
 	"go.uber.org/dig"
 
 	"goshop/app/api"
@@ -32,9 +31,6 @@ func InitGinEngine(container *dig.Container) *gin.Engine {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	app := gin.Default()
-	err := api.RegisterAPI(app, container)
-	if err != nil {
-		logger.Fatal("Failed to init GIN Engine", err)
-	}
+	api.RegisterAPI(app, container)
 	return app
 }

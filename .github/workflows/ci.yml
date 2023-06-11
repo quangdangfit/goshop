@@ -1,16 +1,16 @@
 name: CI GoShop
 on:
   push:
-     branches: [ master, develop ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [master, develop]
+    branches: [ master, develop ]
 
 jobs:
   CI:
     strategy:
       matrix:
-        go-version: [1.18.x]
-        os: [ubuntu-latest]
+        go-version: [ 1.18.x ]
+        os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os }}
     env:
       environment: testing
@@ -44,6 +44,9 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+      - name: Generate Mock
+        run: go install github.com/golang/mock/mockgen@v1.6.0 && make mock
 
       - name: Install dependencies
         run: go mod download

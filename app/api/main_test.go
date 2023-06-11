@@ -22,7 +22,8 @@ import (
 )
 
 var (
-	testRouter *gin.Engine
+	testContainer *dig.Container
+	testRouter    *gin.Engine
 )
 
 func TestMain(m *testing.M) {
@@ -35,13 +36,12 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	cfg := config.GetConfig()
-	logger.Initialize(cfg.Environment)
+	logger.Initialize(config.TestEnv)
 
 	dbs.Init()
 
-	container := buildContainer()
-	testRouter = initGinEngine(container)
+	testContainer = buildContainer()
+	testRouter = initGinEngine(testContainer)
 
 	dbs.Database.Create(&models.User{
 		Email:    "test@test.com",
@@ -110,14 +110,7 @@ func buildContainer() *dig.Container {
 	return container
 }
 func initGinEngine(container *dig.Container) *gin.Engine {
-	cfg := config.GetConfig()
-	if cfg.Environment == config.ProductionEnv {
-		gin.SetMode(gin.ReleaseMode)
-	}
 	app := gin.Default()
-	err := RegisterAPI(app, container)
-	if err != nil {
-		logger.Fatal("Failed to init GIN Engine", err)
-	}
+	RegisterAPI(app, container)
 	return app
 }

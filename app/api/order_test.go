@@ -478,6 +478,56 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 	dbs.Database.Where("1 = 1").Delete(u)
 }
 
+func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
+	u := models.User{
+		Email:    "test1@test.com",
+		Password: "test123456",
+	}
+	dbs.Database.Create(&u)
+
+	p1 := models.Product{
+		Name:        "test-product-1",
+		Description: "test-product-1",
+		Price:       1,
+	}
+	dbs.Database.Create(&p1)
+
+	p2 := models.Product{
+		Name:        "test-product-2",
+		Description: "test-product-2",
+		Price:       2,
+	}
+	dbs.Database.Create(&p2)
+
+	o := models.Order{
+		UserID: u.ID,
+		Lines: []*models.OrderLine{
+			{
+				ProductID: p1.ID,
+				Quantity:  2,
+			},
+			{
+				ProductID: p2.ID,
+				Quantity:  3,
+			},
+		},
+		Status: models.OrderStatusNew,
+	}
+	dbs.Database.Create(&o)
+
+	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, accessToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
+
+	// clean up
+	dbs.Database.Where("1 = 1").Delete(&models.OrderLine{})
+	dbs.Database.Where("1 = 1").Delete(&models.Product{})
+	dbs.Database.Where("1 = 1").Delete(&models.Order{})
+	dbs.Database.Where("1 = 1").Delete(u)
+}
+
 // List My Orders
 // =================================================================================================
 

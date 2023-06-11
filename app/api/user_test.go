@@ -73,6 +73,18 @@ func TestUserAPI_LoginUserNotFound(t *testing.T) {
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
 }
 
+func TestUserAPI_LoginUserWrongPassword(t *testing.T) {
+	user := &serializers.LoginReq{
+		Email:    "test@test.com",
+		Password: "test1234567",
+	}
+	writer := makeRequest("POST", "/auth/login", user, "")
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
+}
+
 // Register
 // =================================================================================================
 
@@ -273,3 +285,25 @@ func TestUserAPI_ChangePasswordInvalidFieldType(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
 	assert.Equal(t, "Invalid parameters", response["error"]["message"])
 }
+
+//func TestUserAPI_ChangePasswordUpdateFail(t *testing.T) {
+//	req := &serializers.ChangePasswordReq{
+//		Password:    "test123456",
+//		NewPassword: "new",
+//	}
+//
+//	mockCtrl := gomock.NewController(t)
+//	defer mockCtrl.Finish()
+//	mockRepo := mocks.NewMockIUserRepository(mockCtrl)
+//	err := testContainer.Decorate(func(repo repositories.IUserRepository) repositories.IUserRepository { return repo })
+//	err = testContainer.Provide(func() repositories.IUserRepository { return mockRepo }, dig.Export(true))
+//	print(err)
+//	mockRepo.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Return(&models.User{}, nil).Times(1)
+//	mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errors.New("update fail")).Times(1)
+//
+//	writer := makeRequest("PUT", "/auth/change-password", req, accessToken())
+//	var response map[string]map[string]string
+//	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+//	assert.Equal(t, http.StatusBadRequest, writer.Code)
+//	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+//}
