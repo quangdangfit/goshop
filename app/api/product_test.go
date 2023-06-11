@@ -2,21 +2,28 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/quangdangfit/gocommon/validation"
 	"github.com/stretchr/testify/assert"
 
 	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
+	"goshop/app/services"
+	"goshop/mocks"
 )
 
 // Get Product Detail
 // =================================================================================================
 
 func TestProductAPI_GetProductByIDSuccess(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -31,9 +38,6 @@ func TestProductAPI_GetProductByIDSuccess(t *testing.T) {
 	assert.Equal(t, "test-product", res.Name)
 	assert.Equal(t, "test-product", res.Description)
 	assert.Equal(t, float64(1), res.Price)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_GetProductByIDNotFound(t *testing.T) {
@@ -48,6 +52,8 @@ func TestProductAPI_GetProductByIDNotFound(t *testing.T) {
 // =================================================================================================
 
 func TestProductAPI_ListProductsSuccess(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -67,9 +73,6 @@ func TestProductAPI_ListProductsSuccess(t *testing.T) {
 	assert.Equal(t, "test-product", res.Products[0].Name)
 	assert.Equal(t, "test-product", res.Products[0].Description)
 	assert.Equal(t, float64(1), res.Products[0].Price)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_ListProductsNotFound(t *testing.T) {
@@ -89,6 +92,8 @@ func TestProductAPI_ListProductsInvalidFieldType(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsFindByNameSuccess(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -108,12 +113,11 @@ func TestProductAPI_ListProductsFindByNameSuccess(t *testing.T) {
 	assert.Equal(t, "test-product", res.Products[0].Name)
 	assert.Equal(t, "test-product", res.Products[0].Description)
 	assert.Equal(t, float64(1), res.Products[0].Price)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_ListProductsFindByNameNotFound(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -126,12 +130,11 @@ func TestProductAPI_ListProductsFindByNameNotFound(t *testing.T) {
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Products))
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_ListProductsFindByCodeSuccess(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -151,12 +154,11 @@ func TestProductAPI_ListProductsFindByCodeSuccess(t *testing.T) {
 	assert.Equal(t, "test-product", res.Products[0].Name)
 	assert.Equal(t, "test-product", res.Products[0].Description)
 	assert.Equal(t, float64(1), res.Products[0].Price)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_ListProductsFindByCodeNotFound(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -169,12 +171,11 @@ func TestProductAPI_ListProductsFindByCodeNotFound(t *testing.T) {
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Products))
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_ListProductsWithPagination(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -208,12 +209,11 @@ func TestProductAPI_ListProductsWithPagination(t *testing.T) {
 	assert.Equal(t, "test-product-3", res.Products[0].Name)
 	assert.Equal(t, "test-product-3", res.Products[0].Description)
 	assert.Equal(t, float64(3), res.Products[0].Price)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_ListProductsWithOrder(t *testing.T) {
+	defer cleanData()
+
 	p1 := models.Product{
 		Name:        "test-product-1",
 		Description: "test-product-1",
@@ -235,7 +235,7 @@ func TestProductAPI_ListProductsWithOrder(t *testing.T) {
 	}
 	dbs.Database.Create(&p3)
 
-	writer := makeRequest("GET", "/api/v1/products?orderBy=name&orderDesc=true", nil, accessToken())
+	writer := makeRequest("GET", "/api/v1/products?order_by=name&order_desc=true", nil, accessToken())
 	var res serializers.ListProductRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
@@ -244,18 +244,44 @@ func TestProductAPI_ListProductsWithOrder(t *testing.T) {
 	assert.Equal(t, int64(1), res.Pagination.TotalPage)
 	assert.Equal(t, int64(20), res.Pagination.Limit)
 	assert.Equal(t, 3, len(res.Products))
-	assert.Equal(t, "test-product-1", res.Products[0].Name)
-	assert.Equal(t, "test-product-1", res.Products[0].Description)
-	assert.Equal(t, float64(1), res.Products[0].Price)
+	assert.Equal(t, "test-product-3", res.Products[0].Name)
+	assert.Equal(t, "test-product-3", res.Products[0].Description)
+	assert.Equal(t, float64(3), res.Products[0].Price)
+}
 
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
+func TestProductAPI_ListProductsFail(t *testing.T) {
+	defer cleanData()
+
+	p := models.Product{
+		Name:        "test-product",
+		Description: "test-product",
+		Price:       1,
+	}
+	dbs.Database.Create(&p)
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockRepo := mocks.NewMockIProductRepository(mockCtrl)
+
+	productSvc := services.NewProductService(mockRepo)
+	mockTestProductAPI := NewProductAPI(validation.New(), productSvc)
+	mockTestRouter = initGinEngine(testUserAPI, mockTestProductAPI, testOrderAPI)
+
+	mockRepo.EXPECT().ListProducts(gomock.Any(), gomock.Any()).Return(nil, nil, errors.New("update order fail")).Times(1)
+
+	writer := makeMockRequest("GET", "/api/v1/products", nil, accessToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
 }
 
 // Create Product
 // =================================================================================================
 
 func TestProductAPI_CreateProductSuccess(t *testing.T) {
+	defer cleanData()
+
 	p := &serializers.CreateProductReq{
 		Name:        "test-product",
 		Description: "test-product",
@@ -268,12 +294,11 @@ func TestProductAPI_CreateProductSuccess(t *testing.T) {
 	assert.Equal(t, "test-product", res.Name)
 	assert.Equal(t, "test-product", res.Description)
 	assert.Equal(t, float64(1), res.Price)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_CreateProductInvalidFieldType(t *testing.T) {
+	defer cleanData()
+
 	p := map[string]interface{}{
 		"name":        "test-product",
 		"description": "test-product",
@@ -287,6 +312,8 @@ func TestProductAPI_CreateProductInvalidFieldType(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductMissingName(t *testing.T) {
+	defer cleanData()
+
 	p := &serializers.CreateProductReq{
 		Description: "test-product",
 		Price:       1,
@@ -299,6 +326,8 @@ func TestProductAPI_CreateProductMissingName(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductMissingDescription(t *testing.T) {
+	defer cleanData()
+
 	p := &serializers.CreateProductReq{
 		Name:  "test-product",
 		Price: 1,
@@ -311,6 +340,8 @@ func TestProductAPI_CreateProductMissingDescription(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductPriceLessThanZero(t *testing.T) {
+	defer cleanData()
+
 	p := &serializers.CreateProductReq{
 		Name:        "test-product",
 		Description: "test-product",
@@ -324,6 +355,8 @@ func TestProductAPI_CreateProductPriceLessThanZero(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductPriceEqualZero(t *testing.T) {
+	defer cleanData()
+
 	p := &serializers.CreateProductReq{
 		Name:        "test-product",
 		Description: "test-product",
@@ -337,6 +370,8 @@ func TestProductAPI_CreateProductPriceEqualZero(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductDuplicateName(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -349,15 +384,14 @@ func TestProductAPI_CreateProductDuplicateName(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 // Update Product
 // =================================================================================================
 
 func TestProductAPI_UpdateProductSuccess(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -375,12 +409,11 @@ func TestProductAPI_UpdateProductSuccess(t *testing.T) {
 	assert.Equal(t, "update-test-product", res.Name)
 	assert.Equal(t, "test-product", res.Description)
 	assert.Equal(t, float64(1), res.Price)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_UpdateProductInvalidFieldType(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -396,12 +429,11 @@ func TestProductAPI_UpdateProductInvalidFieldType(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
 	assert.Equal(t, "Invalid parameters", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_UpdateProductPriceLessThanZero(t *testing.T) {
+	defer cleanData()
+
 	p := models.Product{
 		Name:        "test-product",
 		Description: "test-product",
@@ -417,9 +449,6 @@ func TestProductAPI_UpdateProductPriceLessThanZero(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
 	assert.Equal(t, "Invalid parameters", response["error"]["message"])
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&models.Product{})
 }
 
 func TestProductAPI_UpdateProductNotFound(t *testing.T) {
@@ -427,6 +456,38 @@ func TestProductAPI_UpdateProductNotFound(t *testing.T) {
 		Price: 1,
 	}
 	writer := makeRequest("PUT", "/api/v1/products/notfound", update, accessToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
+}
+
+func TestProductAPI_UpdateProductFail(t *testing.T) {
+	defer cleanData()
+
+	p := models.Product{
+		Name:        "test-product",
+		Description: "test-product",
+		Price:       1,
+	}
+	dbs.Database.Create(&p)
+
+	update := &serializers.UpdateProductReq{
+		Name: "update-test-product",
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockRepo := mocks.NewMockIProductRepository(mockCtrl)
+
+	productSvc := services.NewProductService(mockRepo)
+	mockTestProductAPI := NewProductAPI(validation.New(), productSvc)
+	mockTestRouter = initGinEngine(testUserAPI, mockTestProductAPI, testOrderAPI)
+
+	mockRepo.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(&models.Product{}, nil).Times(1)
+	mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errors.New("update order fail")).Times(1)
+
+	writer := makeMockRequest("PUT", fmt.Sprintf("/api/v1/products/%s", p.ID), update, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)

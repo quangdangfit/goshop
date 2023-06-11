@@ -4,43 +4,25 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 
 	"goshop/pkg/jtoken"
-	"goshop/pkg/utils"
 )
 
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var code string
-
-		code = utils.Success
 		token := c.GetHeader("Authorization")
-
 		if token == "" {
-			code = utils.InvalidParams
-			c.JSON(http.StatusUnauthorized, utils.PrepareResponse(nil, "Unauthorized", code))
-
+			c.JSON(http.StatusUnauthorized, nil)
 			c.Abort()
 			return
 		}
 
 		payload, err := jtoken.ValidateToken(token)
-		if err != nil {
-			switch err.(*jwt.ValidationError).Errors {
-			case jwt.ValidationErrorExpired:
-				code = utils.ErrorAuthCheckTokenTimeout
-			default:
-				code = utils.ErrorAuthCheckTokenFail
-			}
-		}
-
-		if code != utils.Success || payload == nil || payload["type"] != jtoken.AccessTokenType {
-			c.JSON(http.StatusUnauthorized, utils.PrepareResponse(nil, "Unauthorized", code))
+		if err != nil || payload == nil || payload["type"] != jtoken.AccessTokenType {
+			c.JSON(http.StatusUnauthorized, nil)
 			c.Abort()
 			return
 		}
-
 		c.Set("userId", payload["id"])
 		c.Set("role", payload["role"])
 		c.Next()
@@ -49,36 +31,19 @@ func JWTAuth() gin.HandlerFunc {
 
 func JWTRefresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var code string
-
-		code = utils.Success
 		token := c.GetHeader("Authorization")
-
 		if token == "" {
-			code = utils.InvalidParams
-			c.JSON(http.StatusUnauthorized, utils.PrepareResponse(nil, "Unauthorized", code))
-
+			c.JSON(http.StatusUnauthorized, nil)
 			c.Abort()
 			return
 		}
 
 		payload, err := jtoken.ValidateToken(token)
-		if err != nil {
-			switch err.(*jwt.ValidationError).Errors {
-			case jwt.ValidationErrorExpired:
-				code = utils.ErrorAuthCheckTokenTimeout
-			default:
-				code = utils.ErrorAuthCheckTokenFail
-			}
-		}
-
-		if code != utils.Success || payload == nil || payload["type"] != jtoken.RefreshTokenType {
-			c.JSON(http.StatusUnauthorized, utils.PrepareResponse(nil, "Unauthorized", code))
-
+		if err != nil || payload == nil || payload["type"] != jtoken.RefreshTokenType {
+			c.JSON(http.StatusUnauthorized, nil)
 			c.Abort()
 			return
 		}
-
 		c.Set("userId", payload["id"])
 		c.Set("role", payload["role"])
 		c.Next()

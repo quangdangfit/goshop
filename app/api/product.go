@@ -18,9 +18,9 @@ type ProductAPI struct {
 	service   services.IProductService
 }
 
-func NewProductAPI(service services.IProductService) *ProductAPI {
+func NewProductAPI(validator validation.Validation, service services.IProductService) *ProductAPI {
 	return &ProductAPI{
-		validator: validation.New(),
+		validator: validator,
 		service:   service,
 	}
 }

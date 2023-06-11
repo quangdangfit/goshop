@@ -18,9 +18,9 @@ type UserAPI struct {
 	service   services.IUserService
 }
 
-func NewUserAPI(service services.IUserService) *UserAPI {
+func NewUserAPI(validator validation.Validation, service services.IUserService) *UserAPI {
 	return &UserAPI{
-		validator: validation.New(),
+		validator: validator,
 		service:   service,
 	}
 }

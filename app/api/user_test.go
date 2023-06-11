@@ -2,12 +2,18 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
+	"goshop/app/services"
+	"goshop/mocks"
 	"goshop/pkg/jtoken"
 
 	"github.com/stretchr/testify/assert"
@@ -17,6 +23,11 @@ import (
 // =================================================================================================
 
 func TestUserAPI_LoginSuccess(t *testing.T) {
+	dbs.Database.Create(&models.User{
+		Email:    "test@test.com",
+		Password: "test123456",
+	})
+
 	user := &serializers.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
@@ -73,19 +84,30 @@ func TestUserAPI_LoginUserNotFound(t *testing.T) {
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
 }
 
+func TestUserAPI_LoginUserWrongPassword(t *testing.T) {
+	user := &serializers.LoginReq{
+		Email:    "test@test.com",
+		Password: "test1234567",
+	}
+	writer := makeRequest("POST", "/auth/login", user, "")
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
+}
+
 // Register
 // =================================================================================================
 
 func TestUserAPI_RegisterSuccess(t *testing.T) {
+	defer cleanData()
+
 	user := &serializers.RegisterReq{
 		Email:    "register@test.com",
 		Password: "test123456",
 	}
 	writer := makeRequest("POST", "/auth/register", user, "")
 	assert.Equal(t, http.StatusOK, writer.Code)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&user)
 }
 
 func TestUserAPI_RegisterInvalidFieldType(t *testing.T) {
@@ -125,6 +147,13 @@ func TestUserAPI_RegisterInvalidPassword(t *testing.T) {
 }
 
 func TestUserAPI_RegisterEmailExist(t *testing.T) {
+	defer cleanData()
+
+	dbs.Database.Create(&models.User{
+		Email:    "test@test.com",
+		Password: "password",
+	})
+
 	user := map[string]interface{}{
 		"email":    "test@test.com",
 		"password": "test123456",
@@ -163,6 +192,13 @@ func TestUserAPI_GetMeUserNotFound(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
 	assert.Equal(t, "Something went wrong", response["error"]["message"])
+}
+
+func TestUserAPI_GetMeInvalidTokenType(t *testing.T) {
+	writer := makeRequest("GET", "/auth/me", nil, refreshToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusUnauthorized, writer.Code)
 }
 
 // Refresh Token
@@ -206,6 +242,8 @@ func TestUserAPI_RefreshTokenUserNotFound(t *testing.T) {
 // =================================================================================================
 
 func TestUserAPI_ChangePasswordSuccess(t *testing.T) {
+	defer cleanData()
+
 	user := models.User{Email: "changepassword1@gmail.com", Password: "123456"}
 	dbs.Database.Create(&user)
 
@@ -220,9 +258,6 @@ func TestUserAPI_ChangePasswordSuccess(t *testing.T) {
 
 	writer := makeRequest("PUT", "/auth/change-password", req, token)
 	assert.Equal(t, http.StatusOK, writer.Code)
-
-	// clean up
-	dbs.Database.Where("1 = 1").Delete(&user)
 }
 
 func TestUserAPI_ChangePasswordUnauthorized(t *testing.T) {
@@ -272,4 +307,51 @@ func TestUserAPI_ChangePasswordInvalidFieldType(t *testing.T) {
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
 	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+}
+
+func TestUserAPI_ChangePasswordUpdateFail(t *testing.T) {
+	req := &serializers.ChangePasswordReq{
+		Password:    "test123456",
+		NewPassword: "new123456",
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockRepo := mocks.NewMockIUserRepository(mockCtrl)
+
+	userSvc := services.NewUserService(mockRepo)
+	mockTestUserAPI := NewUserAPI(validation.New(), userSvc)
+	mockTestRouter = initGinEngine(mockTestUserAPI, testProductAPI, testOrderAPI)
+
+	mockRepo.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Return(&models.User{}, nil).Times(1)
+	mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errors.New("update fail")).Times(1)
+
+	writer := makeMockRequest("PUT", "/auth/change-password", req, accessToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
+}
+
+func TestUserAPI_ChangePasswordUserNotFound(t *testing.T) {
+	req := &serializers.ChangePasswordReq{
+		Password:    "test123456",
+		NewPassword: "new123456",
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockRepo := mocks.NewMockIUserRepository(mockCtrl)
+
+	userSvc := services.NewUserService(mockRepo)
+	mockTestUserAPI := NewUserAPI(validation.New(), userSvc)
+	mockTestRouter = initGinEngine(mockTestUserAPI, testProductAPI, testOrderAPI)
+
+	mockRepo.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Return(&models.User{}, errors.New("record not found")).Times(1)
+
+	writer := makeMockRequest("PUT", "/auth/change-password", req, accessToken())
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	assert.Equal(t, http.StatusInternalServerError, writer.Code)
+	assert.Equal(t, "Something went wrong", response["error"]["message"])
 }

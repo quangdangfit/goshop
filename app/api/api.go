@@ -2,10 +2,8 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/quangdangfit/gocommon/logger"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"go.uber.org/dig"
 
 	"goshop/app/middleware"
 )
@@ -27,58 +25,38 @@ import (
 
 //	@BasePath	/api/v1
 
-func RegisterAPI(r *gin.Engine, container *dig.Container) error {
-	err := container.Invoke(func(
-		user *UserAPI,
-		product *ProductAPI,
-		order *OrderAPI,
-	) error {
-		r.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+func RegisterAPI(r *gin.Engine, userAPI *UserAPI, productAPI *ProductAPI, orderAPI *OrderAPI) {
+	r.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-		authMiddleware := middleware.JWTAuth()
-		refreshAuthMiddleware := middleware.JWTRefresh()
-		authRoute := r.Group("/auth")
-		{
-			authRoute.POST("/register", user.Register)
-			authRoute.POST("/login", user.Login)
-			authRoute.POST("/refresh", refreshAuthMiddleware, user.RefreshToken)
-			authRoute.GET("/me", authMiddleware, user.GetMe)
-			authRoute.PUT("/change-password", authMiddleware, user.ChangePassword)
-		}
-
-		//--------------------------------API-----------------------------------
-		api1 := r.Group("/api/v1")
-
-		// Products
-		productAPI := api1.Group("/products")
-		{
-			productAPI.GET("", product.ListProducts)
-			productAPI.POST("", authMiddleware, product.CreateProduct)
-			productAPI.PUT("/:id", authMiddleware, product.UpdateProduct)
-			productAPI.GET("/:id", product.GetProductByID)
-		}
-
-		// Orders
-		orderAPI := api1.Group("/orders", authMiddleware)
-		{
-			orderAPI.POST("", order.PlaceOrder)
-			orderAPI.GET("/:id", order.GetOrderByID)
-			orderAPI.GET("", order.GetOrders)
-			orderAPI.PUT("/:id/cancel", order.CancelOrder)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		logger.Error(err)
+	authMiddleware := middleware.JWTAuth()
+	refreshAuthMiddleware := middleware.JWTRefresh()
+	authRoute := r.Group("/auth")
+	{
+		authRoute.POST("/register", userAPI.Register)
+		authRoute.POST("/login", userAPI.Login)
+		authRoute.POST("/refresh", refreshAuthMiddleware, userAPI.RefreshToken)
+		authRoute.GET("/me", authMiddleware, userAPI.GetMe)
+		authRoute.PUT("/change-password", authMiddleware, userAPI.ChangePassword)
 	}
 
-	return err
-}
+	//--------------------------------API-----------------------------------
+	api1 := r.Group("/api/v1")
 
-func Inject(container *dig.Container) {
-	_ = container.Provide(NewProductAPI)
-	_ = container.Provide(NewUserAPI)
-	_ = container.Provide(NewOrderAPI)
+	// Products
+	productRoute := api1.Group("/products")
+	{
+		productRoute.GET("", productAPI.ListProducts)
+		productRoute.POST("", authMiddleware, productAPI.CreateProduct)
+		productRoute.PUT("/:id", authMiddleware, productAPI.UpdateProduct)
+		productRoute.GET("/:id", productAPI.GetProductByID)
+	}
+
+	// Orders
+	orderRoute := api1.Group("/orders", authMiddleware)
+	{
+		orderRoute.POST("", orderAPI.PlaceOrder)
+		orderRoute.GET("/:id", orderAPI.GetOrderByID)
+		orderRoute.GET("", orderAPI.GetOrders)
+		orderRoute.PUT("/:id/cancel", orderAPI.CancelOrder)
+	}
 }
