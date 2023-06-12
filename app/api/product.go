@@ -84,7 +84,7 @@ func (p *ProductAPI) ListProducts(c *gin.Context) {
 		return
 	}
 
-	products, pagination, err := p.service.ListProducts(c, req)
+	products, pagination, err := p.service.ListProducts(c, &req)
 	if err != nil {
 		logger.Error("Failed to get list products: ", err)
 		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
