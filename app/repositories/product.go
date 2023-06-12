@@ -15,7 +15,7 @@ import (
 type IProductRepository interface {
 	Create(ctx context.Context, product *models.Product) error
 	Update(ctx context.Context, product *models.Product) error
-	ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error)
+	ListProducts(ctx context.Context, req *serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error)
 	GetProductByID(ctx context.Context, id string) (*models.Product, error)
 }
 
@@ -27,7 +27,7 @@ func NewProductRepository() *ProductRepo {
 	return &ProductRepo{db: dbs.Database}
 }
 
-func (r *ProductRepo) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
+func (r *ProductRepo) ListProducts(ctx context.Context, req *serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 

@@ -67,7 +67,7 @@ func (mr *MockIProductRepositoryMockRecorder) GetProductByID(ctx, id interface{}
 }
 
 // ListProducts mocks base method.
-func (m *MockIProductRepository) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
+func (m *MockIProductRepository) ListProducts(ctx context.Context, req *serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListProducts", ctx, req)
 	ret0, _ := ret[0].([]*models.Product)
