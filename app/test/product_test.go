@@ -1,4 +1,4 @@
-package api
+package test
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"github.com/quangdangfit/gocommon/validation"
 	"github.com/stretchr/testify/assert"
 
+	"goshop/app/api"
 	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
@@ -329,7 +330,7 @@ func TestProductAPI_ListProductsFail(t *testing.T) {
 	mockRepo := mocks.NewMockIProductRepository(mockCtrl)
 
 	productSvc := services.NewProductService(mockRepo)
-	mockTestProductAPI := NewProductAPI(validation.New(), testRedis, productSvc)
+	mockTestProductAPI := api.NewProductAPI(validation.New(), testRedis, productSvc)
 	mockTestRouter = initGinEngine(testUserAPI, mockTestProductAPI, testOrderAPI)
 
 	mockRepo.EXPECT().ListProducts(gomock.Any(), gomock.Any()).Return(nil, nil, errors.New("update order fail")).Times(1)
@@ -547,7 +548,7 @@ func TestProductAPI_UpdateProductFail(t *testing.T) {
 	mockRepo := mocks.NewMockIProductRepository(mockCtrl)
 
 	productSvc := services.NewProductService(mockRepo)
-	mockTestProductAPI := NewProductAPI(validation.New(), testRedis, productSvc)
+	mockTestProductAPI := api.NewProductAPI(validation.New(), testRedis, productSvc)
 	mockTestRouter = initGinEngine(testUserAPI, mockTestProductAPI, testOrderAPI)
 
 	mockRepo.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(&models.Product{}, nil).Times(1)

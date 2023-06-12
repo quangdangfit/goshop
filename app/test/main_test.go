@@ -1,4 +1,4 @@
-package api
+package test
 
 import (
 	"bytes"
@@ -13,6 +13,7 @@ import (
 	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
+	"goshop/app/api"
 	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/repositories"
@@ -25,9 +26,9 @@ import (
 var (
 	testRouter     *gin.Engine
 	mockTestRouter *gin.Engine
-	testUserAPI    *UserAPI
-	testProductAPI *ProductAPI
-	testOrderAPI   *OrderAPI
+	testUserAPI    *api.UserAPI
+	testProductAPI *api.ProductAPI
+	testOrderAPI   *api.OrderAPI
 	testRedis      redis.IRedis
 )
 
@@ -61,9 +62,9 @@ func setup() {
 	productSvc := services.NewProductService(productRepo)
 	orderSvc := services.NewOrderService(orderRepo, productRepo)
 
-	testUserAPI = NewUserAPI(validator, userSvc)
-	testProductAPI = NewProductAPI(validator, testRedis, productSvc)
-	testOrderAPI = NewOrderAPI(validator, orderSvc)
+	testUserAPI = api.NewUserAPI(validator, userSvc)
+	testProductAPI = api.NewProductAPI(validator, testRedis, productSvc)
+	testOrderAPI = api.NewOrderAPI(validator, orderSvc)
 
 	testRouter = initGinEngine(testUserAPI, testProductAPI, testOrderAPI)
 
@@ -119,16 +120,17 @@ func parseResponseResult(resData []byte, result interface{}) {
 	utils.Copy(result, response["result"])
 }
 
-func initGinEngine(userAPI *UserAPI,
-	productAPI *ProductAPI,
-	orderAPI *OrderAPI,
+func initGinEngine(
+	userAPI *api.UserAPI,
+	productAPI *api.ProductAPI,
+	orderAPI *api.OrderAPI,
 ) *gin.Engine {
 	cfg := config.GetConfig()
 	if cfg.Environment == config.ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	app := gin.Default()
-	RegisterAPI(app, userAPI, productAPI, orderAPI)
+	api.RegisterAPI(app, userAPI, productAPI, orderAPI)
 	return app
 }
 

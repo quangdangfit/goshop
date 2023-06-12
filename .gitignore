@@ -91,4 +91,3 @@ fabric.properties
 
 config/config.yaml
 vendor/
-mocks/*
