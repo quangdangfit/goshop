@@ -1,4 +1,4 @@
-package api
+package test
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/quangdangfit/gocommon/validation"
 
+	"goshop/app/api"
 	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
@@ -320,7 +321,7 @@ func TestUserAPI_ChangePasswordUpdateFail(t *testing.T) {
 	mockRepo := mocks.NewMockIUserRepository(mockCtrl)
 
 	userSvc := services.NewUserService(mockRepo)
-	mockTestUserAPI := NewUserAPI(validation.New(), userSvc)
+	mockTestUserAPI := api.NewUserAPI(validation.New(), userSvc)
 	mockTestRouter = initGinEngine(mockTestUserAPI, testProductAPI, testOrderAPI)
 
 	mockRepo.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Return(&models.User{}, nil).Times(1)
@@ -344,7 +345,7 @@ func TestUserAPI_ChangePasswordUserNotFound(t *testing.T) {
 	mockRepo := mocks.NewMockIUserRepository(mockCtrl)
 
 	userSvc := services.NewUserService(mockRepo)
-	mockTestUserAPI := NewUserAPI(validation.New(), userSvc)
+	mockTestUserAPI := api.NewUserAPI(validation.New(), userSvc)
 	mockTestRouter = initGinEngine(mockTestUserAPI, testProductAPI, testOrderAPI)
 
 	mockRepo.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Return(&models.User{}, errors.New("record not found")).Times(1)
