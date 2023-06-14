@@ -22,7 +22,7 @@ import (
 )
 
 func main() {
-	cfg := config.GetConfig()
+	cfg := config.LoadConfig()
 	logger.Initialize(cfg.Environment)
 
 	dbs.Init()

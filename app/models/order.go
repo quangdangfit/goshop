@@ -10,7 +10,6 @@ import (
 type OrderStatus string
 
 const (
-	OrderStatusNew        OrderStatus = "new"
 	OrderStatusInProgress OrderStatus = "in-progress"
 	OrderStatusDone       OrderStatus = "done"
 	OrderStatusCancelled  OrderStatus = "cancelled"
@@ -31,7 +30,7 @@ func (order *Order) BeforeCreate(tx *gorm.DB) error {
 	order.Code = utils.GenerateCode("SO")
 
 	if order.Status == "" {
-		order.Status = OrderStatusNew
+		order.Status = OrderStatusInProgress
 	}
 
 	return nil

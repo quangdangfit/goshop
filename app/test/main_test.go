@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	cfg := config.GetConfig()
+	cfg := config.LoadConfig()
 	logger.Initialize(config.TestEnv)
 
 	dbs.Init()

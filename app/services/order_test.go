@@ -45,14 +45,14 @@ func (suite *OrderServiceTestSuite) TestGetOrderByIDSuccess() {
 	suite.mockRepo.EXPECT().GetOrderByID(gomock.Any(), orderID, true).Return(&models.Order{
 		UserID:     "userID",
 		TotalPrice: 111.1,
-		Status:     models.OrderStatusNew,
+		Status:     models.OrderStatusInProgress,
 	}, nil).Times(1)
 
 	order, err := suite.service.GetOrderByID(context.Background(), orderID)
 	suite.NotNil(order)
 	suite.Equal("userID", order.UserID)
 	suite.Equal(111.1, order.TotalPrice)
-	suite.Equal(models.OrderStatusNew, order.Status)
+	suite.Equal(models.OrderStatusInProgress, order.Status)
 	suite.Nil(err)
 }
 
@@ -78,7 +78,7 @@ func (suite *OrderServiceTestSuite) TestListOrdersSuccess() {
 			{
 				UserID:     "userID",
 				TotalPrice: 111.2,
-				Status:     models.OrderStatusNew,
+				Status:     models.OrderStatusInProgress,
 			},
 		},
 		&paging.Pagination{
@@ -93,7 +93,7 @@ func (suite *OrderServiceTestSuite) TestListOrdersSuccess() {
 	suite.Equal(1, len(orders))
 	suite.Equal("userID", orders[0].UserID)
 	suite.Equal(111.2, orders[0].TotalPrice)
-	suite.Equal(models.OrderStatusNew, orders[0].Status)
+	suite.Equal(models.OrderStatusInProgress, orders[0].Status)
 	suite.NotNil(pagination)
 	suite.Equal(int64(1), pagination.Total)
 	suite.Equal(int64(1), pagination.CurrentPage)
@@ -205,7 +205,7 @@ func (suite *OrderServiceTestSuite) TestCancelOrderSuccess() {
 		&models.Order{
 			UserID:     userID,
 			TotalPrice: 111.1,
-			Status:     models.OrderStatusNew,
+			Status:     models.OrderStatusInProgress,
 		},
 		nil).Times(1)
 	suite.mockRepo.EXPECT().UpdateOrder(gomock.Any(), &models.Order{
@@ -229,7 +229,7 @@ func (suite *OrderServiceTestSuite) TestCancelOrderFail() {
 		&models.Order{
 			UserID:     userID,
 			TotalPrice: 111.1,
-			Status:     models.OrderStatusNew,
+			Status:     models.OrderStatusInProgress,
 		},
 		nil).Times(1)
 	suite.mockRepo.EXPECT().UpdateOrder(gomock.Any(), &models.Order{
