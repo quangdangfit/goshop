@@ -14,6 +14,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "orders"
+                ],
                 "summary": "get my orders",
                 "parameters": [
                     {
@@ -44,6 +47,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "orders"
                 ],
                 "summary": "place order",
                 "parameters": [
@@ -77,6 +83,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "orders"
+                ],
                 "summary": "get order details",
                 "parameters": [
                     {
@@ -107,6 +116,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "orders"
+                ],
                 "summary": "cancel order",
                 "parameters": [
                     {
@@ -124,6 +136,9 @@
             "get": {
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "products"
                 ],
                 "summary": "Get list products",
                 "responses": {
@@ -143,6 +158,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "products"
                 ],
                 "summary": "create product",
                 "parameters": [
@@ -171,6 +189,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "products"
+                ],
                 "summary": "Get product by id",
                 "parameters": [
                     {
@@ -198,6 +219,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "products"
                 ],
                 "summary": "update product",
                 "parameters": [
@@ -238,6 +262,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "users"
+                ],
                 "summary": "changes the password",
                 "parameters": [
                     {
@@ -257,6 +284,9 @@
             "post": {
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "users"
                 ],
                 "summary": "Login",
                 "parameters": [
@@ -290,6 +320,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "users"
+                ],
                 "summary": "get my profile",
                 "responses": {
                     "200": {
@@ -305,6 +338,9 @@
             "post": {
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "users"
                 ],
                 "summary": "Register new user",
                 "parameters": [

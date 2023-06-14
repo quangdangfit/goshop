@@ -28,6 +28,7 @@ func NewOrderAPI(validator validation.Validation, service services.IOrderService
 // PlaceOrder godoc
 //
 //	@Summary	place order
+//	@Tags		orders
 //	@Produce	json
 //	@Security	ApiKeyAuth
 //	@Param		_	body		serializers.PlaceOrderReq	true	"Body"
@@ -62,6 +63,7 @@ func (a *OrderAPI) PlaceOrder(c *gin.Context) {
 // GetOrders godoc
 //
 //	@Summary	get my orders
+//	@Tags		orders
 //	@Produce	json
 //	@Security	ApiKeyAuth
 //	@Param		_	query		serializers.ListOrderReq	true	"Query"
@@ -92,6 +94,7 @@ func (a *OrderAPI) GetOrders(c *gin.Context) {
 // GetOrderByID godoc
 //
 //	@Summary	get order details
+//	@Tags		orders
 //	@Produce	json
 //	@Security	ApiKeyAuth
 //	@Param		id	path		string	true	"Order ID"
@@ -114,6 +117,7 @@ func (a *OrderAPI) GetOrderByID(c *gin.Context) {
 // CancelOrder godoc
 //
 //	@Summary	cancel order
+//	@Tags		orders
 //	@Produce	json
 //	@Security	ApiKeyAuth
 //	@Param		id	path	string	true	"Order ID"

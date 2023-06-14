@@ -28,6 +28,7 @@ func NewUserAPI(validator validation.Validation, service services.IUserService) 
 // Login godoc
 //
 //	@Summary	Login
+//	@Tags		users
 //	@Produce	json
 //	@Param		_	body		serializers.LoginReq	true	"Body"
 //	@Success	200	{object}	serializers.LoginRes
@@ -62,6 +63,7 @@ func (u *UserAPI) Login(c *gin.Context) {
 // Register godoc
 //
 //	@Summary	Register new user
+//	@Tags		users
 //	@Produce	json
 //	@Param		_	body		serializers.RegisterReq	true	"Body"
 //	@Success	200	{object}	serializers.RegisterRes
@@ -94,6 +96,7 @@ func (u *UserAPI) Register(c *gin.Context) {
 // GetMe godoc
 //
 //	@Summary	get my profile
+//	@Tags		users
 //	@Security	ApiKeyAuth
 //	@Produce	json
 //	@Success	200	{object}	serializers.User
@@ -130,6 +133,7 @@ func (u *UserAPI) RefreshToken(c *gin.Context) {
 // ChangePassword godoc
 //
 //	@Summary	changes the password
+//	@Tags		users
 //	@Security	ApiKeyAuth
 //	@Produce	json
 //	@Param		_	body	serializers.ChangePasswordReq	true	"Body"

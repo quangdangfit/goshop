@@ -13,7 +13,7 @@ import (
 )
 
 type IProductService interface {
-	ListProducts(c context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error)
+	ListProducts(c context.Context, req *serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error)
 	GetProductByID(ctx context.Context, id string) (*models.Product, error)
 	Create(ctx context.Context, req *serializers.CreateProductReq) (*models.Product, error)
 	Update(ctx context.Context, id string, req *serializers.UpdateProductReq) (*models.Product, error)
@@ -36,7 +36,7 @@ func (p *ProductService) GetProductByID(ctx context.Context, id string) (*models
 	return product, nil
 }
 
-func (p *ProductService) ListProducts(ctx context.Context, req serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
+func (p *ProductService) ListProducts(ctx context.Context, req *serializers.ListProductReq) ([]*models.Product, *paging.Pagination, error) {
 	products, pagination, err := p.repo.ListProducts(ctx, req)
 	if err != nil {
 		return nil, nil, err

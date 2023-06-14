@@ -26,6 +26,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "orders"
+                ],
                 "summary": "get my orders",
                 "parameters": [
                     {
@@ -56,6 +59,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "orders"
                 ],
                 "summary": "place order",
                 "parameters": [
@@ -89,6 +95,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "orders"
+                ],
                 "summary": "get order details",
                 "parameters": [
                     {
@@ -119,6 +128,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "orders"
+                ],
                 "summary": "cancel order",
                 "parameters": [
                     {
@@ -136,6 +148,9 @@ const docTemplate = `{
             "get": {
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "products"
                 ],
                 "summary": "Get list products",
                 "responses": {
@@ -155,6 +170,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "products"
                 ],
                 "summary": "create product",
                 "parameters": [
@@ -183,6 +201,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "products"
+                ],
                 "summary": "Get product by id",
                 "parameters": [
                     {
@@ -210,6 +231,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "products"
                 ],
                 "summary": "update product",
                 "parameters": [
@@ -250,6 +274,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "users"
+                ],
                 "summary": "changes the password",
                 "parameters": [
                     {
@@ -269,6 +296,9 @@ const docTemplate = `{
             "post": {
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "users"
                 ],
                 "summary": "Login",
                 "parameters": [
@@ -302,6 +332,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "users"
+                ],
                 "summary": "get my profile",
                 "responses": {
                     "200": {
@@ -317,6 +350,9 @@ const docTemplate = `{
             "post": {
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "users"
                 ],
                 "summary": "Register new user",
                 "parameters": [

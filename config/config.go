@@ -31,7 +31,7 @@ var (
 	cfg Schema
 )
 
-func init() {
+func LoadConfig() *Schema {
 	environment := os.Getenv("environment")
 	err := godotenv.Load("config/config.yaml")
 	if err != nil && environment != TestEnv {
@@ -41,6 +41,7 @@ func init() {
 	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Error on parsing configuration file, error: %v", err)
 	}
+	return &cfg
 }
 
 func GetConfig() *Schema {

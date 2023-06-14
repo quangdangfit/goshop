@@ -1,4 +1,4 @@
-package api
+package test
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"github.com/quangdangfit/gocommon/validation"
 	"github.com/stretchr/testify/assert"
 
+	"goshop/app/api"
 	"goshop/app/dbs"
 	"goshop/app/models"
 	"goshop/app/serializers"
@@ -55,7 +56,7 @@ func TestOrderAPI_PlaceOrderSuccess(t *testing.T) {
 	var res serializers.Order
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
-	assert.Equal(t, "new", res.Status)
+	assert.Equal(t, "in-progress", res.Status)
 	assert.Equal(t, float64(8), res.TotalPrice)
 	assert.Equal(t, 2, len(res.Lines))
 	assert.Equal(t, req.Lines[0].ProductID, res.Lines[0].Product.ID)
@@ -267,7 +268,7 @@ func TestOrderAPI_PlaceOrderCreateOrderFail(t *testing.T) {
 	mockProductRepo := mocks.NewMockIProductRepository(mockCtrl)
 
 	orderSvc := services.NewOrderService(mockRepo, mockProductRepo)
-	mockTestOrderAPI := NewOrderAPI(validation.New(), orderSvc)
+	mockTestOrderAPI := api.NewOrderAPI(validation.New(), orderSvc)
 	mockTestRouter = initGinEngine(testUserAPI, testProductAPI, mockTestOrderAPI)
 
 	mockProductRepo.EXPECT().GetProductByID(gomock.Any(), p1.ID).Return(&models.Product{}, nil).Times(1)
@@ -326,7 +327,7 @@ func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
 	var res serializers.Order
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
-	assert.Equal(t, "new", res.Status)
+	assert.Equal(t, "in-progress", res.Status)
 	assert.Equal(t, 2, len(res.Lines))
 	assert.Equal(t, o.Lines[0].ProductID, res.Lines[0].Product.ID)
 	assert.Equal(t, o.Lines[0].Quantity, res.Lines[0].Quantity)
@@ -522,7 +523,7 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o)
 
@@ -568,7 +569,7 @@ func TestOrderAPI_CancelOrderUpdateOrderFail(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o)
 
@@ -578,11 +579,11 @@ func TestOrderAPI_CancelOrderUpdateOrderFail(t *testing.T) {
 	mockProductRepo := mocks.NewMockIProductRepository(mockCtrl)
 
 	orderSvc := services.NewOrderService(mockRepo, mockProductRepo)
-	mockTestOrderAPI := NewOrderAPI(validation.New(), orderSvc)
+	mockTestOrderAPI := api.NewOrderAPI(validation.New(), orderSvc)
 	mockTestRouter = initGinEngine(testUserAPI, testProductAPI, mockTestOrderAPI)
 
 	mockRepo.EXPECT().GetOrderByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&models.Order{
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 		UserID: u.ID,
 	}, nil).Times(1)
 	mockRepo.EXPECT().UpdateOrder(gomock.Any(), gomock.Any()).Return(errors.New("update order fail")).Times(1)
@@ -640,7 +641,7 @@ func TestOrderAPI_ListProductsSuccess(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o2)
 
@@ -721,11 +722,11 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o2)
 
-	writer := makeRequest("GET", "/api/v1/orders?status=new", nil, token)
+	writer := makeRequest("GET", "/api/v1/orders?status=in-progress", nil, token)
 	var res serializers.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
@@ -781,7 +782,7 @@ func TestOrderAPI_ListProductsFindByStatusNotFound(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o2)
 
@@ -835,7 +836,7 @@ func TestOrderAPI_ListProductsFindByCodeSuccess(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o2)
 
@@ -895,7 +896,7 @@ func TestOrderAPI_ListProductsFindByCodeNotFound(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o2)
 
@@ -949,7 +950,7 @@ func TestOrderAPI_ListProductsWithPagination(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o2)
 
@@ -1009,7 +1010,7 @@ func TestOrderAPI_ListProductsWithOrder(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o2)
 
@@ -1071,7 +1072,7 @@ func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
 				Quantity:  3,
 			},
 		},
-		Status: models.OrderStatusNew,
+		Status: models.OrderStatusInProgress,
 	}
 	dbs.Database.Create(&o2)
 
@@ -1089,7 +1090,7 @@ func TestOrderAPI_GetMyOrdersFail(t *testing.T) {
 	mockProductRepo := mocks.NewMockIProductRepository(mockCtrl)
 
 	orderSvc := services.NewOrderService(mockRepo, mockProductRepo)
-	mockTestOrderAPI := NewOrderAPI(validation.New(), orderSvc)
+	mockTestOrderAPI := api.NewOrderAPI(validation.New(), orderSvc)
 	mockTestRouter = initGinEngine(testUserAPI, testProductAPI, mockTestOrderAPI)
 
 	mockRepo.EXPECT().GetMyOrders(gomock.Any(), gomock.Any()).Return(nil, nil, errors.New("error")).Times(1)

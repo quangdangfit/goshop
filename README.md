@@ -1,5 +1,6 @@
 # Go Shop
 [![Master](https://github.com/quangdangfit/goshop/workflows/CI%20GoShop/badge.svg)](https://github.com/quangdangfit/goshop/actions)
+[![Coverage](https://github.com/quangdangfit/goshop/wiki/coverage.svg)](https://raw.githack.com/wiki/quangdangfit/goshop/coverage.html)
 
 An example of gin contains many useful features for e-commerce websites
 
@@ -21,21 +22,14 @@ environment: production
 port: 8888
 auth_secret: ######
 database_uri: postgres://username:password@host:5432/database
+redis_uri: localhost:6379
+redis_password:
+redis_db: 0
 ```
 
 ### Run
 ```shell script
 $ go run main.go 
-```
-
-### Test
-```shell script
-$ go test
-```
-
-### Test with Coverage
-```shell script
-go test -timeout 9000s -a -v -coverpkg=./... ./test
 ```
 
 Project information and existing API
@@ -56,6 +50,17 @@ Project information and existing API
 [GIN-debug] GET    /api/v1/orders            --> goshop/app/api.(*OrderAPI).GetOrders-fm (4 handlers)
 [GIN-debug] PUT    /api/v1/orders/:id/cancel --> goshop/app/api.(*OrderAPI).CancelOrder-fm (4 handlers)
 2023-06-11T13:31:47.587+0700    INFO    goshop/main.go:34       Listen at: 8888
+```
+
+
+### Test
+```shell script
+$ go test
+```
+
+### Test with Coverage
+```shell script
+go test -timeout 9000s -a -v -coverpkg=./... ./test
 ```
 
 ### Document
