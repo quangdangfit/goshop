@@ -67,12 +67,7 @@ jobs:
         run: make unittest
 
       - name: Update coverage report
-        uses: ncruces/go-coverage-report@v0
-        with:
-          report: 'true'
-          chart: 'true'
-          amend: 'false'
-        continue-on-error: true
+        uses: ncruces/go-coverage-report@main
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
