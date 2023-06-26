@@ -1,6 +1,6 @@
 module goshop
 
-go 1.18
+go 1.20
 
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
