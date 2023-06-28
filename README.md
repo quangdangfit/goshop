@@ -1,5 +1,6 @@
 # Go Shop
 [![Master](https://github.com/quangdangfit/goshop/workflows/CI%20GoShop/badge.svg)](https://github.com/quangdangfit/goshop/actions)
+[![Codecov](https://img.shields.io/codecov/c/github/quangdangfit/goshop?style=flat-square)](https://codecov.io/gh/quangdangfit/goshop)
 
 An example of gin contains many useful features for e-commerce websites
 
