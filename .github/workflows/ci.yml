@@ -1,15 +1,15 @@
-name: CI GoShop
+name: master
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, develop ]
+    branches: [ master ]
 
 jobs:
   CI:
     strategy:
       matrix:
-        go-version: [ 1.18.x ]
+        go-version: [ 1.20.x ]
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os }}
     env:
