@@ -3,7 +3,7 @@ FROM golang:1.20.5
 MAINTAINER quangdp<quangdangfit@gmail.com>
 
 WORKDIR /app
-COPY . ./
+COPY . .
 RUN go mod download
 
 COPY ./config/config.sample.yaml ./config/config.yaml
