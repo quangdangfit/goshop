@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  goshop:
+    build: .
+    image: "github.com/quangdangfit/goshop"
+    ports:
+      - "8888:8888"
+    environment:
+      port: 8888
+      auth_secret: auth_secret
+      database_uri: postgres://postgres:1234@postgres:5432/postgres
+      redis_uri: redis:6379
+      redis_db: 0
+
+    depends_on:
+      - postgres
+      - redis
+
+  redis:
+    image: "redis:alpine"
+
+  postgres:
+    restart: always
+    image: "postgres:latest"
+    environment:
+      DATABASE_USER: postgres
+      POSTGRES_PASSWORD: 1234
