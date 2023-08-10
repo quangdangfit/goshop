@@ -10,22 +10,6 @@ import (
 	_ "goshop/docs"
 )
 
-//	@title			Blueprint Swagger API
-//	@version		1.0
-//	@description	Swagger API for Golang Project Blueprint.
-//	@termsOfService	http://swagger.io/terms/
-
-//	@contact.name	API Support
-//	@contact.email	quangdangfit@gmail.com
-
-//	@license.name	MIT
-//	@license.url	https://github.com/MartinHeinz/go-project-blueprint/blob/master/LICENSE
-
-//	@securityDefinitions.apikey	ApiKeyAuth
-//	@in							header
-//	@name						Authorization
-
-//	@BasePath	/api/v1
 
 func RegisterAPI(r *gin.Engine, userAPI *UserAPI, productAPI *ProductAPI, orderAPI *OrderAPI) {
 	r.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
