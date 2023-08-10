@@ -3,7 +3,7 @@ FROM golang:1.21.0-alpine3.18 as builder
 WORKDIR /app
 COPY . .
 RUN go mod download
-RUN go build -o /app/goshop
+RUN go build -o /app/goshop ./cmd
 
 FROM scratch 
 

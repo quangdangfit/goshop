@@ -1,5 +1,20 @@
 doc:
-	swag fmt && swag init
+	swag fmt --generalInfo ./cmd/main.go
+	swag init -d . --output ./internal/docs --generalInfo ./cmd/main.go
+
+build:
+	docker-compose build
+
+
+run:
+	docker-compose up -d
+
+stop:
+	docker-compose down
+
+
+status:
+	docker-compose ps -a
 
 unittest:
 	go test -timeout 9000s -a -v -coverprofile=coverage.out -coverpkg=./... ./... 2>&1 | tee report.out
