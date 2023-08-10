@@ -174,11 +174,26 @@ definitions:
         type: string
     type: object
 info:
-  contact: {}
+  contact:
+    email: quangdangfit@gmail.com
+    name: API Support
+  description: Swagger API for Golang Project Blueprint.
+  license:
+    name: MIT
+    url: https://github.com/MartinHeinz/go-project-blueprint/blob/master/LICENSE
+  termsOfService: http://swagger.io/terms/
+  title: Blueprint Swagger API
+  version: "1.0"
 paths:
   /api/v1/orders:
     get:
       parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - in: query
         name: code
         type: string
@@ -199,6 +214,12 @@ paths:
       - orders
     post:
       parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Body
         in: body
         name: _
@@ -220,6 +241,12 @@ paths:
   /api/v1/orders/{id}:
     get:
       parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Order ID
         in: path
         name: id
@@ -240,6 +267,12 @@ paths:
   /api/v1/orders/{id}/cancel:
     put:
       parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Order ID
         in: path
         name: id
@@ -397,4 +430,9 @@ paths:
       summary: Register new user
       tags:
       - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

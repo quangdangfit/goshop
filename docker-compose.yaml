@@ -2,7 +2,8 @@ version: "3.8"
 services:
   goshop:
     build: .
-    image: "github.com/quangdangfit/goshop"
+    image: test:v5 # "github.com/quangdangfit/goshop"
+    restart: always
     ports:
       - "8888:8888"
     environment:
