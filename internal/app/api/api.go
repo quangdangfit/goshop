@@ -1,10 +1,12 @@
 package api
 
 import (
+
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-
 	"goshop/internal/app/middleware"
 
 	_ "goshop/internal/docs"
@@ -13,6 +15,16 @@ import (
 
 func RegisterAPI(r *gin.Engine, userAPI *UserAPI, productAPI *ProductAPI, orderAPI *OrderAPI) {
 	r.GET("swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// "/health"
+	r.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "ok")
+	})
+
+	// "/readiness"
+	r.GET("/readiness", func(c *gin.Context) {
+		c.String(http.StatusOK, "ok")
+	})
 
 	authMiddleware := middleware.JWTAuth()
 	refreshAuthMiddleware := middleware.JWTRefresh()
@@ -24,6 +36,8 @@ func RegisterAPI(r *gin.Engine, userAPI *UserAPI, productAPI *ProductAPI, orderA
 		authRoute.GET("/me", authMiddleware, userAPI.GetMe)
 		authRoute.PUT("/change-password", authMiddleware, userAPI.ChangePassword)
 	}
+
+
 
 	//--------------------------------API-----------------------------------
 	api1 := r.Group("/api/v1")
