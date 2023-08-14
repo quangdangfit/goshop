@@ -1,7 +1,17 @@
-FROM golang:1.21.0-alpine3.18 as builder
+FROM harbor.iblog.pro/test/golang:main.golang.1.21.custom as builder
+#golang:1.21.0-alpine3.18 as builder
 
 WORKDIR /app
 COPY . .
+
+
+ENV GOLANG_VERSION="1.21.0"
+ENV GOPROXY='https://nexus3.iblog.pro/repository/go-proxy/'
+ENV GONOSUMDB="https://gitlab.iblog.pro/*"
+ENV GONOPROXY="https://gitlab.iblog.pro/*"
+#export GOSUMDB='sum.golang.org https://nexus.iblog.pro/repository/golang-sum/'
+
+
 RUN go mod download
 RUN go build -o /app/goshop ./cmd
 
