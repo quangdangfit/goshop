@@ -1,5 +1,5 @@
 FROM harbor.iblog.pro/test/golang:main.golang.1.21.custom as builder
-#golang:1.21.0-alpine3.18 as builder
+# golang:1.21.0-alpine3.18 as builder
 
 WORKDIR /app
 COPY . .
@@ -15,7 +15,8 @@ ENV GONOPROXY="https://gitlab.iblog.pro/*"
 RUN go mod download
 RUN go build -o /app/goshop ./cmd
 
-FROM scratch 
+FROM harbor.iblog.pro/test/alpine:main.scratch.3.18.stage.4
+#FROM scratch
 
 WORKDIR /app
 COPY --from=builder /app/goshop /app/goshop
