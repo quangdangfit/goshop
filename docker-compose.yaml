@@ -7,6 +7,7 @@ services:
     restart: always
     ports:
       - "8888:8888"
+      - "18081:8081"
     environment:
       port: 8888
       auth_secret: auth_secret

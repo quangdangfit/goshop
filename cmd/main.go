@@ -19,6 +19,9 @@ import (
 	"goshop/internal/app/repositories"
 	"goshop/internal/app/services"
 	"goshop/internal/config"
+
+	"github.com/gin-gonic/gin"
+	"github.com/penglongli/gin-metrics/ginmetrics"
 )
 
 
@@ -62,7 +65,27 @@ func main() {
 	productAPI := api.NewProductAPI(validator, cache, productSvc)
 	orderAPI := api.NewOrderAPI(validator, orderSvc)
 
-	engine := app.InitGinEngine(userAPI, productAPI, orderAPI)
+
+
+        api := gin.Default()
+
+        metricRouter := gin.Default()
+        m := ginmetrics.GetMonitor()
+        //m.UseWithoutExposingEndpoint(engine)
+        m.Expose(metricRouter)
+        // +optional set metric path, default /debug/metrics
+        m.SetMetricPath("/metrics")
+        // +optional set slow time, default 5s
+        m.SetSlowTime(10)
+        // +optional set request duration, default {0.1, 0.3, 1.2, 5, 10}
+        // used to p95, p99
+        //m.SetDuration([]float64{0.1, 0.3, 1.2, 5, 10})
+
+        // set middleware for gin
+        m.Use(api)
+
+	engine := app.InitGinEngine(api, userAPI, productAPI, orderAPI)
+
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),

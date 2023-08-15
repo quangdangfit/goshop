@@ -8,6 +8,7 @@ import (
 )
 
 func InitGinEngine(
+	app *gin.Engine, 
 	userAPI *api.UserAPI,
 	productAPI *api.ProductAPI,
 	orderAPI *api.OrderAPI,
@@ -16,7 +17,6 @@ func InitGinEngine(
 	if cfg.Environment == config.ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	app := gin.Default()
 	api.RegisterAPI(app, userAPI, productAPI, orderAPI)
 	return app
 }

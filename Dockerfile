@@ -23,4 +23,5 @@ COPY --from=builder /app/goshop /app/goshop
 COPY ./config/config.sample.yaml ./config/config.yaml
 
 EXPOSE 8888
+EXPOSE 8081
 ENTRYPOINT ["/app/goshop"]
