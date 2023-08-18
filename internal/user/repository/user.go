@@ -11,6 +11,7 @@ import (
 	"goshop/internal/user/model"
 )
 
+//go:generate mockery --name=IUserRepository
 type IUserRepository interface {
 	Create(ctx context.Context, user *model.User) error
 	Update(ctx context.Context, user *model.User) error

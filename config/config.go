@@ -3,6 +3,8 @@ package config
 import (
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/caarlos0/env"
@@ -32,8 +34,11 @@ var (
 )
 
 func init() {
+	_, filename, _, _ := runtime.Caller(0)
+	currentDir := filepath.Dir(filename)
+
 	environment := os.Getenv("environment")
-	err := godotenv.Load("config/config.yaml")
+	err := godotenv.Load(filepath.Join(currentDir, "config.yaml"))
 	if err != nil && environment != TestEnv {
 		log.Fatalf("Error on load configuration file, error: %v", err)
 	}
