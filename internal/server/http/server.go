@@ -7,6 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
+	"github.com/quangdangfit/gocommon/redis"
+	"github.com/quangdangfit/gocommon/validation"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -28,10 +30,10 @@ func NewServer() *Server {
 	}
 }
 
-func (s Server) Run() error {
+func (s Server) Run(validator validation.Validation, cache redis.IRedis) error {
 	_ = s.engine.SetTrustedProxies(nil)
 
-	if err := s.MapRoutes(s.engine); err != nil {
+	if err := s.MapRoutes(s.engine, validator, cache); err != nil {
 		log.Fatalf("MapRoutes Error: %v", err)
 	}
 	s.engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

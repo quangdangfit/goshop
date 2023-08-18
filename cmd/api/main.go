@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/quangdangfit/gocommon/logger"
+	"github.com/quangdangfit/gocommon/redis"
+	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/app/dbs"
 	"goshop/config"
@@ -30,8 +32,16 @@ func main() {
 	logger.Initialize(cfg.Environment)
 	dbs.Init()
 
+	validator := validation.New()
+
+	cache := redis.New(redis.Config{
+		Address:  cfg.RedisURI,
+		Password: cfg.RedisPassword,
+		Database: cfg.RedisDB,
+	})
+
 	server := httpServer.NewServer()
-	if err := server.Run(); err != nil {
+	if err := server.Run(validator, cache); err != nil {
 		logger.Fatal(err)
 	}
 }

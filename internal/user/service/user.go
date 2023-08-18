@@ -15,6 +15,7 @@ import (
 	"goshop/pkg/utils"
 )
 
+//go:generate mockery --name=IUserService
 type IUserService interface {
 	Login(ctx context.Context, req *dto.LoginReq) (*model.User, string, string, error)
 	Register(ctx context.Context, req *dto.RegisterReq) (*model.User, error)

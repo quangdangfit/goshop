@@ -9,6 +9,27 @@ definitions:
     - new_password
     - password
     type: object
+  dto.CreateProductReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    required:
+    - description
+    - name
+    type: object
+  dto.ListProductRes:
+    properties:
+      pagination:
+        $ref: '#/definitions/paging.Pagination'
+      products:
+        items:
+          $ref: '#/definitions/dto.Product'
+        type: array
+    type: object
   dto.LoginReq:
     properties:
       email:
@@ -28,6 +49,25 @@ definitions:
       user:
         $ref: '#/definitions/dto.User'
     type: object
+  dto.Product:
+    properties:
+      active:
+        type: boolean
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      updated_at:
+        type: string
+    type: object
   dto.RegisterReq:
     properties:
       email:
@@ -42,6 +82,16 @@ definitions:
     properties:
       user:
         $ref: '#/definitions/dto.User'
+    type: object
+  dto.UpdateProductReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        minimum: 0
+        type: number
     type: object
   dto.User:
     properties:
@@ -231,6 +281,75 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/auth/change-password:
+    put:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChangePasswordReq'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: changes the password
+      tags:
+      - users
+  /api/v1/auth/login:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginRes'
+      summary: Login
+      tags:
+      - users
+  /api/v1/auth/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.User'
+      security:
+      - ApiKeyAuth: []
+      summary: get my profile
+      tags:
+      - users
+  /api/v1/auth/register:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterRes'
+      summary: Register new user
+      tags:
+      - users
   /api/v1/orders:
     get:
       parameters:
@@ -316,7 +435,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.ListProductRes'
+            $ref: '#/definitions/dto.ListProductRes'
       summary: Get list products
       tags:
       - products
@@ -327,14 +446,14 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.CreateProductReq'
+          $ref: '#/definitions/dto.CreateProductReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.Product'
+            $ref: '#/definitions/dto.Product'
       security:
       - ApiKeyAuth: []
       summary: create product
@@ -354,7 +473,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.Product'
+            $ref: '#/definitions/dto.Product'
       summary: Get product by id
       tags:
       - products
@@ -370,14 +489,14 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.UpdateProductReq'
+          $ref: '#/definitions/dto.UpdateProductReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.Product'
+            $ref: '#/definitions/dto.Product'
       security:
       - ApiKeyAuth: []
       summary: update product
@@ -391,7 +510,7 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/dto.ChangePasswordReq'
+          $ref: '#/definitions/serializers.ChangePasswordReq'
       produces:
       - application/json
       responses: {}
@@ -408,14 +527,14 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/dto.LoginReq'
+          $ref: '#/definitions/serializers.LoginReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.LoginRes'
+            $ref: '#/definitions/serializers.LoginRes'
       summary: Login
       tags:
       - users
@@ -427,7 +546,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.User'
+            $ref: '#/definitions/serializers.User'
       security:
       - ApiKeyAuth: []
       summary: get my profile
@@ -441,14 +560,14 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/dto.RegisterReq'
+          $ref: '#/definitions/serializers.RegisterReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.RegisterRes'
+            $ref: '#/definitions/serializers.RegisterRes'
       summary: Register new user
       tags:
       - users

@@ -9,8 +9,7 @@ import (
 	"goshop/internal/user/service"
 )
 
-func Routes(r *gin.RouterGroup) {
-	validator := validation.New()
+func Routes(r *gin.RouterGroup, validator validation.Validation) {
 	userRepo := repository.NewUserRepository()
 	userSvc := service.NewUserService(validator, userRepo)
 	userHandler := NewUserHandler(userSvc)
