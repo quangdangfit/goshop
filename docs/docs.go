@@ -158,7 +158,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/serializers.ListOrderRes"
+                            "$ref": "#/definitions/dto.ListOrderRes"
                         }
                     }
                 }
@@ -183,7 +183,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/serializers.PlaceOrderReq"
+                            "$ref": "#/definitions/dto.PlaceOrderReq"
                         }
                     }
                 ],
@@ -191,7 +191,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/serializers.Order"
+                            "$ref": "#/definitions/dto.Order"
                         }
                     }
                 }
@@ -224,7 +224,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/serializers.Order"
+                            "$ref": "#/definitions/dto.Order"
                         }
                     }
                 }
@@ -302,7 +302,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Product"
+                            "$ref": "#/definitions/goshop_internal_product_dto.Product"
                         }
                     }
                 }
@@ -330,7 +330,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Product"
+                            "$ref": "#/definitions/goshop_internal_product_dto.Product"
                         }
                     }
                 }
@@ -370,7 +370,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Product"
+                            "$ref": "#/definitions/goshop_internal_product_dto.Product"
                         }
                     }
                 }
@@ -523,6 +523,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ListOrderRes": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Order"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/paging.Pagination"
+                }
+            }
+        },
         "dto.ListProductRes": {
             "type": "object",
             "properties": {
@@ -532,7 +546,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.Product"
+                        "$ref": "#/definitions/goshop_internal_product_dto.Product"
                     }
                 }
             }
@@ -566,31 +580,73 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Product": {
+        "dto.Order": {
             "type": "object",
             "properties": {
-                "active": {
-                    "type": "boolean"
-                },
                 "code": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "description": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "name": {
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.OrderLine"
+                    }
+                },
+                "status": {
                     "type": "string"
                 },
+                "total_price": {
+                    "type": "number"
+                }
+            }
+        },
+        "dto.OrderLine": {
+            "type": "object",
+            "properties": {
                 "price": {
                     "type": "number"
                 },
-                "updated_at": {
+                "product": {
+                    "$ref": "#/definitions/goshop_internal_order_dto.Product"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.PlaceOrderLineReq": {
+            "type": "object",
+            "required": [
+                "product_id",
+                "quantity"
+            ],
+            "properties": {
+                "product_id": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.PlaceOrderReq": {
+            "type": "object",
+            "required": [
+                "lines",
+                "user_id"
+            ],
+            "properties": {
+                "lines": {
+                    "type": "array",
+                    "maxItems": 5,
+                    "items": {
+                        "$ref": "#/definitions/dto.PlaceOrderLineReq"
+                    }
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -644,6 +700,52 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "goshop_internal_order_dto.Product": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
+        "goshop_internal_product_dto.Product": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
                 },
                 "updated_at": {
                     "type": "string"

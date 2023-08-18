@@ -21,13 +21,22 @@ definitions:
     - description
     - name
     type: object
+  dto.ListOrderRes:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/dto.Order'
+        type: array
+      pagination:
+        $ref: '#/definitions/paging.Pagination'
+    type: object
   dto.ListProductRes:
     properties:
       pagination:
         $ref: '#/definitions/paging.Pagination'
       products:
         items:
-          $ref: '#/definitions/dto.Product'
+          $ref: '#/definitions/goshop_internal_product_dto.Product'
         type: array
     type: object
   dto.LoginReq:
@@ -49,24 +58,52 @@ definitions:
       user:
         $ref: '#/definitions/dto.User'
     type: object
-  dto.Product:
+  dto.Order:
     properties:
-      active:
-        type: boolean
       code:
-        type: string
-      created_at:
-        type: string
-      description:
         type: string
       id:
         type: string
-      name:
+      lines:
+        items:
+          $ref: '#/definitions/dto.OrderLine'
+        type: array
+      status:
         type: string
+      total_price:
+        type: number
+    type: object
+  dto.OrderLine:
+    properties:
       price:
         type: number
-      updated_at:
+      product:
+        $ref: '#/definitions/goshop_internal_order_dto.Product'
+      quantity:
+        type: integer
+    type: object
+  dto.PlaceOrderLineReq:
+    properties:
+      product_id:
         type: string
+      quantity:
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  dto.PlaceOrderReq:
+    properties:
+      lines:
+        items:
+          $ref: '#/definitions/dto.PlaceOrderLineReq'
+        maxItems: 5
+        type: array
+      user_id:
+        type: string
+    required:
+    - lines
+    - user_id
     type: object
   dto.RegisterReq:
     properties:
@@ -101,6 +138,36 @@ definitions:
         type: string
       id:
         type: string
+      updated_at:
+        type: string
+    type: object
+  goshop_internal_order_dto.Product:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    type: object
+  goshop_internal_product_dto.Product:
+    properties:
+      active:
+        type: boolean
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
       updated_at:
         type: string
     type: object
@@ -365,7 +432,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.ListOrderRes'
+            $ref: '#/definitions/dto.ListOrderRes'
       security:
       - ApiKeyAuth: []
       summary: get my orders
@@ -378,14 +445,14 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.PlaceOrderReq'
+          $ref: '#/definitions/dto.PlaceOrderReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.Order'
+            $ref: '#/definitions/dto.Order'
       security:
       - ApiKeyAuth: []
       summary: place order
@@ -405,7 +472,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.Order'
+            $ref: '#/definitions/dto.Order'
       security:
       - ApiKeyAuth: []
       summary: get order details
@@ -453,7 +520,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.Product'
+            $ref: '#/definitions/goshop_internal_product_dto.Product'
       security:
       - ApiKeyAuth: []
       summary: create product
@@ -473,7 +540,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.Product'
+            $ref: '#/definitions/goshop_internal_product_dto.Product'
       summary: Get product by id
       tags:
       - products
@@ -496,7 +563,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.Product'
+            $ref: '#/definitions/goshop_internal_product_dto.Product'
       security:
       - ApiKeyAuth: []
       summary: update product
