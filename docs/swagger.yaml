@@ -1,4 +1,59 @@
 definitions:
+  dto.ChangePasswordReq:
+    properties:
+      new_password:
+        type: string
+      password:
+        type: string
+    required:
+    - new_password
+    - password
+    type: object
+  dto.LoginReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.LoginRes:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/dto.User'
+    type: object
+  dto.RegisterReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RegisterRes:
+    properties:
+      user:
+        $ref: '#/definitions/dto.User'
+    type: object
+  dto.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+    type: object
   paging.Pagination:
     properties:
       current_page:
@@ -336,7 +391,7 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.ChangePasswordReq'
+          $ref: '#/definitions/dto.ChangePasswordReq'
       produces:
       - application/json
       responses: {}
@@ -353,14 +408,14 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.LoginReq'
+          $ref: '#/definitions/dto.LoginReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.LoginRes'
+            $ref: '#/definitions/dto.LoginRes'
       summary: Login
       tags:
       - users
@@ -372,7 +427,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.User'
+            $ref: '#/definitions/dto.User'
       security:
       - ApiKeyAuth: []
       summary: get my profile
@@ -386,14 +441,14 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.RegisterReq'
+          $ref: '#/definitions/dto.RegisterReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.RegisterRes'
+            $ref: '#/definitions/dto.RegisterRes'
       summary: Register new user
       tags:
       - users
