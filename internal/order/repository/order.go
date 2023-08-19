@@ -13,6 +13,7 @@ import (
 	"goshop/pkg/utils"
 )
 
+//go:generate mockery --name=IOrderRepository
 type IOrderRepository interface {
 	CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error)
 	GetOrderByID(ctx context.Context, id string, preload bool) (*model.Order, error)

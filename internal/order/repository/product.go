@@ -10,6 +10,7 @@ import (
 	"goshop/internal/order/model"
 )
 
+//go:generate mockery --name=IProductRepository
 type IProductRepository interface {
 	GetProductByID(ctx context.Context, id string) (*model.Product, error)
 }

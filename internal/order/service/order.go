@@ -13,6 +13,7 @@ import (
 	"goshop/pkg/utils"
 )
 
+//go:generate mockery --name=IOrderService
 type IOrderService interface {
 	PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (*model.Order, error)
 	GetOrderByID(ctx context.Context, id string) (*model.Order, error)
