@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/app/models"
 	"goshop/config"
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
@@ -230,7 +229,7 @@ func (suite *OrderServiceTestSuite) TestCancelOrderSuccess() {
 	suite.NotNil(order)
 	suite.Equal(userID, order.UserID)
 	suite.Equal(111.1, order.TotalPrice)
-	suite.Equal(models.OrderStatusCancelled, order.Status)
+	suite.Equal(model.OrderStatusCancelled, order.Status)
 	suite.Nil(err)
 }
 
