@@ -12,6 +12,7 @@ import (
 	"goshop/pkg/paging"
 )
 
+//go:generate mockery --name=IProductRepository
 type IProductRepository interface {
 	Create(ctx context.Context, product *model.Product) error
 	Update(ctx context.Context, product *model.Product) error

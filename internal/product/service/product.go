@@ -13,6 +13,7 @@ import (
 	"goshop/pkg/utils"
 )
 
+//go:generate mockery --name=IProductService
 type IProductService interface {
 	ListProducts(c context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)
 	GetProductByID(ctx context.Context, id string) (*model.Product, error)
