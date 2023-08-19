@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,14 +34,14 @@ func NewUserHandler(service service.IUserService) *UserHandler {
 func (h *UserHandler) Login(c *gin.Context) {
 	var req dto.LoginReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
-		logger.Error("Failed to get body", err)
+		logger.Error("Failed to get body ", err)
 		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
 		return
 	}
 
 	user, accessToken, refreshToken, err := h.service.Login(c, &req)
 	if err != nil {
-		logger.Error("Failed to get body", err)
+		logger.Error("Failed to login ", err)
 		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
@@ -90,6 +91,11 @@ func (h *UserHandler) Register(c *gin.Context) {
 //	@Router		/api/v1/auth/me [get]
 func (h *UserHandler) GetMe(c *gin.Context) {
 	userID := c.GetString("userId")
+	if userID == "" {
+		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		return
+	}
+
 	user, err := h.service.GetUserByID(c, userID)
 	if err != nil {
 		logger.Error(err.Error())
@@ -104,6 +110,11 @@ func (h *UserHandler) GetMe(c *gin.Context) {
 
 func (h *UserHandler) RefreshToken(c *gin.Context) {
 	userID := c.GetString("userId")
+	if userID == "" {
+		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		return
+	}
+
 	accessToken, err := h.service.RefreshToken(c, userID)
 	if err != nil {
 		logger.Error("Failed to refresh token", err)
