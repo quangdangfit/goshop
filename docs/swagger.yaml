@@ -1,4 +1,190 @@
 basePath: /api/v1
+definitions:
+  dto.ChangePasswordReq:
+    properties:
+      new_password:
+        type: string
+      password:
+        type: string
+    required:
+    - new_password
+    - password
+    type: object
+  dto.CreateProductReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    required:
+    - description
+    - name
+    type: object
+  dto.ListOrderRes:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/dto.Order'
+        type: array
+      pagination:
+        $ref: '#/definitions/paging.Pagination'
+    type: object
+  dto.ListProductRes:
+    properties:
+      pagination:
+        $ref: '#/definitions/paging.Pagination'
+      products:
+        items:
+          $ref: '#/definitions/internal_product_dto.Product'
+        type: array
+    type: object
+  dto.LoginReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.LoginRes:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/dto.User'
+    type: object
+  dto.Order:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      lines:
+        items:
+          $ref: '#/definitions/dto.OrderLine'
+        type: array
+      status:
+        type: string
+      total_price:
+        type: number
+    type: object
+  dto.OrderLine:
+    properties:
+      price:
+        type: number
+      product:
+        $ref: '#/definitions/internal_order_dto.Product'
+      quantity:
+        type: integer
+    type: object
+  dto.PlaceOrderLineReq:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  dto.PlaceOrderReq:
+    properties:
+      lines:
+        items:
+          $ref: '#/definitions/dto.PlaceOrderLineReq'
+        maxItems: 5
+        type: array
+      user_id:
+        type: string
+    required:
+    - lines
+    - user_id
+    type: object
+  dto.RegisterReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RegisterRes:
+    properties:
+      user:
+        $ref: '#/definitions/dto.User'
+    type: object
+  dto.UpdateProductReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        minimum: 0
+        type: number
+    type: object
+  dto.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_order_dto.Product:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    type: object
+  internal_product_dto.Product:
+    properties:
+      active:
+        type: boolean
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  paging.Pagination:
+    properties:
+      current_page:
+        type: integer
+      limit:
+        type: integer
+      skip:
+        type: integer
+      total:
+        type: integer
+      total_page:
+        type: integer
+    type: object
 info:
   contact:
     email: quangdangfit@gmail.com
@@ -10,7 +196,216 @@ info:
   termsOfService: http://swagger.io/terms/
   title: GoShop Swagger API
   version: "1.0"
-paths: {}
+paths:
+  /api/v1/auth/change-password:
+    put:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChangePasswordReq'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: changes the password
+      tags:
+      - users
+  /api/v1/auth/login:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginRes'
+      summary: Login
+      tags:
+      - users
+  /api/v1/auth/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.User'
+      security:
+      - ApiKeyAuth: []
+      summary: get my profile
+      tags:
+      - users
+  /api/v1/auth/register:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterRes'
+      summary: Register new user
+      tags:
+      - users
+  /api/v1/orders:
+    get:
+      parameters:
+      - in: query
+        name: code
+        type: string
+      - in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ListOrderRes'
+      security:
+      - ApiKeyAuth: []
+      summary: get my orders
+      tags:
+      - orders
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PlaceOrderReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Order'
+      security:
+      - ApiKeyAuth: []
+      summary: place order
+      tags:
+      - orders
+  /api/v1/orders/{id}:
+    get:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Order'
+      security:
+      - ApiKeyAuth: []
+      summary: get order details
+      tags:
+      - orders
+  /api/v1/orders/{id}/cancel:
+    put:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: cancel order
+      tags:
+      - orders
+  /api/v1/products:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ListProductRes'
+      summary: Get list products
+      tags:
+      - products
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateProductReq'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: create product
+      tags:
+      - products
+  /api/v1/products/{id}:
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get product by id
+      tags:
+      - products
+    put:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateProductReq'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: update product
+      tags:
+      - products
 securityDefinitions:
   ApiKeyAuth:
     in: header

@@ -34,8 +34,7 @@ func NewProductHandler(
 //	@Summary	Get product by id
 //	@Tags		products
 //	@Produce	json
-//	@Param		id	path		string	true	"Product ID"
-//	@Success	200	{object}	dto.Product
+//	@Param		id	path	string	true	"Product ID"
 //	@Router		/api/v1/products/{id} [get]
 func (p *ProductHandler) GetProductByID(c *gin.Context) {
 	var res dto.Product
@@ -99,8 +98,7 @@ func (p *ProductHandler) ListProducts(c *gin.Context) {
 //	@Tags		products
 //	@Produce	json
 //	@Security	ApiKeyAuth
-//	@Param		_	body		dto.CreateProductReq	true	"Body"
-//	@Success	200	{object}	dto.Product
+//	@Param		_	body	dto.CreateProductReq	true	"Body"
 //	@Router		/api/v1/products [post]
 func (p *ProductHandler) CreateProduct(c *gin.Context) {
 	var req dto.CreateProductReq
@@ -129,9 +127,8 @@ func (p *ProductHandler) CreateProduct(c *gin.Context) {
 //	@Tags		products
 //	@Produce	json
 //	@Security	ApiKeyAuth
-//	@Param		id	path		string					true	"Product ID"
-//	@Param		_	body		dto.UpdateProductReq	true	"Body"
-//	@Success	200	{object}	dto.Product
+//	@Param		id	path	string					true	"Product ID"
+//	@Param		_	body	dto.UpdateProductReq	true	"Body"
 //	@Router		/api/v1/products/{id} [put]
 func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 	productId := c.Param("id")
