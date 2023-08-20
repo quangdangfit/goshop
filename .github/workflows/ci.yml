@@ -3,14 +3,9 @@ on:
   pull_request:
     branches: [ master ]
 
-strategy:
-  matrix:
-    go-version: [ 1.20.x ]
-    os: [ ubuntu-latest ]
-
 jobs:
   unittest:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     env:
       environment: testing
       database_uri: postgres://postgres:test@localhost:5432/postgres
@@ -35,7 +30,7 @@ jobs:
       - name: Set up Golang
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: 1.20.x
 
       - name: Cache go pkg
         uses: actions/cache@v2
@@ -64,7 +59,7 @@ jobs:
 
   sonarcloud:
     needs: unittest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
@@ -74,7 +69,7 @@ jobs:
 
   codecov:
     needs: unittest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
