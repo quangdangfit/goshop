@@ -48,7 +48,7 @@ jobs:
         run: go mod download
 
       - name: Build
-        run: go build -o main
+        run: go build -o main cmd/api
         env:
           GOOS: linux
           GOARCH: amd64
