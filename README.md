@@ -21,7 +21,8 @@ You can see the docker compose file [here](https://github.com/quangdangfit/docke
 
 ```yaml
 environment: production
-port: 8888
+http_port: 8888
+grpc_port: 8889
 auth_secret: ######
 database_uri: postgres://username:password@host:5432/database
 redis_uri: localhost:6379
@@ -71,6 +72,7 @@ Project information and existing API
 
 ### Tech stack
 - Restful API
+- GRPC
 - DDD
 - Gorm
 - Swagger
