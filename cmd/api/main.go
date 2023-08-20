@@ -5,6 +5,7 @@ import (
 	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
+	grpcServer "goshop/internal/server/grpc"
 	httpServer "goshop/internal/server/http"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
@@ -43,8 +44,15 @@ func main() {
 		Database: cfg.RedisDB,
 	})
 
-	server := httpServer.NewServer(validator, db, cache)
-	if err := server.Run(); err != nil {
+	go func() {
+		httpSvr := httpServer.NewServer(validator, db, cache)
+		if err = httpSvr.Run(); err != nil {
+			logger.Fatal(err)
+		}
+	}()
+
+	grpcSvr := grpcServer.NewServer(validator, db, cache)
+	if err = grpcSvr.Run(); err != nil {
 		logger.Fatal(err)
 	}
 }

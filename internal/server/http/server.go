@@ -15,7 +15,6 @@ import (
 
 	_ "goshop/docs"
 	"goshop/pkg/config"
-
 	"goshop/pkg/response"
 )
 
@@ -49,9 +48,9 @@ func (s Server) Run() error {
 		return
 	})
 
-	// Start server
-	logger.Info("Server is listening on PORT: ", s.cfg.Port)
-	if err := s.engine.Run(fmt.Sprintf(":%d", s.cfg.Port)); err != nil {
+	// Start http server
+	logger.Info("HTTP server is listening on PORT: ", s.cfg.HttpPort)
+	if err := s.engine.Run(fmt.Sprintf(":%d", s.cfg.HttpPort)); err != nil {
 		log.Fatalf("Running HTTP server: %v", err)
 	}
 

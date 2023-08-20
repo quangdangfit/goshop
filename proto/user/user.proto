@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "./;user";
+
+service UserService {
+  rpc Register(RegisterReq) returns (RegisterRes);
+  rpc Login(LoginReq) returns (LoginRes);
+  rpc GetMe(GetMeReq) returns (GetMeRes);
+  rpc RefreshToken(RefreshTokenReq) returns (RefreshTokenRes);
+  rpc ChangePassword(ChangePasswordReq) returns (ChangePasswordRes);
+}
+
+// =================================================================
+
+message UserInfo {
+  string id         = 1;
+  string email      = 2;
+  string created_at = 3;
+  string updated_at = 4;
+}
+
+// =================================================================
+
+message RegisterReq {
+  string email    = 1;
+  string password = 2;
+}
+
+message RegisterRes { UserInfo user = 1; }
+
+message LoginReq {
+  string email    = 1;
+  string password = 2;
+}
+
+message LoginRes {
+  UserInfo user         = 1;
+  string   access_token = 2;
+  string   fresh_token  = 3;
+}
+
+message GetMeReq {}
+
+message GetMeRes { UserInfo user = 1; }
+
+message RefreshTokenReq {}
+
+message RefreshTokenRes { string access_token = 1; }
+
+message ChangePasswordReq {
+  string password     = 1;
+  string new_password = 2;
+}
+
+message ChangePasswordRes {}
