@@ -7,9 +7,9 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/redis"
 
-	"goshop/config"
 	"goshop/internal/product/dto"
 	"goshop/internal/product/service"
+	"goshop/pkg/config"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )

@@ -5,8 +5,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"goshop/config"
 	"goshop/internal/order/model"
+	"goshop/pkg/config"
 )
 
 //go:generate mockery --name=IProductRepository

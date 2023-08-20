@@ -6,8 +6,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"goshop/config"
 	"goshop/internal/user/model"
+	"goshop/pkg/config"
 )
 
 //go:generate mockery --name=IUserRepository

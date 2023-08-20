@@ -3,7 +3,7 @@ package response
 import (
 	"github.com/gin-gonic/gin"
 
-	"goshop/config"
+	"goshop/pkg/config"
 )
 
 func Error(c *gin.Context, status int, err error, message string) {

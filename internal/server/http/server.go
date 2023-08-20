@@ -14,8 +14,8 @@ import (
 	"gorm.io/gorm"
 
 	_ "goshop/docs"
+	"goshop/pkg/config"
 
-	"goshop/config"
 	"goshop/pkg/response"
 )
 

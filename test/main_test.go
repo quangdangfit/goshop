@@ -14,12 +14,12 @@ import (
 	"github.com/quangdangfit/gocommon/validation"
 	"gorm.io/gorm"
 
-	"goshop/config"
 	orderModel "goshop/internal/order/model"
 	productModel "goshop/internal/product/model"
 	httpServer "goshop/internal/server/http"
 	"goshop/internal/user/dto"
 	userModel "goshop/internal/user/model"
+	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/utils"
 )

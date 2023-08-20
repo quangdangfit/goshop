@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/config"
 	"goshop/internal/user/dto"
 	"goshop/internal/user/model"
 	"goshop/internal/user/repository/mocks"
+	"goshop/pkg/config"
 	"goshop/pkg/utils"
 )
 

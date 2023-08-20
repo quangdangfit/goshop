@@ -5,9 +5,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"goshop/config"
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
+	"goshop/pkg/config"
 	"goshop/pkg/paging"
 	"goshop/pkg/utils"
 )

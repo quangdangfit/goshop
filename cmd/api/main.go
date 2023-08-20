@@ -5,8 +5,8 @@ import (
 	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/config"
 	httpServer "goshop/internal/server/http"
+	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 )
 
