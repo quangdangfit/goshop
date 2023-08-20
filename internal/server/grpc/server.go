@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	grpcRecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
@@ -25,11 +24,10 @@ type Server struct {
 }
 
 func NewServer(validator validation.Validation, db *gorm.DB, cache redis.IRedis) *Server {
-	interceptor := middleware.NewAuthInterceptor([]string{})
+	interceptor := middleware.NewAuthInterceptor(config.AuthIgnoreMethods)
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			grpcRecovery.UnaryServerInterceptor(),
 			interceptor.Unary(),
 		),
 	)

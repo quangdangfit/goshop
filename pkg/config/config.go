@@ -19,6 +19,11 @@ const (
 	ProductCachingTime = 5 * time.Minute
 )
 
+var AuthIgnoreMethods = []string{
+	"/user.UserService/Login",
+	"/user.UserService/Register",
+}
+
 type Schema struct {
 	Environment   string `env:"environment"`
 	HttpPort      int    `env:"http_port"`

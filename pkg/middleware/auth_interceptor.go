@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"regexp"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -31,9 +30,8 @@ func (ai *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		method := ai.extractMethod(info.FullMethod)
 		for _, m := range ai.ignoredMethods {
-			if method == m {
+			if info.FullMethod == m {
 				return handler(ctx, req)
 			}
 		}
@@ -71,12 +69,5 @@ func (ai *AuthInterceptor) authorize(ctx context.Context) (context.Context, stri
 		}
 	}
 
-	return ctx, payload["sub"].(string), nil
-}
-
-func (ai *AuthInterceptor) extractMethod(fullMethod string) string {
-	re := regexp.MustCompile(`.+/(\w+)$`)
-	method := re.ReplaceAllString(fullMethod, "$1")
-
-	return method
+	return ctx, payload["id"].(string), nil
 }
