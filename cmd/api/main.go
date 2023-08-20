@@ -5,9 +5,9 @@ import (
 	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/app/dbs"
 	"goshop/config"
 	httpServer "goshop/internal/server/http"
+	"goshop/pkg/dbs"
 )
 
 //	@title			GoShop Swagger API
@@ -30,7 +30,10 @@ import (
 func main() {
 	cfg := config.GetConfig()
 	logger.Initialize(cfg.Environment)
-	dbs.Init()
+	db, err := dbs.Connect(cfg.DatabaseURI)
+	if err != nil {
+		logger.Fatal("Cannot connect to database", err)
+	}
 
 	validator := validation.New()
 
@@ -40,8 +43,8 @@ func main() {
 		Database: cfg.RedisDB,
 	})
 
-	server := httpServer.NewServer()
-	if err := server.Run(validator, cache); err != nil {
+	server := httpServer.NewServer(validator, db, cache)
+	if err := server.Run(); err != nil {
 		logger.Fatal(err)
 	}
 }

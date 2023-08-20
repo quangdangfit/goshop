@@ -11,6 +11,7 @@ import (
 	"github.com/quangdangfit/gocommon/validation"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"gorm.io/gorm"
 
 	_ "goshop/docs"
 
@@ -19,21 +20,27 @@ import (
 )
 
 type Server struct {
-	engine *gin.Engine
-	cfg    *config.Schema
+	engine    *gin.Engine
+	cfg       *config.Schema
+	validator validation.Validation
+	db        *gorm.DB
+	cache     redis.IRedis
 }
 
-func NewServer() *Server {
+func NewServer(validator validation.Validation, db *gorm.DB, cache redis.IRedis) *Server {
 	return &Server{
-		engine: gin.Default(),
-		cfg:    config.GetConfig(),
+		engine:    gin.Default(),
+		cfg:       config.GetConfig(),
+		validator: validator,
+		db:        db,
+		cache:     cache,
 	}
 }
 
-func (s Server) Run(validator validation.Validation, cache redis.IRedis) error {
+func (s Server) Run() error {
 	_ = s.engine.SetTrustedProxies(nil)
 
-	if err := s.MapRoutes(s.engine, validator, cache); err != nil {
+	if err := s.MapRoutes(); err != nil {
 		log.Fatalf("MapRoutes Error: %v", err)
 	}
 	s.engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -49,4 +56,8 @@ func (s Server) Run(validator validation.Validation, cache redis.IRedis) error {
 	}
 
 	return nil
+}
+
+func (s Server) GetEngine() *gin.Engine {
+	return s.engine
 }

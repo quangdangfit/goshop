@@ -5,7 +5,6 @@ import (
 
 	"gorm.io/gorm"
 
-	"goshop/app/dbs"
 	"goshop/config"
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
@@ -25,8 +24,10 @@ type OrderRepo struct {
 	db *gorm.DB
 }
 
-func NewOrderRepository() *OrderRepo {
-	return &OrderRepo{db: dbs.Database}
+func NewOrderRepository(db *gorm.DB) *OrderRepo {
+	_ = db.AutoMigrate(&model.Order{})
+	_ = db.AutoMigrate(&model.OrderLine{})
+	return &OrderRepo{db: db}
 }
 
 func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error) {

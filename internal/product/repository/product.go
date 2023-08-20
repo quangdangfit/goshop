@@ -5,7 +5,6 @@ import (
 
 	"gorm.io/gorm"
 
-	"goshop/app/dbs"
 	"goshop/config"
 	"goshop/internal/product/dto"
 	"goshop/internal/product/model"
@@ -24,8 +23,9 @@ type ProductRepo struct {
 	db *gorm.DB
 }
 
-func NewProductRepository() *ProductRepo {
-	return &ProductRepo{db: dbs.Database}
+func NewProductRepository(db *gorm.DB) *ProductRepo {
+	_ = db.AutoMigrate(&model.Product{})
+	return &ProductRepo{db: db}
 }
 
 func (r *ProductRepo) ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
