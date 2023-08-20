@@ -65,6 +65,7 @@ jobs:
         run: make unittest
 
   sonarcloud:
+    needs: unittest
     strategy:
       matrix:
         go-version: [ 1.20.x ]
@@ -78,6 +79,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   codecov:
+    needs: unittest
     strategy:
       matrix:
         go-version: [ 1.20.x ]
