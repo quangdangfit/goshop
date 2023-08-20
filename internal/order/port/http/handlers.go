@@ -111,6 +111,11 @@ func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 	}
 
 	orderId := c.Param("id")
+	if orderId == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss Order ID")
+		return
+	}
+
 	order, err := a.service.GetOrderByID(c, orderId)
 	if err != nil {
 		logger.Errorf("Failed to get order, id: %s, error: %s ", orderId, err)
@@ -133,13 +138,17 @@ func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 //	@Router		/api/v1/orders/{id}/cancel [put]
 func (a *OrderHandler) CancelOrder(c *gin.Context) {
 	userID := c.GetString("userId")
-	userId := c.GetString("userId")
-	if userId == "" {
+	if userID == "" {
 		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
 		return
 	}
 
 	orderID := c.Param("id")
+	if orderID == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss Order ID")
+		return
+	}
+
 	order, err := a.service.CancelOrder(c, orderID, userID)
 	if err != nil {
 		logger.Errorf("Failed to cancel order, id: %s, error: %s", orderID, err)
@@ -149,5 +158,5 @@ func (a *OrderHandler) CancelOrder(c *gin.Context) {
 
 	var res dto.Order
 	utils.Copy(&res, &order)
-	response.JSON(c, http.StatusOK, nil)
+	response.JSON(c, http.StatusOK, res)
 }
