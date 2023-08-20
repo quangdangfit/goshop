@@ -1,18 +1,6 @@
+basePath: /api/v1
 definitions:
-  paging.Pagination:
-    properties:
-      current_page:
-        type: integer
-      limit:
-        type: integer
-      skip:
-        type: integer
-      total:
-        type: integer
-      total_page:
-        type: integer
-    type: object
-  serializers.ChangePasswordReq:
+  dto.ChangePasswordReq:
     properties:
       new_password:
         type: string
@@ -22,7 +10,7 @@ definitions:
     - new_password
     - password
     type: object
-  serializers.CreateProductReq:
+  dto.CreateProductReq:
     properties:
       description:
         type: string
@@ -34,25 +22,25 @@ definitions:
     - description
     - name
     type: object
-  serializers.ListOrderRes:
+  dto.ListOrderRes:
     properties:
       orders:
         items:
-          $ref: '#/definitions/serializers.Order'
+          $ref: '#/definitions/dto.Order'
         type: array
       pagination:
         $ref: '#/definitions/paging.Pagination'
     type: object
-  serializers.ListProductRes:
+  dto.ListProductRes:
     properties:
       pagination:
         $ref: '#/definitions/paging.Pagination'
       products:
         items:
-          $ref: '#/definitions/serializers.Product'
+          $ref: '#/definitions/internal_product_dto.Product'
         type: array
     type: object
-  serializers.LoginReq:
+  dto.LoginReq:
     properties:
       email:
         type: string
@@ -62,16 +50,16 @@ definitions:
     - email
     - password
     type: object
-  serializers.LoginRes:
+  dto.LoginRes:
     properties:
       access_token:
         type: string
       refresh_token:
         type: string
       user:
-        $ref: '#/definitions/serializers.User'
+        $ref: '#/definitions/dto.User'
     type: object
-  serializers.Order:
+  dto.Order:
     properties:
       code:
         type: string
@@ -79,23 +67,23 @@ definitions:
         type: string
       lines:
         items:
-          $ref: '#/definitions/serializers.OrderLine'
+          $ref: '#/definitions/dto.OrderLine'
         type: array
       status:
         type: string
       total_price:
         type: number
     type: object
-  serializers.OrderLine:
+  dto.OrderLine:
     properties:
       price:
         type: number
       product:
-        $ref: '#/definitions/serializers.Product'
+        $ref: '#/definitions/internal_order_dto.Product'
       quantity:
         type: integer
     type: object
-  serializers.PlaceOrderLineReq:
+  dto.PlaceOrderLineReq:
     properties:
       product_id:
         type: string
@@ -105,11 +93,11 @@ definitions:
     - product_id
     - quantity
     type: object
-  serializers.PlaceOrderReq:
+  dto.PlaceOrderReq:
     properties:
       lines:
         items:
-          $ref: '#/definitions/serializers.PlaceOrderLineReq'
+          $ref: '#/definitions/dto.PlaceOrderLineReq'
         maxItems: 5
         type: array
       user_id:
@@ -118,7 +106,54 @@ definitions:
     - lines
     - user_id
     type: object
-  serializers.Product:
+  dto.RegisterReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RegisterRes:
+    properties:
+      user:
+        $ref: '#/definitions/dto.User'
+    type: object
+  dto.UpdateProductReq:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        minimum: 0
+        type: number
+    type: object
+  dto.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_order_dto.Product:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    type: object
+  internal_product_dto.Product:
     properties:
       active:
         type: boolean
@@ -137,45 +172,100 @@ definitions:
       updated_at:
         type: string
     type: object
-  serializers.RegisterReq:
+  paging.Pagination:
     properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  serializers.RegisterRes:
-    properties:
-      user:
-        $ref: '#/definitions/serializers.User'
-    type: object
-  serializers.UpdateProductReq:
-    properties:
-      description:
-        type: string
-      name:
-        type: string
-      price:
-        minimum: 0
-        type: number
-    type: object
-  serializers.User:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      updated_at:
-        type: string
+      current_page:
+        type: integer
+      limit:
+        type: integer
+      skip:
+        type: integer
+      total:
+        type: integer
+      total_page:
+        type: integer
     type: object
 info:
-  contact: {}
+  contact:
+    email: quangdangfit@gmail.com
+    name: Quang Dang
+  description: Swagger API for GoShop.
+  license:
+    name: MIT
+    url: https://github.com/MartinHeinz/go-project-blueprint/blob/master/LICENSE
+  termsOfService: http://swagger.io/terms/
+  title: GoShop Swagger API
+  version: "1.0"
 paths:
+  /api/v1/auth/change-password:
+    put:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChangePasswordReq'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: changes the password
+      tags:
+      - users
+  /api/v1/auth/login:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginRes'
+      summary: Login
+      tags:
+      - users
+  /api/v1/auth/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.User'
+      security:
+      - ApiKeyAuth: []
+      summary: get my profile
+      tags:
+      - users
+  /api/v1/auth/register:
+    post:
+      parameters:
+      - description: Body
+        in: body
+        name: _
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RegisterRes'
+      summary: Register new user
+      tags:
+      - users
   /api/v1/orders:
     get:
       parameters:
@@ -191,7 +281,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.ListOrderRes'
+            $ref: '#/definitions/dto.ListOrderRes'
       security:
       - ApiKeyAuth: []
       summary: get my orders
@@ -204,14 +294,14 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.PlaceOrderReq'
+          $ref: '#/definitions/dto.PlaceOrderReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.Order'
+            $ref: '#/definitions/dto.Order'
       security:
       - ApiKeyAuth: []
       summary: place order
@@ -231,7 +321,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.Order'
+            $ref: '#/definitions/dto.Order'
       security:
       - ApiKeyAuth: []
       summary: get order details
@@ -261,7 +351,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/serializers.ListProductRes'
+            $ref: '#/definitions/dto.ListProductRes'
       summary: Get list products
       tags:
       - products
@@ -272,14 +362,10 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.CreateProductReq'
+          $ref: '#/definitions/dto.CreateProductReq'
       produces:
       - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/serializers.Product'
+      responses: {}
       security:
       - ApiKeyAuth: []
       summary: create product
@@ -295,11 +381,7 @@ paths:
         type: string
       produces:
       - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/serializers.Product'
+      responses: {}
       summary: Get product by id
       tags:
       - products
@@ -315,86 +397,18 @@ paths:
         name: _
         required: true
         schema:
-          $ref: '#/definitions/serializers.UpdateProductReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/serializers.Product'
-      security:
-      - ApiKeyAuth: []
-      summary: update product
-      tags:
-      - products
-  /auth/change-password:
-    put:
-      parameters:
-      - description: Body
-        in: body
-        name: _
-        required: true
-        schema:
-          $ref: '#/definitions/serializers.ChangePasswordReq'
+          $ref: '#/definitions/dto.UpdateProductReq'
       produces:
       - application/json
       responses: {}
       security:
       - ApiKeyAuth: []
-      summary: changes the password
+      summary: update product
       tags:
-      - users
-  /auth/login:
-    post:
-      parameters:
-      - description: Body
-        in: body
-        name: _
-        required: true
-        schema:
-          $ref: '#/definitions/serializers.LoginReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/serializers.LoginRes'
-      summary: Login
-      tags:
-      - users
-  /auth/me:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/serializers.User'
-      security:
-      - ApiKeyAuth: []
-      summary: get my profile
-      tags:
-      - users
-  /auth/register:
-    post:
-      parameters:
-      - description: Body
-        in: body
-        name: _
-        required: true
-        schema:
-          $ref: '#/definitions/serializers.RegisterReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/serializers.RegisterRes'
-      summary: Register new user
-      tags:
-      - users
+      - products
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

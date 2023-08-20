@@ -89,5 +89,5 @@ fabric.properties
 
 .history
 
-config/config.yaml
+pkg/config/config.yaml
 vendor/

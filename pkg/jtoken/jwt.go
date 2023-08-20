@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/config"
+	"goshop/pkg/config"
 	"goshop/pkg/utils"
 )
 

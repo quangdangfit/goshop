@@ -10,12 +10,132 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "Quang Dang",
+            "email": "quangdangfit@gmail.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://github.com/MartinHeinz/go-project-blueprint/blob/master/LICENSE"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/auth/change-password": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "changes the password",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "_",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChangePasswordReq"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "_",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LoginReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LoginRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "get my profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Register new user",
+                "parameters": [
+                    {
+                        "description": "Body",
+                        "name": "_",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RegisterReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.RegisterRes"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/orders": {
             "get": {
                 "security": [
@@ -46,7 +166,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/serializers.ListOrderRes"
+                            "$ref": "#/definitions/dto.ListOrderRes"
                         }
                     }
                 }
@@ -71,7 +191,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/serializers.PlaceOrderReq"
+                            "$ref": "#/definitions/dto.PlaceOrderReq"
                         }
                     }
                 ],
@@ -79,7 +199,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/serializers.Order"
+                            "$ref": "#/definitions/dto.Order"
                         }
                     }
                 }
@@ -112,7 +232,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/serializers.Order"
+                            "$ref": "#/definitions/dto.Order"
                         }
                     }
                 }
@@ -157,7 +277,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/serializers.ListProductRes"
+                            "$ref": "#/definitions/dto.ListProductRes"
                         }
                     }
                 }
@@ -182,18 +302,11 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/serializers.CreateProductReq"
+                            "$ref": "#/definitions/dto.CreateProductReq"
                         }
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/serializers.Product"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/api/v1/products/{id}": {
@@ -214,14 +327,7 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/serializers.Product"
-                        }
-                    }
-                }
+                "responses": {}
             },
             "put": {
                 "security": [
@@ -250,155 +356,16 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/serializers.UpdateProductReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/serializers.Product"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/change-password": {
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "changes the password",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "_",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/serializers.ChangePasswordReq"
+                            "$ref": "#/definitions/dto.UpdateProductReq"
                         }
                     }
                 ],
                 "responses": {}
             }
-        },
-        "/auth/login": {
-            "post": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Login",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "_",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/serializers.LoginReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/serializers.LoginRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/me": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "get my profile",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/serializers.User"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/register": {
-            "post": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Register new user",
-                "parameters": [
-                    {
-                        "description": "Body",
-                        "name": "_",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/serializers.RegisterReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/serializers.RegisterRes"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "paging.Pagination": {
-            "type": "object",
-            "properties": {
-                "current_page": {
-                    "type": "integer"
-                },
-                "limit": {
-                    "type": "integer"
-                },
-                "skip": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                },
-                "total_page": {
-                    "type": "integer"
-                }
-            }
-        },
-        "serializers.ChangePasswordReq": {
+        "dto.ChangePasswordReq": {
             "type": "object",
             "required": [
                 "new_password",
@@ -413,7 +380,7 @@ const docTemplate = `{
                 }
             }
         },
-        "serializers.CreateProductReq": {
+        "dto.CreateProductReq": {
             "type": "object",
             "required": [
                 "description",
@@ -431,13 +398,13 @@ const docTemplate = `{
                 }
             }
         },
-        "serializers.ListOrderRes": {
+        "dto.ListOrderRes": {
             "type": "object",
             "properties": {
                 "orders": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/serializers.Order"
+                        "$ref": "#/definitions/dto.Order"
                     }
                 },
                 "pagination": {
@@ -445,7 +412,7 @@ const docTemplate = `{
                 }
             }
         },
-        "serializers.ListProductRes": {
+        "dto.ListProductRes": {
             "type": "object",
             "properties": {
                 "pagination": {
@@ -454,12 +421,12 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/serializers.Product"
+                        "$ref": "#/definitions/internal_product_dto.Product"
                     }
                 }
             }
         },
-        "serializers.LoginReq": {
+        "dto.LoginReq": {
             "type": "object",
             "required": [
                 "email",
@@ -474,7 +441,7 @@ const docTemplate = `{
                 }
             }
         },
-        "serializers.LoginRes": {
+        "dto.LoginRes": {
             "type": "object",
             "properties": {
                 "access_token": {
@@ -484,11 +451,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/serializers.User"
+                    "$ref": "#/definitions/dto.User"
                 }
             }
         },
-        "serializers.Order": {
+        "dto.Order": {
             "type": "object",
             "properties": {
                 "code": {
@@ -500,7 +467,7 @@ const docTemplate = `{
                 "lines": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/serializers.OrderLine"
+                        "$ref": "#/definitions/dto.OrderLine"
                     }
                 },
                 "status": {
@@ -511,21 +478,21 @@ const docTemplate = `{
                 }
             }
         },
-        "serializers.OrderLine": {
+        "dto.OrderLine": {
             "type": "object",
             "properties": {
                 "price": {
                     "type": "number"
                 },
                 "product": {
-                    "$ref": "#/definitions/serializers.Product"
+                    "$ref": "#/definitions/internal_order_dto.Product"
                 },
                 "quantity": {
                     "type": "integer"
                 }
             }
         },
-        "serializers.PlaceOrderLineReq": {
+        "dto.PlaceOrderLineReq": {
             "type": "object",
             "required": [
                 "product_id",
@@ -540,7 +507,7 @@ const docTemplate = `{
                 }
             }
         },
-        "serializers.PlaceOrderReq": {
+        "dto.PlaceOrderReq": {
             "type": "object",
             "required": [
                 "lines",
@@ -551,7 +518,7 @@ const docTemplate = `{
                     "type": "array",
                     "maxItems": 5,
                     "items": {
-                        "$ref": "#/definitions/serializers.PlaceOrderLineReq"
+                        "$ref": "#/definitions/dto.PlaceOrderLineReq"
                     }
                 },
                 "user_id": {
@@ -559,7 +526,79 @@ const docTemplate = `{
                 }
             }
         },
-        "serializers.Product": {
+        "dto.RegisterReq": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RegisterRes": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "$ref": "#/definitions/dto.User"
+                }
+            }
+        },
+        "dto.UpdateProductReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            }
+        },
+        "dto.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_order_dto.Product": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_product_dto.Product": {
             "type": "object",
             "properties": {
                 "active": {
@@ -588,72 +627,44 @@ const docTemplate = `{
                 }
             }
         },
-        "serializers.RegisterReq": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "serializers.RegisterRes": {
+        "paging.Pagination": {
             "type": "object",
             "properties": {
-                "user": {
-                    "$ref": "#/definitions/serializers.User"
+                "current_page": {
+                    "type": "integer"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "skip": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_page": {
+                    "type": "integer"
                 }
             }
-        },
-        "serializers.UpdateProductReq": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number",
-                    "minimum": 0
-                }
-            }
-        },
-        "serializers.User": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "GoShop Swagger API",
+	Description:      "Swagger API for GoShop.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
