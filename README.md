@@ -42,7 +42,13 @@ $ go test
 
 ### Test with Coverage
 ```shell script
-go test -timeout 9000s -a -v -coverpkg=./... ./test
+go test -timeout 9000s -a -v -coverprofile=coverage.out -coverpkg=./... ./...
+```
+
+**or**
+
+```shell script
+make unittest
 ```
 
 Project information and existing API
@@ -80,3 +86,9 @@ Project information and existing API
 - Jwt-Go
 - Gin-gonic
 - Redis
+
+### What's next?
+- gRPC functions for products and orders
+- Push message to notify place order successfully
+- Put database object into interface
+- Unittest for repositories (mock database)
