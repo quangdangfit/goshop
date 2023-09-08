@@ -1,0 +1,9 @@
+.git/
+.vscode/
+.idea/
+.gitignore
+Makefile
+README.md
+codecov.yaml
+sonar-project.properties
+*.out
