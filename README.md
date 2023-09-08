@@ -16,8 +16,8 @@ An example of gin contains many useful features for e-commerce websites
 You can see the docker compose file [here](https://github.com/quangdangfit/docker-compose-template/blob/master/base/docker-compose.yml) to set up required environment
 
 ### Config
-- Copy config file: `cp config/config.sample.yaml config/config.yaml`
-- You should modify `config/config.yaml`
+- Copy config file: `cp pkg/config/config.sample.yaml pkg/config/config.yaml`
+- You should modify `pkg/config/config.yaml`
 
 ```yaml
 environment: production
@@ -70,6 +70,7 @@ Project information and existing API
 [GIN-debug] GET    /swagger/*any             --> github.com/swaggo/gin-swagger.CustomWrapHandler.func1 (3 handlers)
 [GIN-debug] GET    /health                   --> goshop/internal/server/http.Server.Run.func1 (3 handlers)
 2023-08-20T13:50:57.175+0700    INFO    http/server.go:53       Server is listening on PORT: 8888
+2023-09-08T21:03:00.950+0700    INFO    grpc/server.go:48       GRPC server is listening on PORT: 8889
 [GIN-debug] Listening and serving HTTP on :8888
 ```
 
