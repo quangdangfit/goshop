@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 RUN go mod download
 
-COPY ./config/config.sample.yaml ./config/config.yaml
+COPY ./pkg/config/config.sample.yaml ./pkg/config/config.yaml
 RUN go build -o /app/goshop
 
 EXPOSE 8888
