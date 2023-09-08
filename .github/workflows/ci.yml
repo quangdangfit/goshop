@@ -59,24 +59,12 @@ jobs:
       - name: Run unit tests
         run: make unittest
 
-  sonarcloud:
-    needs: unittest
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  codecov:
-    needs: unittest
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:
