@@ -15,5 +15,4 @@ ignore:
   - "mocks/"
   - "pkg/"
   - "vendor/"
-  - "config/"
-  - "main.go"
+  - "cmd/"
