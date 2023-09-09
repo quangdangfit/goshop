@@ -6,7 +6,7 @@ on:
     branches: [ master ]
 
 jobs:
-  unittest:
+  ci:
     runs-on: ubuntu-latest
     env:
       environment: testing
