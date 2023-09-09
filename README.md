@@ -91,6 +91,4 @@ Project information and existing API
 ### What's next?
 - gRPC functions for products and orders
 - Push message to notify place order successfully
-- Put database object into interface
-- Unittest for repositories (mock database)
 - Define error response wrapper
