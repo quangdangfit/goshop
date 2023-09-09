@@ -3,15 +3,15 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/validation"
-	"gorm.io/gorm"
 
 	"goshop/internal/user/repository"
 	"goshop/internal/user/service"
+	"goshop/pkg/dbs"
 	"goshop/pkg/middleware"
 )
 
-func Routes(r *gin.RouterGroup, db *gorm.DB, validator validation.Validation) {
-	userRepo := repository.NewUserRepository(db)
+func Routes(r *gin.RouterGroup, sqlDB dbs.IDatabase, validator validation.Validation) {
+	userRepo := repository.NewUserRepository(sqlDB)
 	userSvc := service.NewUserService(validator, userRepo)
 	userHandler := NewUserHandler(userSvc)
 

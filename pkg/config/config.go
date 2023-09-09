@@ -16,7 +16,7 @@ const (
 	TestEnv       = "testing"
 
 	DatabaseTimeout    = 5 * time.Second
-	ProductCachingTime = 5 * time.Minute
+	ProductCachingTime = 1 * time.Minute
 )
 
 var AuthIgnoreMethods = []string{

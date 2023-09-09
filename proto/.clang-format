@@ -1,0 +1,5 @@
+---
+Language: Proto
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+ColumnLimit: 120

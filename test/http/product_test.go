@@ -1,6 +1,7 @@
-package test
+package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -23,7 +24,7 @@ func TestProductAPI_GetProductByIDSuccess(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("GET", fmt.Sprintf("/api/v1/products/%s", p.ID), nil, accessToken())
 	var res model.Product
@@ -42,7 +43,7 @@ func TestProductAPI_GetProductByIDSuccessFromCache(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("GET", fmt.Sprintf("/api/v1/products/%s", p.ID), nil, accessToken())
 	var res model.Product
@@ -80,7 +81,7 @@ func TestProductAPI_ListProductsSuccess(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("GET", "/api/v1/products", nil, accessToken())
 	var res dto.ListProductRes
@@ -104,7 +105,7 @@ func TestProductAPI_ListProductsSuccessFromCache(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("GET", "/api/v1/products", nil, accessToken())
 	var res dto.ListProductRes
@@ -158,7 +159,7 @@ func TestProductAPI_ListProductsFindByNameSuccess(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("GET", "/api/v1/products?name=test", nil, accessToken())
 	var res dto.ListProductRes
@@ -182,7 +183,7 @@ func TestProductAPI_ListProductsFindByNameNotFound(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("GET", "/api/v1/products?name=notfound", nil, accessToken())
 	var res dto.ListProductRes
@@ -199,7 +200,7 @@ func TestProductAPI_ListProductsFindByCodeSuccess(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("GET", fmt.Sprintf("/api/v1/products?code=%s", p.Code), nil, accessToken())
 	var res dto.ListProductRes
@@ -223,7 +224,7 @@ func TestProductAPI_ListProductsFindByCodeNotFound(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("GET", "/api/v1/products?code=notfound", nil, accessToken())
 	var res dto.ListProductRes
@@ -240,21 +241,21 @@ func TestProductAPI_ListProductsWithPagination(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(&p1)
+	dbTest.Create(context.Background(), &p1)
 
 	p2 := model.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(&p2)
+	dbTest.Create(context.Background(), &p2)
 
 	p3 := model.Product{
 		Name:        "test-product-3",
 		Description: "test-product-3",
 		Price:       3,
 	}
-	dbTest.Create(&p3)
+	dbTest.Create(context.Background(), &p3)
 
 	writer := makeRequest("GET", "/api/v1/products?page=2&limit=2", nil, accessToken())
 	var res dto.ListProductRes
@@ -278,21 +279,21 @@ func TestProductAPI_ListProductsWithOrder(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(&p1)
+	dbTest.Create(context.Background(), &p1)
 
 	p2 := model.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(&p2)
+	dbTest.Create(context.Background(), &p2)
 
 	p3 := model.Product{
 		Name:        "test-product-3",
 		Description: "test-product-3",
 		Price:       3,
 	}
-	dbTest.Create(&p3)
+	dbTest.Create(context.Background(), &p3)
 
 	writer := makeRequest("GET", "/api/v1/products?order_by=name&order_desc=true", nil, accessToken())
 	var res dto.ListProductRes
@@ -409,7 +410,7 @@ func TestProductAPI_CreateProductDuplicateName(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	writer := makeRequest("POST", "/api/v1/products", p, accessToken())
 	var response map[string]map[string]string
@@ -429,7 +430,7 @@ func TestProductAPI_UpdateProductSuccess(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	update := &dto.UpdateProductReq{
 		Name: "update-test-product",
@@ -451,7 +452,7 @@ func TestProductAPI_UpdateProductInvalidFieldType(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	update := map[string]interface{}{
 		"price": "1",
@@ -471,7 +472,7 @@ func TestProductAPI_UpdateProductPriceLessThanZero(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	dbTest.Create(&p)
+	dbTest.Create(context.Background(), &p)
 
 	update := &dto.UpdateProductReq{
 		Price: -1,

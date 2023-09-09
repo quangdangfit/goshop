@@ -5,25 +5,25 @@ import (
 	"net"
 
 	"github.com/quangdangfit/gocommon/logger"
-	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 	"google.golang.org/grpc"
-	"gorm.io/gorm"
 
 	userGRPC "goshop/internal/user/port/grpc"
 	"goshop/pkg/config"
+	"goshop/pkg/dbs"
 	"goshop/pkg/middleware"
+	"goshop/pkg/redis"
 )
 
 type Server struct {
 	engine    *grpc.Server
 	cfg       *config.Schema
 	validator validation.Validation
-	db        *gorm.DB
+	db        dbs.IDatabase
 	cache     redis.IRedis
 }
 
-func NewServer(validator validation.Validation, db *gorm.DB, cache redis.IRedis) *Server {
+func NewServer(validator validation.Validation, db dbs.IDatabase, cache redis.IRedis) *Server {
 	interceptor := middleware.NewAuthInterceptor(config.AuthIgnoreMethods)
 
 	grpcServer := grpc.NewServer(

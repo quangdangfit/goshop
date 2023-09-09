@@ -2,16 +2,16 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
-	"gorm.io/gorm"
 
 	"goshop/internal/product/repository"
 	"goshop/internal/product/service"
+	"goshop/pkg/dbs"
 	"goshop/pkg/middleware"
+	"goshop/pkg/redis"
 )
 
-func Routes(r *gin.RouterGroup, db *gorm.DB, validator validation.Validation, cache redis.IRedis) {
+func Routes(r *gin.RouterGroup, db dbs.IDatabase, validator validation.Validation, cache redis.IRedis) {
 	productRepo := repository.NewProductRepository(db)
 	productSvc := service.NewProductService(validator, productRepo)
 	productHandler := NewProductHandler(cache, productSvc)

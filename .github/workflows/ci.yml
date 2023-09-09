@@ -6,7 +6,7 @@ on:
     branches: [ master ]
 
 jobs:
-  unittest:
+  ci:
     runs-on: ubuntu-latest
     env:
       environment: testing
@@ -56,12 +56,6 @@ jobs:
 
       - name: Run unit tests
         run: make unittest
-
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3

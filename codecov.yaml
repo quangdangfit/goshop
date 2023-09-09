@@ -16,3 +16,4 @@ ignore:
   - "pkg/"
   - "vendor/"
   - "cmd/"
+  - "proto/"

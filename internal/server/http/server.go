@@ -7,14 +7,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
-	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"gorm.io/gorm"
 
 	_ "goshop/docs"
 	"goshop/pkg/config"
+	"goshop/pkg/dbs"
+	"goshop/pkg/redis"
 	"goshop/pkg/response"
 )
 
@@ -22,11 +22,11 @@ type Server struct {
 	engine    *gin.Engine
 	cfg       *config.Schema
 	validator validation.Validation
-	db        *gorm.DB
+	db        dbs.IDatabase
 	cache     redis.IRedis
 }
 
-func NewServer(validator validation.Validation, db *gorm.DB, cache redis.IRedis) *Server {
+func NewServer(validator validation.Validation, db dbs.IDatabase, cache redis.IRedis) *Server {
 	return &Server{
 		engine:    gin.Default(),
 		cfg:       config.GetConfig(),

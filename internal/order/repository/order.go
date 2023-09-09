@@ -3,11 +3,9 @@ package repository
 import (
 	"context"
 
-	"gorm.io/gorm"
-
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
-	"goshop/pkg/config"
+	"goshop/pkg/dbs"
 	"goshop/pkg/paging"
 	"goshop/pkg/utils"
 )
@@ -21,21 +19,18 @@ type IOrderRepository interface {
 }
 
 type OrderRepo struct {
-	db *gorm.DB
+	db dbs.IDatabase
 }
 
-func NewOrderRepository(db *gorm.DB) *OrderRepo {
-	_ = db.AutoMigrate(&model.Order{})
-	_ = db.AutoMigrate(&model.OrderLine{})
+func NewOrderRepository(db dbs.IDatabase) *OrderRepo {
+	_ = db.AutoMigrate(&model.Order{}, &model.OrderLine{})
 	return &OrderRepo{db: db}
 }
 
 func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error) {
-	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
-	defer cancel()
-
 	order := new(model.Order)
-	err := r.WithTransaction(func(*gorm.DB) error {
+
+	handler := func() error {
 		// Create Order
 		var totalPrice float64
 		for _, line := range lines {
@@ -44,7 +39,7 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 		order.TotalPrice = totalPrice
 		order.UserID = userID
 
-		if err := r.db.Create(order).Error; err != nil {
+		if err := r.db.Create(ctx, order); err != nil {
 			return err
 		}
 
@@ -52,13 +47,15 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 		for _, line := range lines {
 			line.OrderID = order.ID
 		}
-		if err := r.db.CreateInBatches(&lines, len(lines)).Error; err != nil {
+		if err := r.db.CreateInBatches(ctx, &lines, len(lines)); err != nil {
 			return err
 		}
 
 		utils.Copy(&order.Lines, &lines)
 		return nil
-	})
+	}
+
+	err := r.db.WithTransaction(handler)
 	if err != nil {
 		return nil, err
 	}
@@ -67,15 +64,15 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 }
 
 func (r *OrderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (*model.Order, error) {
-	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
-	defer cancel()
-
 	var order model.Order
-	query := r.db.Where("id = ?", id)
-	if preload {
-		query = query.Preload("Lines").Preload("Lines.Product")
+	opts := []dbs.FindOption{
+		dbs.WithQuery(dbs.NewQuery("id = ?", id)),
 	}
-	if err := query.First(&order).Error; err != nil {
+	if preload {
+		opts = append(opts, dbs.WithPreload([]string{"Lines", "Lines.Product"}))
+	}
+
+	if err := r.db.FindOne(ctx, &order, opts...); err != nil {
 		return nil, err
 	}
 
@@ -83,17 +80,17 @@ func (r *OrderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (
 }
 
 func (r *OrderRepo) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
-	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
-	defer cancel()
-
-	query := r.db.Where("user_id = ?", req.UserID)
-	order := "created_at"
+	query := []dbs.Query{
+		dbs.NewQuery("user_id = ?", req.UserID),
+	}
 	if req.Code != "" {
-		query = query.Where("code = ?", req.Code)
+		query = append(query, dbs.NewQuery("code = ?", req.Code))
 	}
 	if req.Status != "" {
-		query = query.Where("status = ?", req.Status)
+		query = append(query, dbs.NewQuery("status = ?", req.Status))
 	}
+
+	order := "created_at"
 	if req.OrderBy != "" {
 		order = req.OrderBy
 		if req.OrderDesc {
@@ -102,19 +99,22 @@ func (r *OrderRepo) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*
 	}
 
 	var total int64
-	if err := query.Model(&model.Order{}).Count(&total).Error; err != nil {
+	if err := r.db.Count(ctx, &model.Order{}, &total, dbs.WithQuery(query...)); err != nil {
 		return nil, nil, err
 	}
 
 	pagination := paging.New(req.Page, req.Limit, total)
 
 	var orders []*model.Order
-	if err := query.Preload("Lines").
-		Preload("Lines.Product").
-		Limit(int(pagination.Limit)).
-		Offset(int(pagination.Skip)).
-		Order(order).
-		Find(&orders).Error; err != nil {
+	if err := r.db.Find(
+		ctx,
+		&orders,
+		dbs.WithPreload([]string{"Lines", "Lines.Product"}),
+		dbs.WithQuery(query...),
+		dbs.WithLimit(int(pagination.Limit)),
+		dbs.WithOffset(int(pagination.Skip)),
+		dbs.WithOrder(order),
+	); err != nil {
 		return nil, nil, err
 	}
 
@@ -122,27 +122,5 @@ func (r *OrderRepo) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*
 }
 
 func (r *OrderRepo) UpdateOrder(ctx context.Context, order *model.Order) error {
-	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
-	defer cancel()
-
-	if err := r.db.Save(&order).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *OrderRepo) WithTransaction(callback func(*gorm.DB) error) error {
-	tx := r.db.Begin()
-
-	if err := callback(tx); err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return err
-	}
-
-	return nil
+	return r.db.Update(ctx, order)
 }

@@ -2,13 +2,13 @@ package main
 
 import (
 	"github.com/quangdangfit/gocommon/logger"
-	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
 	grpcServer "goshop/internal/server/grpc"
 	httpServer "goshop/internal/server/http"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
+	"goshop/pkg/redis"
 )
 
 //	@title			GoShop Swagger API
@@ -31,7 +31,8 @@ import (
 func main() {
 	cfg := config.GetConfig()
 	logger.Initialize(cfg.Environment)
-	db, err := dbs.Connect(cfg.DatabaseURI)
+
+	db, err := dbs.NewDatabase(cfg.DatabaseURI)
 	if err != nil {
 		logger.Fatal("Cannot connect to database", err)
 	}
