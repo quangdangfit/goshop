@@ -4,8 +4,11 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
+	orderModel "goshop/internal/order/model"
+	productModel "goshop/internal/product/model"
 	grpcServer "goshop/internal/server/grpc"
 	httpServer "goshop/internal/server/http"
+	userModel "goshop/internal/user/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/redis"
@@ -35,6 +38,11 @@ func main() {
 	db, err := dbs.NewDatabase(cfg.DatabaseURI)
 	if err != nil {
 		logger.Fatal("Cannot connect to database", err)
+	}
+
+	err = db.AutoMigrate(&userModel.User{}, &productModel.Product{}, orderModel.Order{}, orderModel.OrderLine{})
+	if err != nil {
+		logger.Fatal("Database migration fail", err)
 	}
 
 	validator := validation.New()

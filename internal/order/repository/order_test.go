@@ -25,7 +25,6 @@ func (suite *OrderRepositoryTestSuite) SetupTest() {
 	logger.Initialize(config.TestEnv)
 
 	suite.mockDB = mocks.NewIDatabase(suite.T())
-	suite.mockDB.On("AutoMigrate", mock.Anything, mock.Anything).Return(nil).Times(1)
 	suite.repo = NewOrderRepository(suite.mockDB)
 }
 

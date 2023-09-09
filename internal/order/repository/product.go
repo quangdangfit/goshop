@@ -17,7 +17,6 @@ type ProductRepo struct {
 }
 
 func NewProductRepository(db dbs.IDatabase) *ProductRepo {
-	_ = db.AutoMigrate(&model.Product{})
 	return &ProductRepo{db: db}
 }
 

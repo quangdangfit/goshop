@@ -49,6 +49,11 @@ func setup() {
 		logger.Fatal("Cannot connect to database", err)
 	}
 
+	err = dbTest.AutoMigrate(&userModel.User{}, &productModel.Product{}, orderModel.Order{}, orderModel.OrderLine{})
+	if err != nil {
+		logger.Fatal("Database migration fail", err)
+	}
+
 	validator := validation.New()
 	testCache = redis.New(redis.Config{
 		Address:  cfg.RedisURI,

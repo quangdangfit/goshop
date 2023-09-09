@@ -1,17 +1,19 @@
-package http
+package grpc
 
 import (
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/validation"
+	"github.com/stretchr/testify/assert"
 
 	dbMocks "goshop/pkg/dbs/mocks"
 	redisMocks "goshop/pkg/redis/mocks"
 )
 
-func TestRoutes(t *testing.T) {
+func TestNewServer(t *testing.T) {
 	mockDB := dbMocks.NewIDatabase(t)
 	mockRedis := redisMocks.NewIRedis(t)
-	Routes(gin.New().Group("/"), mockDB, validation.New(), mockRedis)
+
+	server := NewServer(validation.New(), mockDB, mockRedis)
+	assert.NotNil(t, server)
 }
