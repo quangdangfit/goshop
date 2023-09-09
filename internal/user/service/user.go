@@ -49,8 +49,7 @@ func (s *UserService) Login(ctx context.Context, req *dto.LoginReq) (*model.User
 		return nil, "", "", err
 	}
 
-	passErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-	if passErr == bcrypt.ErrMismatchedHashAndPassword && passErr != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return nil, "", "", errors.New("wrong password")
 	}
 
@@ -115,8 +114,7 @@ func (s *UserService) ChangePassword(ctx context.Context, id string, req *dto.Ch
 		return err
 	}
 
-	passErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-	if passErr == bcrypt.ErrMismatchedHashAndPassword && passErr != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return errors.New("wrong password")
 	}
 

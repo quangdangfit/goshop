@@ -53,6 +53,38 @@ func (suite *UserServiceTestSuite) TestLoginGetUserByEmailFail() {
 	suite.NotNil(err)
 }
 
+func (suite *UserServiceTestSuite) TestLoginInvalidEmailFormat() {
+	req := &dto.LoginReq{
+		Email:    "email",
+		Password: "test123456",
+	}
+
+	user, accessToken, refreshToken, err := suite.service.Login(context.Background(), req)
+	suite.Nil(user)
+	suite.Empty(accessToken)
+	suite.Empty(refreshToken)
+	suite.NotNil(err)
+}
+
+func (suite *UserServiceTestSuite) TestLoginWrongPassword() {
+	req := &dto.LoginReq{
+		Email:    "test@test.com",
+		Password: "test123456",
+	}
+
+	suite.mockRepo.On("GetUserByEmail", mock.Anything, req.Email).
+		Return(&model.User{
+			Email:    "test@test.com",
+			Password: "password",
+		}, nil).Times(1)
+
+	user, accessToken, refreshToken, err := suite.service.Login(context.Background(), req)
+	suite.Nil(user)
+	suite.Empty(accessToken)
+	suite.Empty(refreshToken)
+	suite.NotNil(err)
+}
+
 func (suite *UserServiceTestSuite) TestLoginSuccess() {
 	req := &dto.LoginReq{
 		Email:    "test@test.com",
@@ -99,6 +131,16 @@ func (suite *UserServiceTestSuite) TestRegisterCreateUserFail() {
 	suite.mockRepo.On("Create", mock.Anything, mock.Anything).
 		Return(errors.New("error")).Times(1)
 
+	user, err := suite.service.Register(context.Background(), req)
+	suite.Nil(user)
+	suite.NotNil(err)
+}
+
+func (suite *UserServiceTestSuite) TestRegisterInvalidEmailFormat() {
+	req := &dto.RegisterReq{
+		Email:    "email",
+		Password: "test123456",
+	}
 	user, err := suite.service.Register(context.Background(), req)
 	suite.Nil(user)
 	suite.NotNil(err)
@@ -177,8 +219,9 @@ func (suite *UserServiceTestSuite) TestChangePasswordSuccess() {
 	suite.mockRepo.On("GetUserByID", mock.Anything, userID).
 		Return(
 			&model.User{
-				ID:    userID,
-				Email: "test@test.com",
+				ID:       userID,
+				Email:    "test@test.com",
+				Password: utils.HashAndSalt([]byte("password")),
 			}, nil,
 		).Times(1)
 	suite.mockRepo.On("Update", mock.Anything, mock.Anything).
@@ -202,6 +245,37 @@ func (suite *UserServiceTestSuite) TestChangePasswordGetUserByIDFail() {
 	suite.NotNil(err)
 }
 
+func (suite *UserServiceTestSuite) TestChangePasswordMissRequiredField() {
+	userID := "userID"
+	req := &dto.ChangePasswordReq{
+		Password:    "password",
+		NewPassword: "",
+	}
+
+	err := suite.service.ChangePassword(context.Background(), userID, req)
+	suite.NotNil(err)
+}
+
+func (suite *UserServiceTestSuite) TestChangePasswordWrongCurrentPassword() {
+	userID := "userID"
+	req := &dto.ChangePasswordReq{
+		Password:    "password1",
+		NewPassword: "newPassword",
+	}
+
+	suite.mockRepo.On("GetUserByID", mock.Anything, userID).
+		Return(
+			&model.User{
+				ID:       userID,
+				Email:    "test@test.com",
+				Password: utils.HashAndSalt([]byte("password")),
+			}, nil,
+		).Times(1)
+
+	err := suite.service.ChangePassword(context.Background(), userID, req)
+	suite.NotNil(err)
+}
+
 func (suite *UserServiceTestSuite) TestChangePasswordUpdateUserFail() {
 	userID := "userID"
 	req := &dto.ChangePasswordReq{
@@ -212,8 +286,9 @@ func (suite *UserServiceTestSuite) TestChangePasswordUpdateUserFail() {
 	suite.mockRepo.On("GetUserByID", mock.Anything, userID).
 		Return(
 			&model.User{
-				ID:    userID,
-				Email: "test@test.com",
+				ID:       userID,
+				Email:    "test@test.com",
+				Password: utils.HashAndSalt([]byte("password")),
 			}, nil,
 		).Times(1)
 	suite.mockRepo.On("Update", mock.Anything, mock.Anything).

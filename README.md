@@ -93,3 +93,4 @@ Project information and existing API
 - Push message to notify place order successfully
 - Put database object into interface
 - Unittest for repositories (mock database)
+- Define error response wrapper

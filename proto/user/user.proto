@@ -36,9 +36,9 @@ message LoginReq {
 }
 
 message LoginRes {
-  UserInfo user         = 1;
-  string   access_token = 2;
-  string   fresh_token  = 3;
+  UserInfo user          = 1;
+  string   access_token  = 2;
+  string   refresh_token = 3;
 }
 
 message GetMeReq {}
