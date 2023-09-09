@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -16,7 +17,7 @@ import (
 // =================================================================================================
 
 func TestUserAPI_LoginSuccess(t *testing.T) {
-	dbTest.Create(&model.User{
+	dbTest.Create(context.Background(), &model.User{
 		Email:    "login@test.com",
 		Password: "test123456",
 	})
@@ -142,7 +143,7 @@ func TestUserAPI_RegisterInvalidPassword(t *testing.T) {
 func TestUserAPI_RegisterEmailExist(t *testing.T) {
 	defer cleanData()
 
-	dbTest.Create(&model.User{
+	dbTest.Create(context.Background(), &model.User{
 		Email:    "emailexist@test.com",
 		Password: "password",
 	})
@@ -238,7 +239,7 @@ func TestUserAPI_ChangePasswordSuccess(t *testing.T) {
 	defer cleanData()
 
 	user := model.User{Email: "changepassword1@gmail.com", Password: "123456"}
-	dbTest.Create(&user)
+	dbTest.Create(context.Background(), &user)
 
 	token := jtoken.GenerateAccessToken(map[string]interface{}{
 		"id": user.ID,

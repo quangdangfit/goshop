@@ -38,7 +38,8 @@ func NewProductHandler(
 //	@Router		/api/v1/products/{id} [get]
 func (p *ProductHandler) GetProductByID(c *gin.Context) {
 	var res dto.Product
-	err := p.cache.Get(c.Request.URL.Path, &res)
+	cacheKey := c.Request.URL.RequestURI()
+	err := p.cache.Get(cacheKey, &res)
 	if err == nil {
 		response.JSON(c, http.StatusOK, res)
 		return
@@ -54,7 +55,7 @@ func (p *ProductHandler) GetProductByID(c *gin.Context) {
 
 	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
-	_ = p.cache.SetWithExpiration(c.Request.URL.Path, res, config.ProductCachingTime)
+	_ = p.cache.SetWithExpiration(cacheKey, res, config.ProductCachingTime)
 }
 
 // ListProducts godoc
@@ -73,7 +74,8 @@ func (p *ProductHandler) ListProducts(c *gin.Context) {
 	}
 
 	var res dto.ListProductRes
-	err := p.cache.Get(c.Request.URL.Path, &res)
+	cacheKey := c.Request.URL.RequestURI()
+	err := p.cache.Get(cacheKey, &res)
 	if err == nil {
 		response.JSON(c, http.StatusOK, res)
 		return
@@ -89,7 +91,7 @@ func (p *ProductHandler) ListProducts(c *gin.Context) {
 	utils.Copy(&res.Products, &products)
 	res.Pagination = pagination
 	response.JSON(c, http.StatusOK, res)
-	_ = p.cache.SetWithExpiration(c.Request.URL.Path, res, config.ProductCachingTime)
+	_ = p.cache.SetWithExpiration(cacheKey, res, config.ProductCachingTime)
 }
 
 // CreateProduct godoc

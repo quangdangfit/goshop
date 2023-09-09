@@ -3,11 +3,10 @@ package repository
 import (
 	"context"
 
-	"gorm.io/gorm"
-
 	"goshop/internal/product/dto"
 	"goshop/internal/product/model"
 	"goshop/pkg/config"
+	"goshop/pkg/dbs"
 	"goshop/pkg/paging"
 )
 
@@ -20,10 +19,10 @@ type IProductRepository interface {
 }
 
 type ProductRepo struct {
-	db *gorm.DB
+	db dbs.IDatabase
 }
 
-func NewProductRepository(db *gorm.DB) *ProductRepo {
+func NewProductRepository(db dbs.IDatabase) *ProductRepo {
 	_ = db.AutoMigrate(&model.Product{})
 	return &ProductRepo{db: db}
 }
@@ -32,33 +31,38 @@ func (r *ProductRepo) ListProducts(ctx context.Context, req *dto.ListProductReq)
 	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
-	query := r.db
-	order := "created_at"
+	query := make([]dbs.Query, 0)
 	if req.Name != "" {
-		query = query.Where("name LIKE ?", "%"+req.Name+"%")
+		query = append(query, dbs.NewQuery("name LIKE ?", "%"+req.Name+"%"))
 	}
 	if req.Code != "" {
-		query = query.Where("code = ?", req.Code)
+		query = append(query, dbs.NewQuery("code = ?", req.Code))
 	}
+
+	order := "created_at"
 	if req.OrderBy != "" {
 		order = req.OrderBy
 		if req.OrderDesc {
 			order += " DESC"
 		}
 	}
+
 	var total int64
-	if err := query.Model(&model.Product{}).Count(&total).Error; err != nil {
+	if err := r.db.Count(ctx, &model.Product{}, &total, dbs.WithQuery(query...)); err != nil {
 		return nil, nil, err
 	}
 
 	pagination := paging.New(req.Page, req.Limit, total)
 
 	var products []*model.Product
-	if err := query.
-		Limit(int(pagination.Limit)).
-		Offset(int(pagination.Skip)).
-		Order(order).
-		Find(&products).Error; err != nil {
+	if err := r.db.Find(
+		ctx,
+		&products,
+		dbs.WithQuery(query...),
+		dbs.WithLimit(int(pagination.Limit)),
+		dbs.WithOffset(int(pagination.Skip)),
+		dbs.WithOrder(order),
+	); err != nil {
 		return nil, nil, nil
 	}
 
@@ -66,35 +70,17 @@ func (r *ProductRepo) ListProducts(ctx context.Context, req *dto.ListProductReq)
 }
 
 func (r *ProductRepo) GetProductByID(ctx context.Context, id string) (*model.Product, error) {
-	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
-	defer cancel()
-
 	var product model.Product
-	if err := r.db.Where("id = ?", id).First(&product).Error; err != nil {
+	if err := r.db.FindById(ctx, id, &product); err != nil {
 		return nil, err
 	}
-
 	return &product, nil
 }
 
 func (r *ProductRepo) Create(ctx context.Context, product *model.Product) error {
-	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
-	defer cancel()
-
-	if err := r.db.Create(&product).Error; err != nil {
-		return err
-	}
-
-	return nil
+	return r.db.Create(ctx, product)
 }
 
 func (r *ProductRepo) Update(ctx context.Context, product *model.Product) error {
-	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
-	defer cancel()
-
-	if err := r.db.Save(&product).Error; err != nil {
-		return err
-	}
-
-	return nil
+	return r.db.Update(ctx, product)
 }

@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -12,7 +13,6 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
-	"gorm.io/gorm"
 
 	orderModel "goshop/internal/order/model"
 	productModel "goshop/internal/product/model"
@@ -26,7 +26,7 @@ import (
 
 var (
 	testRouter *gin.Engine
-	dbTest     *gorm.DB
+	dbTest     dbs.IDatabase
 	testCache  redis.IRedis
 )
 
@@ -44,7 +44,7 @@ func setup() {
 	logger.Initialize(config.TestEnv)
 
 	var err error
-	dbTest, err = dbs.Connect(cfg.DatabaseURI)
+	dbTest, err = dbs.NewDatabase(cfg.DatabaseURI)
 	if err != nil {
 		logger.Fatal("Cannot connect to database", err)
 	}
@@ -60,14 +60,14 @@ func setup() {
 	_ = server.MapRoutes()
 	testRouter = server.GetEngine()
 
-	dbTest.Create(&userModel.User{
+	dbTest.Create(context.Background(), &userModel.User{
 		Email:    "test@test.com",
 		Password: "test123456",
 	})
 }
 
 func teardown() {
-	migrator := dbTest.Migrator()
+	migrator := dbTest.GetDB().Migrator()
 	migrator.DropTable(&userModel.User{}, &productModel.Product{}, &orderModel.Order{}, &orderModel.OrderLine{})
 }
 
@@ -113,12 +113,12 @@ func parseResponseResult(resData []byte, result interface{}) {
 }
 
 func cleanData(records ...interface{}) {
-	dbTest.Where("1 = 1").Delete(&orderModel.OrderLine{})
-	dbTest.Where("1 = 1").Delete(&productModel.Product{})
-	dbTest.Where("1 = 1").Delete(&orderModel.Order{})
+	dbTest.GetDB().Where("1 = 1").Delete(&orderModel.OrderLine{})
+	dbTest.GetDB().Where("1 = 1").Delete(&productModel.Product{})
+	dbTest.GetDB().Where("1 = 1").Delete(&orderModel.Order{})
 
 	for _, record := range records {
-		dbTest.Delete(record)
+		dbTest.Delete(context.Background(), record)
 	}
 
 	testCache.RemovePattern("*")
