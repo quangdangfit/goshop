@@ -23,7 +23,6 @@ type OrderRepo struct {
 }
 
 func NewOrderRepository(db dbs.IDatabase) *OrderRepo {
-	_ = db.AutoMigrate(&model.Order{}, &model.OrderLine{})
 	return &OrderRepo{db: db}
 }
 

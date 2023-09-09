@@ -20,7 +20,6 @@ type UserRepo struct {
 }
 
 func NewUserRepository(db dbs.IDatabase) *UserRepo {
-	_ = db.AutoMigrate(&model.User{})
 	return &UserRepo{db: db}
 }
 

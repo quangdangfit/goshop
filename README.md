@@ -1,6 +1,6 @@
 # Go Shop
 [![Master](https://github.com/quangdangfit/goshop/workflows/master/badge.svg)](https://github.com/quangdangfit/goshop/actions)
-[![Codecov](https://img.shields.io/codecov/c/github/quangdangfit/goshop?style=flat-square)](https://codecov.io/gh/quangdangfit/goshop)
+[![codecov](https://codecov.io/gh/quangdangfit/goshop/graph/badge.svg?token=78BO8FQDB0)](https://codecov.io/gh/quangdangfit/goshop)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/quangdangfit/goshop?style=flat-square)
 [![GitHub](https://img.shields.io/github/license/jrapoport/gothic?style=flat-square)](https://github.com/quangdangfit/goshop/blob/master/LICENSE)
 

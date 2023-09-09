@@ -12,6 +12,9 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "goshop/docs"
+	orderHttp "goshop/internal/order/port/http"
+	productHttp "goshop/internal/product/port/http"
+	userHttp "goshop/internal/user/port/http"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/redis"
@@ -59,4 +62,12 @@ func (s Server) Run() error {
 
 func (s Server) GetEngine() *gin.Engine {
 	return s.engine
+}
+
+func (s Server) MapRoutes() error {
+	v1 := s.engine.Group("/api/v1")
+	userHttp.Routes(v1, s.db, s.validator)
+	productHttp.Routes(v1, s.db, s.validator, s.cache)
+	orderHttp.Routes(v1, s.db, s.validator)
+	return nil
 }
