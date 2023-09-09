@@ -109,7 +109,7 @@ func (suite *UserRepositoryTestSuite) TestFindByIdFail() {
 	suite.Nil(user)
 }
 
-// GetUserByID
+// GetUserByEmail
 // =================================================================
 
 func (suite *UserRepositoryTestSuite) TestGetUserByEmailSuccessfully() {

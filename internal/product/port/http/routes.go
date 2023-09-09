@@ -2,13 +2,13 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/internal/product/repository"
 	"goshop/internal/product/service"
 	"goshop/pkg/dbs"
 	"goshop/pkg/middleware"
+	"goshop/pkg/redis"
 )
 
 func Routes(r *gin.RouterGroup, db dbs.IDatabase, validator validation.Validation, cache redis.IRedis) {

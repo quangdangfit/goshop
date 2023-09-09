@@ -63,7 +63,7 @@ func (r *ProductRepo) ListProducts(ctx context.Context, req *dto.ListProductReq)
 		dbs.WithOffset(int(pagination.Skip)),
 		dbs.WithOrder(order),
 	); err != nil {
-		return nil, nil, nil
+		return nil, nil, err
 	}
 
 	return products, pagination, nil

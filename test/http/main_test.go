@@ -11,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
-	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 
 	orderModel "goshop/internal/order/model"
@@ -21,6 +20,7 @@ import (
 	userModel "goshop/internal/user/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
+	"goshop/pkg/redis"
 	"goshop/pkg/utils"
 )
 

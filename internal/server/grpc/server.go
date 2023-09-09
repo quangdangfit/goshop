@@ -5,7 +5,6 @@ import (
 	"net"
 
 	"github.com/quangdangfit/gocommon/logger"
-	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 	"google.golang.org/grpc"
 
@@ -13,6 +12,7 @@ import (
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/middleware"
+	"goshop/pkg/redis"
 )
 
 type Server struct {

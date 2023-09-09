@@ -51,7 +51,7 @@ func (suite *UserHandlerTestSuite) prepareContext(body any) (*gin.Context, *http
 // Login
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestUserAPI_LoginSuccess() {
+func (suite *UserHandlerTestSuite) TestLoginSuccess() {
 	req := &dto.LoginReq{
 		Email:    "login@test.com",
 		Password: "test123456",
@@ -83,7 +83,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_LoginSuccess() {
 	suite.Equal("refresh-token", loginRes.RefreshToken)
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_LoginInvalidEmailType() {
+func (suite *UserHandlerTestSuite) TestLoginInvalidEmailType() {
 	req := map[string]interface{}{
 		"email":    1,
 		"password": "test123456",
@@ -99,7 +99,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_LoginInvalidEmailType() {
 	suite.Equal("Invalid parameters", res["error"]["message"])
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_LoginInvalidPasswordType() {
+func (suite *UserHandlerTestSuite) TestLoginInvalidPasswordType() {
 	req := map[string]interface{}{
 		"email":    "login@test.com",
 		"password": 12345,
@@ -115,7 +115,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_LoginInvalidPasswordType() {
 	suite.Equal("Invalid parameters", res["error"]["message"])
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_LoginFail() {
+func (suite *UserHandlerTestSuite) TestLoginFail() {
 	req := &dto.LoginReq{
 		Email:    "login@test.com",
 		Password: "test123456",
@@ -137,7 +137,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_LoginFail() {
 // Register
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestUserAPI_RegisterSuccess() {
+func (suite *UserHandlerTestSuite) TestRegisterSuccess() {
 	req := &dto.RegisterReq{
 		Email:    "register@test.com",
 		Password: "test123456",
@@ -165,7 +165,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_RegisterSuccess() {
 	suite.Equal(req.Email, registerRes.User.Email)
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_RegisterInvalidEmailType() {
+func (suite *UserHandlerTestSuite) TestRegisterInvalidEmailType() {
 	req := map[string]interface{}{
 		"email":    1,
 		"password": "test123456",
@@ -181,7 +181,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_RegisterInvalidEmailType() {
 	suite.Equal("Invalid parameters", res["error"]["message"])
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_RegisterInvalidPasswordType() {
+func (suite *UserHandlerTestSuite) TestRegisterInvalidPasswordType() {
 	req := map[string]interface{}{
 		"email":    "login@test.com",
 		"password": 12345,
@@ -197,7 +197,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_RegisterInvalidPasswordType() {
 	suite.Equal("Invalid parameters", res["error"]["message"])
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_RegisterFail() {
+func (suite *UserHandlerTestSuite) TestRegisterFail() {
 	req := &dto.RegisterReq{
 		Email:    "register@test.com",
 		Password: "test123456",
@@ -219,7 +219,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_RegisterFail() {
 // GetMe
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestUserAPI_GetMeSuccess() {
+func (suite *UserHandlerTestSuite) TestGetMeSuccess() {
 	ctx, writer := suite.prepareContext(nil)
 	ctx.Set("userId", "123456")
 
@@ -245,7 +245,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_GetMeSuccess() {
 	suite.Equal("user@test.com", getMeRes.Email)
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_GetMeUnauthorized() {
+func (suite *UserHandlerTestSuite) TestGetMeUnauthorized() {
 	ctx, writer := suite.prepareContext(nil)
 	suite.handler.GetMe(ctx)
 
@@ -255,7 +255,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_GetMeUnauthorized() {
 	suite.Equal("Unauthorized", res["error"]["message"])
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_GetMeFail() {
+func (suite *UserHandlerTestSuite) TestGetMeFail() {
 	ctx, writer := suite.prepareContext(nil)
 	ctx.Set("userId", "123456")
 
@@ -273,7 +273,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_GetMeFail() {
 // Refresh Token
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestUserAPI_RefreshTokenSuccess() {
+func (suite *UserHandlerTestSuite) TestRefreshTokenSuccess() {
 	ctx, writer := suite.prepareContext(nil)
 	ctx.Set("userId", "123456")
 
@@ -291,7 +291,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_RefreshTokenSuccess() {
 	suite.Equal("access-token", getMeRes.AccessToken)
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_RefreshTokenUnauthorized() {
+func (suite *UserHandlerTestSuite) TestRefreshTokenUnauthorized() {
 	ctx, writer := suite.prepareContext(nil)
 	suite.handler.RefreshToken(ctx)
 
@@ -301,7 +301,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_RefreshTokenUnauthorized() {
 	suite.Equal("Unauthorized", res["error"]["message"])
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_RefreshTokenFail() {
+func (suite *UserHandlerTestSuite) TestRefreshTokenFail() {
 	ctx, writer := suite.prepareContext(nil)
 	ctx.Set("userId", "123456")
 
@@ -319,7 +319,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_RefreshTokenFail() {
 // Change Password
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestUserAPI_ChangePasswordSuccess() {
+func (suite *UserHandlerTestSuite) TestChangePasswordSuccess() {
 	req := &dto.ChangePasswordReq{
 		Password:    "test123456",
 		NewPassword: "new-test123456",
@@ -336,7 +336,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_ChangePasswordSuccess() {
 	suite.Equal(http.StatusOK, writer.Code)
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_ChangePasswordInvalidPasswordType() {
+func (suite *UserHandlerTestSuite) TestChangePasswordInvalidPasswordType() {
 	req := map[string]interface{}{
 		"password":     12345,
 		"new_password": 12345,
@@ -351,7 +351,7 @@ func (suite *UserHandlerTestSuite) TestUserAPI_ChangePasswordInvalidPasswordType
 	suite.Equal("Invalid parameters", res["error"]["message"])
 }
 
-func (suite *UserHandlerTestSuite) TestUserAPI_ChangePasswordFail() {
+func (suite *UserHandlerTestSuite) TestChangePasswordFail() {
 	req := &dto.ChangePasswordReq{
 		Password:    "test123456",
 		NewPassword: "new-test123456",

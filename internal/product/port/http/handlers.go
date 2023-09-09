@@ -5,11 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
-	"github.com/quangdangfit/gocommon/redis"
 
 	"goshop/internal/product/dto"
 	"goshop/internal/product/service"
 	"goshop/pkg/config"
+	"goshop/pkg/redis"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )

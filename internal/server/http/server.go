@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
-	"github.com/quangdangfit/gocommon/redis"
 	"github.com/quangdangfit/gocommon/validation"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -15,6 +14,7 @@ import (
 	_ "goshop/docs"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
+	"goshop/pkg/redis"
 	"goshop/pkg/response"
 )
 
