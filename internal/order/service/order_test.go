@@ -179,6 +179,21 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderGetProductByIDFail() {
 	suite.NotNil(err)
 }
 
+func (suite *OrderServiceTestSuite) TestPlaceOrderMissUserId() {
+	req := &dto.PlaceOrderReq{
+		Lines: []dto.PlaceOrderLineReq{
+			{
+				ProductID: "productID",
+				Quantity:  2,
+			},
+		},
+	}
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
 func (suite *OrderServiceTestSuite) TestPlaceOrderCreateFail() {
 	req := &dto.PlaceOrderReq{
 		UserID: "userID",
@@ -209,7 +224,7 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderCreateFail() {
 // =================================================================
 
 func (suite *OrderServiceTestSuite) TestCancelOrderSuccess() {
-	userID := "orderID"
+	userID := "userID"
 	orderID := "orderID"
 
 	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
@@ -234,7 +249,7 @@ func (suite *OrderServiceTestSuite) TestCancelOrderSuccess() {
 }
 
 func (suite *OrderServiceTestSuite) TestCancelOrderFail() {
-	userID := "orderID"
+	userID := "userID"
 	orderID := "orderID"
 
 	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
@@ -255,8 +270,40 @@ func (suite *OrderServiceTestSuite) TestCancelOrderFail() {
 	suite.NotNil(err)
 }
 
+func (suite *OrderServiceTestSuite) TestCancelOrderDifferenceUserId() {
+	userID := "userID"
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(&model.Order{
+			UserID:     "userID1",
+			TotalPrice: 111.1,
+			Status:     model.OrderStatusNew,
+		}, nil).Times(1)
+
+	order, err := suite.service.CancelOrder(context.Background(), orderID, userID)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestCancelOrderInvalidStatus() {
+	userID := "userID"
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(&model.Order{
+			UserID:     userID,
+			TotalPrice: 111.1,
+			Status:     model.OrderStatusCancelled,
+		}, nil).Times(1)
+
+	order, err := suite.service.CancelOrder(context.Background(), orderID, userID)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
 func (suite *OrderServiceTestSuite) TestCancelOrderGetOrderByIDFail() {
-	userID := "orderID"
+	userID := "userID"
 	orderID := "orderID"
 
 	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).

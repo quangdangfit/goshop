@@ -29,7 +29,8 @@ func NewOrderRepository(db dbs.IDatabase) *OrderRepo {
 
 func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error) {
 	order := new(model.Order)
-	err := r.db.WithTransaction(func() error {
+
+	handler := func() error {
 		// Create Order
 		var totalPrice float64
 		for _, line := range lines {
@@ -52,7 +53,9 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 
 		utils.Copy(&order.Lines, &lines)
 		return nil
-	})
+	}
+
+	err := r.db.WithTransaction(handler)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +115,7 @@ func (r *OrderRepo) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*
 		dbs.WithOffset(int(pagination.Skip)),
 		dbs.WithOrder(order),
 	); err != nil {
-		return nil, nil, nil
+		return nil, nil, err
 	}
 
 	return orders, pagination, nil
