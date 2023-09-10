@@ -11,7 +11,7 @@ import (
 type ICartRepository interface {
 	Create(ctx context.Context, cart *model.Cart) error
 	Update(ctx context.Context, cart *model.Cart) error
-	GetCartByUser(ctx context.Context, userID string) (*model.Cart, error)
+	GetCartByUserID(ctx context.Context, userID string) (*model.Cart, error)
 }
 
 type CartRepo struct {
@@ -30,7 +30,7 @@ func (r *CartRepo) Update(ctx context.Context, cart *model.Cart) error {
 	return r.db.Update(ctx, cart)
 }
 
-func (r *CartRepo) GetCartByUser(ctx context.Context, userID string) (*model.Cart, error) {
+func (r *CartRepo) GetCartByUserID(ctx context.Context, userID string) (*model.Cart, error) {
 	var order model.Cart
 	opts := []dbs.FindOption{
 		dbs.WithQuery(dbs.NewQuery("user_id = ?", userID)),

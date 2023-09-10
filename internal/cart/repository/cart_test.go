@@ -123,23 +123,23 @@ func (suite *CartRepositoryTestSuite) TestUpdateCartFail() {
 	suite.NotNil(err)
 }
 
-// GetCartByUser
+// GetCartByUserID
 // =================================================================
 
-func (suite *CartRepositoryTestSuite) TestGetCartByUserSuccessfully() {
+func (suite *CartRepositoryTestSuite) TestGetCartByUserIDSuccessfully() {
 	suite.mockDB.On("FindOne", mock.Anything, &model.Cart{}, mock.Anything, mock.Anything).
 		Return(nil).Times(1)
 
-	cart, err := suite.repo.GetCartByUser(context.Background(), "userId")
+	cart, err := suite.repo.GetCartByUserID(context.Background(), "userId")
 	suite.Nil(err)
 	suite.NotNil(cart)
 }
 
-func (suite *CartRepositoryTestSuite) TestGetCartByUserFail() {
+func (suite *CartRepositoryTestSuite) TestGetCartByUserIDFail() {
 	suite.mockDB.On("FindOne", mock.Anything, &model.Cart{}, mock.Anything, mock.Anything).
 		Return(errors.New("error")).Times(1)
 
-	cart, err := suite.repo.GetCartByUser(context.Background(), "userId")
+	cart, err := suite.repo.GetCartByUserID(context.Background(), "userId")
 	suite.NotNil(err)
 	suite.Nil(cart)
 }
