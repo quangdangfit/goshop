@@ -34,6 +34,10 @@ redis_db: 0
 ```shell script
 $ go run cmd/api/main.go 
 ```
+```
+2023-09-12T15:18:36.684+0700    INFO    http/server.go:58       HTTP server is listening on PORT: 8888
+2023-09-12T15:18:36.684+0700    INFO    grpc/server.go:53       GRPC server is listening on PORT: 8889
+```
 
 ### Test
 ```shell script
@@ -49,13 +53,6 @@ go test -timeout 9000s -a -v -coverprofile=coverage.out -coverpkg=./... ./...
 
 ```shell script
 make unittest
-```
-
-Project information and existing API
-
-```
-2023-09-12T15:18:36.684+0700    INFO    http/server.go:58       HTTP server is listening on PORT: 8888
-2023-09-12T15:18:36.684+0700    INFO    grpc/server.go:53       GRPC server is listening on PORT: 8889
 ```
 
 ### Document
@@ -75,4 +72,5 @@ Project information and existing API
 ### What's next?
 - gRPC functions for products and orders
 - Push message to notify place order successfully
+- Payment with PayPal
 - Define error response wrapper
