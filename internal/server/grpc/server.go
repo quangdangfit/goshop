@@ -7,7 +7,9 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
+	cartGRPC "goshop/internal/cart/port/grpc"
 	userGRPC "goshop/internal/user/port/grpc"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
@@ -43,6 +45,9 @@ func NewServer(validator validation.Validation, db dbs.IDatabase, cache redis.IR
 
 func (s Server) Run() error {
 	userGRPC.RegisterHandlers(s.engine, s.db, s.validator)
+	cartGRPC.RegisterHandlers(s.engine, s.db, s.validator)
+
+	reflection.Register(s.engine)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.GrpcPort))
 	logger.Info("GRPC server is listening on PORT: ", s.cfg.GrpcPort)

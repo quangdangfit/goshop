@@ -25,7 +25,7 @@ type OrderServiceTestSuite struct {
 }
 
 func (suite *OrderServiceTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
 	suite.mockRepo = mocks.NewIOrderRepository(suite.T())

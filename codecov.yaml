@@ -18,3 +18,4 @@ ignore:
   - "pkg/"
   - "vendor/"
   - "proto/"
+  - "internal/server"

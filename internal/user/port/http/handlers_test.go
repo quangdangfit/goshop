@@ -28,7 +28,7 @@ type UserHandlerTestSuite struct {
 }
 
 func (suite *UserHandlerTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	suite.mockService = mocks.NewIUserService(suite.T())
 	suite.handler = NewUserHandler(suite.mockService)

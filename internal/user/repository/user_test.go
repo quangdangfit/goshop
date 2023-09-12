@@ -21,7 +21,7 @@ type UserRepositoryTestSuite struct {
 }
 
 func (suite *UserRepositoryTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	suite.mockDB = mocks.NewIDatabase(suite.T())
 	suite.repo = NewUserRepository(suite.mockDB)

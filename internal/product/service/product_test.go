@@ -24,7 +24,7 @@ type ProductServiceTestSuite struct {
 }
 
 func (suite *ProductServiceTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
 	suite.mockRepo = mocks.NewIProductRepository(suite.T())

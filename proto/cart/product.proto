@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package cart;
+
+option go_package = "./;cart";
+
+message ProductInfo {
+  string id          = 1;
+  string code        = 2;
+  string name        = 3;
+  string description = 4;
+  float  price       = 5;
+}

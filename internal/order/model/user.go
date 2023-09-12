@@ -10,6 +10,4 @@ type User struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at" gorm:"index"`
 	Email     string     `json:"email" gorm:"unique;not null;index:idx_user_email"`
-	Password  string     `json:"password"`
-	Role      string     `json:"role"`
 }

@@ -41,6 +41,9 @@ func NewServer(validator validation.Validation, db dbs.IDatabase, cache redis.IR
 
 func (s Server) Run() error {
 	_ = s.engine.SetTrustedProxies(nil)
+	if s.cfg.Environment == config.ProductionEnv {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	if err := s.MapRoutes(); err != nil {
 		log.Fatalf("MapRoutes Error: %v", err)

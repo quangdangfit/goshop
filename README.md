@@ -42,7 +42,8 @@ $ go test
 
 ### Test with Coverage
 ```shell script
-go test -timeout 9000s -a -v -coverprofile=coverage.out -coverpkg=./... ./...
+2023-09-12T15:18:36.684+0700    INFO    http/server.go:58       HTTP server is listening on PORT: 8888
+2023-09-12T15:18:36.684+0700    INFO    grpc/server.go:53       GRPC server is listening on PORT: 8889
 ```
 
 **or**
@@ -54,24 +55,8 @@ make unittest
 Project information and existing API
 
 ```
-[GIN-debug] POST   /api/v1/auth/register     --> goshop/internal/user/port/http.(*UserHandler).Register-fm (3 handlers)
-[GIN-debug] POST   /api/v1/auth/login        --> goshop/internal/user/port/http.(*UserHandler).Login-fm (3 handlers)
-[GIN-debug] POST   /api/v1/auth/refresh      --> goshop/internal/user/port/http.(*UserHandler).RefreshToken-fm (4 handlers)
-[GIN-debug] GET    /api/v1/auth/me           --> goshop/internal/user/port/http.(*UserHandler).GetMe-fm (4 handlers)
-[GIN-debug] PUT    /api/v1/auth/change-password --> goshop/internal/user/port/http.(*UserHandler).ChangePassword-fm (4 handlers)
-[GIN-debug] GET    /api/v1/products          --> goshop/internal/product/port/http.(*ProductHandler).ListProducts-fm (3 handlers)
-[GIN-debug] POST   /api/v1/products          --> goshop/internal/product/port/http.(*ProductHandler).CreateProduct-fm (4 handlers)
-[GIN-debug] PUT    /api/v1/products/:id      --> goshop/internal/product/port/http.(*ProductHandler).UpdateProduct-fm (4 handlers)
-[GIN-debug] GET    /api/v1/products/:id      --> goshop/internal/product/port/http.(*ProductHandler).GetProductByID-fm (3 handlers)
-[GIN-debug] POST   /api/v1/orders            --> goshop/internal/order/port/http.(*OrderHandler).PlaceOrder-fm (4 handlers)
-[GIN-debug] GET    /api/v1/orders/:id        --> goshop/internal/order/port/http.(*OrderHandler).GetOrderByID-fm (4 handlers)
-[GIN-debug] GET    /api/v1/orders            --> goshop/internal/order/port/http.(*OrderHandler).GetOrders-fm (4 handlers)
-[GIN-debug] PUT    /api/v1/orders/:id/cancel --> goshop/internal/order/port/http.(*OrderHandler).CancelOrder-fm (4 handlers)
-[GIN-debug] GET    /swagger/*any             --> github.com/swaggo/gin-swagger.CustomWrapHandler.func1 (3 handlers)
-[GIN-debug] GET    /health                   --> goshop/internal/server/http.Server.Run.func1 (3 handlers)
-2023-08-20T13:50:57.175+0700    INFO    http/server.go:53       Server is listening on PORT: 8888
-2023-09-08T21:03:00.950+0700    INFO    grpc/server.go:48       GRPC server is listening on PORT: 8889
 [GIN-debug] Listening and serving HTTP on :8888
+
 ```
 
 ### Document

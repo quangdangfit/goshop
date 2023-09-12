@@ -3,7 +3,6 @@ package grpc
 import (
 	"github.com/quangdangfit/gocommon/validation"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 
 	"goshop/internal/user/repository"
 	"goshop/internal/user/service"
@@ -17,5 +16,4 @@ func RegisterHandlers(svr *grpc.Server, db dbs.IDatabase, validator validation.V
 	userHandler := NewUserHandler(userSvc)
 
 	pb.RegisterUserServiceServer(svr, userHandler)
-	reflection.Register(svr)
 }
