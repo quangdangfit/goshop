@@ -32,7 +32,7 @@ import (
 //	@BasePath	/api/v1
 
 func main() {
-	cfg := config.GetConfig()
+	cfg := config.LoadConfig()
 	logger.Initialize(cfg.Environment)
 
 	db, err := dbs.NewDatabase(cfg.DatabaseURI)

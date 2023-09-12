@@ -22,7 +22,7 @@ type OrderRepositoryTestSuite struct {
 }
 
 func (suite *OrderRepositoryTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	suite.mockDB = mocks.NewIDatabase(suite.T())
 	suite.repo = NewOrderRepository(suite.mockDB)

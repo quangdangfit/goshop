@@ -9,7 +9,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     env:
-      environment: testing
+      environment: production
       database_uri: postgres://postgres:test@localhost:5432/postgres
       redis_uri: localhost:6379
 

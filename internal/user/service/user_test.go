@@ -24,7 +24,7 @@ type UserServiceTestSuite struct {
 }
 
 func (suite *UserServiceTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
 	suite.mockRepo = mocks.NewIUserRepository(suite.T())

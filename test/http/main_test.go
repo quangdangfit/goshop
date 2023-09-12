@@ -40,8 +40,8 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	cfg := config.GetConfig()
-	logger.Initialize(config.TestEnv)
+	cfg := config.LoadConfig()
+	logger.Initialize(config.ProductionEnv)
 
 	var err error
 	dbTest, err = dbs.NewDatabase(cfg.DatabaseURI)

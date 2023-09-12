@@ -31,7 +31,7 @@ type ProductHandlerTestSuite struct {
 }
 
 func (suite *ProductHandlerTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	suite.mockService = srvMocks.NewIProductService(suite.T())
 	suite.mockRedis = redisMocks.NewIRedis(suite.T())

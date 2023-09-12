@@ -32,7 +32,7 @@ type OrderHandlerTestSuite struct {
 }
 
 func (suite *OrderHandlerTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	suite.mockService = mocks.NewIOrderService(suite.T())
 	suite.mockProductService = productMocks.NewIProductService(suite.T())

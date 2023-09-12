@@ -23,7 +23,7 @@ type CartHandlerTestSuite struct {
 }
 
 func (suite *CartHandlerTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	suite.mockService = mocks.NewICartService(suite.T())
 	suite.handler = NewCartHandler(suite.mockService)

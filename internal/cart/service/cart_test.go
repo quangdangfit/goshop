@@ -23,7 +23,7 @@ type CartServiceTestSuite struct {
 }
 
 func (suite *CartServiceTestSuite) SetupTest() {
-	logger.Initialize(config.TestEnv)
+	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
 	suite.mockRepo = mocks.NewICartRepository(suite.T())
