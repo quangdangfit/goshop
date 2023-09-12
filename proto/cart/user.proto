@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package cart;
+
+option go_package = "./;cart";
+
+message UserInfo {
+  string id    = 1;
+  string email = 2;
+}

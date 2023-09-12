@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package cart;
+
+import "cart/product.proto";
+import "cart/user.proto";
+
+option go_package = "./;cart";
+
+service CartService {
+  rpc AddProduct(AddProductReq) returns (AddProductRes);
+  rpc RemoveProduct(RemoveProductReq) returns (RemoveProductRes);
+  rpc GetCart(GetCartReq) returns (GetCartRes);
+}
+
+// =================================================================
+
+message CartInfo {
+  string                id    = 1;
+  UserInfo              user  = 2;
+  repeated CartLineInfo lines = 3;
+}
+
+message CartLineInfo {
+  ProductInfo product  = 1;
+  uint32      quantity = 2;
+}
+
+// =================================================================
+
+message AddProductReq {
+  string product_id = 1;
+  uint32 quantity   = 2;
+}
+
+message AddProductRes { CartInfo cart = 1; }
+
+message RemoveProductReq { string product_id = 1; }
+
+message RemoveProductRes { CartInfo cart = 1; }
+
+message GetCartReq {}
+
+message GetCartRes { CartInfo cart = 1; }

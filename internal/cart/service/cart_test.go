@@ -102,7 +102,7 @@ func (suite *CartServiceTestSuite) TestGetCartByUserIDCreateFail() {
 func (suite *CartServiceTestSuite) TestAddProductSuccessfully() {
 	req := &dto.AddProductReq{
 		UserID: "userID",
-		Line: &dto.CartLine{
+		Line: &dto.CartLineReq{
 			ProductID: "productID2",
 			Quantity:  3,
 		},
@@ -147,7 +147,7 @@ func (suite *CartServiceTestSuite) TestAddProductSuccessfully() {
 
 func (suite *CartServiceTestSuite) TestAddProductMissUserID() {
 	req := &dto.AddProductReq{
-		Line: &dto.CartLine{
+		Line: &dto.CartLineReq{
 			ProductID: "productID2",
 			Quantity:  3,
 		},
@@ -161,7 +161,7 @@ func (suite *CartServiceTestSuite) TestAddProductMissUserID() {
 func (suite *CartServiceTestSuite) TestAddProductMissProductID() {
 	req := &dto.AddProductReq{
 		UserID: "userID",
-		Line: &dto.CartLine{
+		Line: &dto.CartLineReq{
 			Quantity: 3,
 		},
 	}
@@ -174,7 +174,7 @@ func (suite *CartServiceTestSuite) TestAddProductMissProductID() {
 func (suite *CartServiceTestSuite) TestAddProductMissQuantity() {
 	req := &dto.AddProductReq{
 		UserID: "userID",
-		Line: &dto.CartLine{
+		Line: &dto.CartLineReq{
 			ProductID: "productID2",
 		},
 	}
@@ -187,7 +187,7 @@ func (suite *CartServiceTestSuite) TestAddProductMissQuantity() {
 func (suite *CartServiceTestSuite) TestAddProductCartNotFound() {
 	req := &dto.AddProductReq{
 		UserID: "userID",
-		Line: &dto.CartLine{
+		Line: &dto.CartLineReq{
 			ProductID: "productID2",
 			Quantity:  3,
 		},
@@ -216,7 +216,7 @@ func (suite *CartServiceTestSuite) TestAddProductCartNotFound() {
 func (suite *CartServiceTestSuite) TestAddProductCartNotFoundCreateFail() {
 	req := &dto.AddProductReq{
 		UserID: "userID",
-		Line: &dto.CartLine{
+		Line: &dto.CartLineReq{
 			ProductID: "productID2",
 			Quantity:  3,
 		},
@@ -243,7 +243,7 @@ func (suite *CartServiceTestSuite) TestAddProductCartNotFoundCreateFail() {
 func (suite *CartServiceTestSuite) TestAddProductAlreadyExistInCart() {
 	req := &dto.AddProductReq{
 		UserID: "userID",
-		Line: &dto.CartLine{
+		Line: &dto.CartLineReq{
 			ProductID: "productID2",
 			Quantity:  3,
 		},
@@ -278,7 +278,7 @@ func (suite *CartServiceTestSuite) TestAddProductAlreadyExistInCart() {
 func (suite *CartServiceTestSuite) TestAddProductUpdateFail() {
 	req := &dto.AddProductReq{
 		UserID: "userID",
-		Line: &dto.CartLine{
+		Line: &dto.CartLineReq{
 			ProductID: "productID2",
 			Quantity:  3,
 		},

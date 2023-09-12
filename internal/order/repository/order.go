@@ -29,29 +29,15 @@ func NewOrderRepository(db dbs.IDatabase) *OrderRepo {
 func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error) {
 	order := new(model.Order)
 
+	var totalPrice float64
+	for _, line := range lines {
+		totalPrice += line.Price
+	}
+	order.TotalPrice = totalPrice
+	order.UserID = userID
+
 	handler := func() error {
-		// Create Order
-		var totalPrice float64
-		for _, line := range lines {
-			totalPrice += line.Price
-		}
-		order.TotalPrice = totalPrice
-		order.UserID = userID
-
-		if err := r.db.Create(ctx, order); err != nil {
-			return err
-		}
-
-		// Create order lines
-		for _, line := range lines {
-			line.OrderID = order.ID
-		}
-		if err := r.db.CreateInBatches(ctx, &lines, len(lines)); err != nil {
-			return err
-		}
-
-		utils.Copy(&order.Lines, &lines)
-		return nil
+		return r.createOrder(ctx, order, lines)
 	}
 
 	err := r.db.WithTransaction(handler)
@@ -60,6 +46,24 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 	}
 
 	return order, nil
+}
+
+func (r *OrderRepo) createOrder(ctx context.Context, order *model.Order, lines []*model.OrderLine) error {
+	// Create Order
+	if err := r.db.Create(ctx, order); err != nil {
+		return err
+	}
+
+	// Create order lines
+	for _, line := range lines {
+		line.OrderID = order.ID
+	}
+	if err := r.db.CreateInBatches(ctx, &lines, len(lines)); err != nil {
+		return err
+	}
+
+	utils.Copy(&order.Lines, &lines)
+	return nil
 }
 
 func (r *OrderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (*model.Order, error) {
