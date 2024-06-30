@@ -74,3 +74,7 @@ make unittest
 - Push message to notify place order successfully
 - Payment with PayPal
 - Define error response wrapper
+
+### Donate:
+- Ethereum: `0x96b2F7E87786Db12121D66477e87539619aa2c97`
+- BNB Chain: `0x96b2F7E87786Db12121D66477e87539619aa2c97`
