@@ -7,31 +7,31 @@ import (
 	"goshop/pkg/dbs"
 )
 
-//go:generate mockery --name=IUserRepository
-type IUserRepository interface {
+//go:generate mockery --name=UserRepository
+type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error
 	Update(ctx context.Context, user *model.User) error
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 }
 
-type UserRepo struct {
-	db dbs.IDatabase
+type userRepo struct {
+	db dbs.Database
 }
 
-func NewUserRepository(db dbs.IDatabase) *UserRepo {
-	return &UserRepo{db: db}
+func NewUserRepository(db dbs.Database) UserRepository {
+	return &userRepo{db: db}
 }
 
-func (r *UserRepo) Create(ctx context.Context, user *model.User) error {
+func (r *userRepo) Create(ctx context.Context, user *model.User) error {
 	return r.db.Create(ctx, user)
 }
 
-func (r *UserRepo) Update(ctx context.Context, user *model.User) error {
+func (r *userRepo) Update(ctx context.Context, user *model.User) error {
 	return r.db.Update(ctx, user)
 }
 
-func (r *UserRepo) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+func (r *userRepo) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	var user model.User
 	if err := r.db.FindById(ctx, id, &user); err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (r *UserRepo) GetUserByID(ctx context.Context, id string) (*model.User, err
 	return &user, nil
 }
 
-func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
 	query := dbs.NewQuery("email = ?", email)
 	if err := r.db.FindOne(ctx, &user, dbs.WithQuery(query)); err != nil {

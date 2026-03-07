@@ -11,7 +11,7 @@ import (
 	"goshop/pkg/redis"
 )
 
-func Routes(r *gin.RouterGroup, db dbs.IDatabase, validator validation.Validation, cache redis.IRedis) {
+func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation, cache redis.Redis) {
 	productRepo := repository.NewProductRepository(db)
 	productSvc := service.NewProductService(validator, productRepo)
 	productHandler := NewProductHandler(cache, productSvc)

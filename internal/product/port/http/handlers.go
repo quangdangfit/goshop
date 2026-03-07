@@ -15,13 +15,13 @@ import (
 )
 
 type ProductHandler struct {
-	cache   redis.IRedis
-	service service.IProductService
+	cache   redis.Redis
+	service service.ProductService
 }
 
 func NewProductHandler(
-	cache redis.IRedis,
-	service service.IProductService,
+	cache redis.Redis,
+	service service.ProductService,
 ) *ProductHandler {
 	return &ProductHandler{
 		cache:   cache,

@@ -10,6 +10,6 @@ import (
 )
 
 func TestRegisterHandlers(t *testing.T) {
-	mockDB := mocks.NewIDatabase(t)
+	mockDB := mocks.NewDatabase(t)
 	RegisterHandlers(goGRPC.NewServer(), mockDB, validation.New())
 }

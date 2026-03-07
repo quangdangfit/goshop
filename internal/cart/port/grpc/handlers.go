@@ -15,10 +15,10 @@ import (
 type CartHandler struct {
 	pb.UnimplementedCartServiceServer
 
-	service service.ICartService
+	service service.CartService
 }
 
-func NewCartHandler(service service.ICartService) *CartHandler {
+func NewCartHandler(service service.CartService) *CartHandler {
 	return &CartHandler{
 		service: service,
 	}

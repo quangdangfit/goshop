@@ -91,3 +91,4 @@ fabric.properties
 
 pkg/config/config.yaml
 vendor/
+CLAUDE.md

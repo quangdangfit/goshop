@@ -10,23 +10,23 @@ import (
 	"goshop/pkg/utils"
 )
 
-//go:generate mockery --name=IOrderRepository
-type IOrderRepository interface {
+//go:generate mockery --name=OrderRepository
+type OrderRepository interface {
 	CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error)
 	GetOrderByID(ctx context.Context, id string, preload bool) (*model.Order, error)
 	GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error)
 	UpdateOrder(ctx context.Context, order *model.Order) error
 }
 
-type OrderRepo struct {
-	db dbs.IDatabase
+type orderRepo struct {
+	db dbs.Database
 }
 
-func NewOrderRepository(db dbs.IDatabase) *OrderRepo {
-	return &OrderRepo{db: db}
+func NewOrderRepository(db dbs.Database) OrderRepository {
+	return &orderRepo{db: db}
 }
 
-func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error) {
+func (r *orderRepo) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error) {
 	order := new(model.Order)
 
 	var totalPrice float64
@@ -48,7 +48,7 @@ func (r *OrderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 	return order, nil
 }
 
-func (r *OrderRepo) createOrder(ctx context.Context, order *model.Order, lines []*model.OrderLine) error {
+func (r *orderRepo) createOrder(ctx context.Context, order *model.Order, lines []*model.OrderLine) error {
 	// Create Order
 	if err := r.db.Create(ctx, order); err != nil {
 		return err
@@ -66,7 +66,7 @@ func (r *OrderRepo) createOrder(ctx context.Context, order *model.Order, lines [
 	return nil
 }
 
-func (r *OrderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (*model.Order, error) {
+func (r *orderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (*model.Order, error) {
 	var order model.Order
 	opts := []dbs.FindOption{
 		dbs.WithQuery(dbs.NewQuery("id = ?", id)),
@@ -82,7 +82,7 @@ func (r *OrderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (
 	return &order, nil
 }
 
-func (r *OrderRepo) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
+func (r *orderRepo) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
 	query := []dbs.Query{
 		dbs.NewQuery("user_id = ?", req.UserID),
 	}
@@ -124,6 +124,6 @@ func (r *OrderRepo) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*
 	return orders, pagination, nil
 }
 
-func (r *OrderRepo) UpdateOrder(ctx context.Context, order *model.Order) error {
+func (r *orderRepo) UpdateOrder(ctx context.Context, order *model.Order) error {
 	return r.db.Update(ctx, order)
 }

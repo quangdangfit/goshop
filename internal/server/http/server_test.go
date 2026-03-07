@@ -11,16 +11,16 @@ import (
 )
 
 func TestNewServer(t *testing.T) {
-	mockDB := dbMocks.NewIDatabase(t)
-	mockRedis := redisMocks.NewIRedis(t)
+	mockDB := dbMocks.NewDatabase(t)
+	mockRedis := redisMocks.NewRedis(t)
 
 	server := NewServer(validation.New(), mockDB, mockRedis)
 	assert.NotNil(t, server)
 }
 
 func TestServer_GetEngine(t *testing.T) {
-	mockDB := dbMocks.NewIDatabase(t)
-	mockRedis := redisMocks.NewIRedis(t)
+	mockDB := dbMocks.NewDatabase(t)
+	mockRedis := redisMocks.NewRedis(t)
 
 	server := NewServer(validation.New(), mockDB, mockRedis)
 	assert.NotNil(t, server)
@@ -30,8 +30,8 @@ func TestServer_GetEngine(t *testing.T) {
 }
 
 func TestServer_MapRoutes(t *testing.T) {
-	mockDB := dbMocks.NewIDatabase(t)
-	mockRedis := redisMocks.NewIRedis(t)
+	mockDB := dbMocks.NewDatabase(t)
+	mockRedis := redisMocks.NewRedis(t)
 
 	server := NewServer(validation.New(), mockDB, mockRedis)
 	assert.NotNil(t, server)

@@ -18,15 +18,15 @@ import (
 
 type CartServiceTestSuite struct {
 	suite.Suite
-	mockRepo *mocks.ICartRepository
-	service  ICartService
+	mockRepo *mocks.CartRepository
+	service  CartService
 }
 
 func (suite *CartServiceTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
-	suite.mockRepo = mocks.NewICartRepository(suite.T())
+	suite.mockRepo = mocks.NewCartRepository(suite.T())
 	suite.service = NewCartService(validator, suite.mockRepo)
 }
 

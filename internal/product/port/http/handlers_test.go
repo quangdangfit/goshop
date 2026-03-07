@@ -25,16 +25,16 @@ import (
 
 type ProductHandlerTestSuite struct {
 	suite.Suite
-	mockService *srvMocks.IProductService
-	mockRedis   *redisMocks.IRedis
+	mockService *srvMocks.ProductService
+	mockRedis   *redisMocks.Redis
 	handler     *ProductHandler
 }
 
 func (suite *ProductHandlerTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
-	suite.mockService = srvMocks.NewIProductService(suite.T())
-	suite.mockRedis = redisMocks.NewIRedis(suite.T())
+	suite.mockService = srvMocks.NewProductService(suite.T())
+	suite.mockRedis = redisMocks.NewRedis(suite.T())
 	suite.handler = NewProductHandler(suite.mockRedis, suite.mockService)
 }
 

@@ -16,14 +16,14 @@ import (
 
 type ProductRepositoryTestSuite struct {
 	suite.Suite
-	mockDB *mocks.IDatabase
-	repo   IProductRepository
+	mockDB *mocks.Database
+	repo   ProductRepository
 }
 
 func (suite *ProductRepositoryTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
-	suite.mockDB = mocks.NewIDatabase(suite.T())
+	suite.mockDB = mocks.NewDatabase(suite.T())
 	suite.repo = NewProductRepository(suite.mockDB)
 }
 

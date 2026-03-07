@@ -25,11 +25,11 @@ type Server struct {
 	engine    *gin.Engine
 	cfg       *config.Schema
 	validator validation.Validation
-	db        dbs.IDatabase
-	cache     redis.IRedis
+	db        dbs.Database
+	cache     redis.Redis
 }
 
-func NewServer(validator validation.Validation, db dbs.IDatabase, cache redis.IRedis) *Server {
+func NewServer(validator validation.Validation, db dbs.Database, cache redis.Redis) *Server {
 	return &Server{
 		engine:    gin.Default(),
 		cfg:       config.GetConfig(),

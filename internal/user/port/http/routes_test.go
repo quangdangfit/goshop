@@ -10,6 +10,6 @@ import (
 )
 
 func TestRoutes(t *testing.T) {
-	mockDB := mocks.NewIDatabase(t)
+	mockDB := mocks.NewDatabase(t)
 	Routes(gin.New().Group("/"), mockDB, validation.New())
 }

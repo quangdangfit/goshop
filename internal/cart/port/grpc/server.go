@@ -10,7 +10,7 @@ import (
 	pb "goshop/proto/gen/go/cart"
 )
 
-func RegisterHandlers(svr *grpc.Server, db dbs.IDatabase, validator validation.Validation) {
+func RegisterHandlers(svr *grpc.Server, db dbs.Database, validator validation.Validation) {
 	cartRepo := repository.NewCartRepository(db)
 	cartSvc := service.NewCartService(validator, cartRepo)
 	cartHandler := NewCartHandler(cartSvc)

@@ -13,33 +13,33 @@ import (
 	"goshop/pkg/utils"
 )
 
-//go:generate mockery --name=IOrderService
-type IOrderService interface {
+//go:generate mockery --name=OrderService
+type OrderService interface {
 	PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (*model.Order, error)
 	GetOrderByID(ctx context.Context, id string) (*model.Order, error)
 	GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error)
 	CancelOrder(ctx context.Context, orderID, userID string) (*model.Order, error)
 }
 
-type OrderService struct {
+type orderService struct {
 	validator   validation.Validation
-	repo        repository.IOrderRepository
-	productRepo repository.IProductRepository
+	repo        repository.OrderRepository
+	productRepo repository.ProductRepository
 }
 
 func NewOrderService(
 	validator validation.Validation,
-	repo repository.IOrderRepository,
-	productRepo repository.IProductRepository,
-) *OrderService {
-	return &OrderService{
+	repo repository.OrderRepository,
+	productRepo repository.ProductRepository,
+) OrderService {
+	return &orderService{
 		validator:   validator,
 		repo:        repo,
 		productRepo: productRepo,
 	}
 }
 
-func (s *OrderService) PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (*model.Order, error) {
+func (s *orderService) PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (*model.Order, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (s *OrderService) PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (
 	return order, nil
 }
 
-func (s *OrderService) GetOrderByID(ctx context.Context, id string) (*model.Order, error) {
+func (s *orderService) GetOrderByID(ctx context.Context, id string) (*model.Order, error) {
 	order, err := s.repo.GetOrderByID(ctx, id, true)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (s *OrderService) GetOrderByID(ctx context.Context, id string) (*model.Orde
 	return order, nil
 }
 
-func (s *OrderService) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
+func (s *orderService) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
 	orders, pagination, err := s.repo.GetMyOrders(ctx, req)
 	if err != nil {
 		return nil, nil, err
@@ -87,7 +87,7 @@ func (s *OrderService) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) (
 	return orders, pagination, err
 }
 
-func (s *OrderService) CancelOrder(ctx context.Context, orderID, userID string) (*model.Order, error) {
+func (s *orderService) CancelOrder(ctx context.Context, orderID, userID string) (*model.Order, error) {
 	order, err := s.repo.GetOrderByID(ctx, orderID, false)
 	if err != nil {
 		return nil, err

@@ -21,11 +21,11 @@ type Server struct {
 	engine    *grpc.Server
 	cfg       *config.Schema
 	validator validation.Validation
-	db        dbs.IDatabase
-	cache     redis.IRedis
+	db        dbs.Database
+	cache     redis.Redis
 }
 
-func NewServer(validator validation.Validation, db dbs.IDatabase, cache redis.IRedis) *Server {
+func NewServer(validator validation.Validation, db dbs.Database, cache redis.Redis) *Server {
 	interceptor := middleware.NewAuthInterceptor(config.AuthIgnoreMethods)
 
 	grpcServer := grpc.NewServer(

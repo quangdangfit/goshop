@@ -10,7 +10,7 @@ import (
 	"goshop/pkg/middleware"
 )
 
-func Routes(r *gin.RouterGroup, db dbs.IDatabase, validator validation.Validation) {
+func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation) {
 	productRepo := repository.NewProductRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
 	productSvc := service.NewOrderService(validator, orderRepo, productRepo)

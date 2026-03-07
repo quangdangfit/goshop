@@ -11,8 +11,8 @@ import (
 
 const DatabaseTimeout = 5 * time.Second
 
-//go:generate mockery --name=IDatabase
-type IDatabase interface {
+//go:generate mockery
+type Database interface {
 	GetDB() *gorm.DB
 	AutoMigrate(models ...any) error
 	WithTransaction(function func() error) error
@@ -38,12 +38,12 @@ func NewQuery(query string, args ...any) Query {
 	}
 }
 
-type Database struct {
+type database struct {
 	db *gorm.DB
 }
 
-func NewDatabase(uri string) (*Database, error) {
-	database, err := gorm.Open(postgres.Open(uri), &gorm.Config{
+func NewDatabase(uri string) (Database, error) {
+	db, err := gorm.Open(postgres.Open(uri), &gorm.Config{
 		Logger: gormLogger.Default.LogMode(gormLogger.Warn),
 	})
 	if err != nil {
@@ -51,126 +51,127 @@ func NewDatabase(uri string) (*Database, error) {
 	}
 
 	// Set up connection pool
-	sqlDB, err := database.DB()
+	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
 	}
 	sqlDB.SetMaxIdleConns(20)
 	sqlDB.SetMaxOpenConns(200)
 
-	return &Database{
-		db: database,
+	return &database{
+		db: db,
 	}, nil
 }
 
-func (d *Database) AutoMigrate(models ...any) error {
+func (d *database) AutoMigrate(models ...any) error {
 	return d.db.AutoMigrate(models...)
 }
 
-func (d *Database) WithTransaction(function func() error) error {
-	callback := func(db *gorm.DB) error {
-		return function()
+func (d *database) WithTransaction(function func() error) error {
+	tx := d.db.Begin()
+	if tx.Error != nil {
+		return tx.Error
 	}
 
-	tx := d.db.Begin()
-	if err := callback(tx); err != nil {
+	originalDB := d.db
+	d.db = tx
+
+	if err := function(); err != nil {
+		d.db = originalDB
 		tx.Rollback()
 		return err
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		return err
-	}
-
-	return nil
+	d.db = originalDB
+	return tx.Commit().Error
 }
 
-func (d *Database) Preload(query string, args ...interface{}) IDatabase {
-	d.db.Preload(query, args...)
+func (d *database) Preload(query string, args ...interface{}) Database {
+	d.db = d.db.Preload(query, args...)
 	return d
 }
 
-func (d *Database) Create(ctx context.Context, doc any) error {
+func (d *database) Create(ctx context.Context, doc any) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
 
-	return d.db.Create(doc).Error
+	return d.db.WithContext(ctx).Create(doc).Error
 }
 
-func (d *Database) CreateInBatches(ctx context.Context, docs any, batchSize int) error {
+func (d *database) CreateInBatches(ctx context.Context, docs any, batchSize int) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
 
-	return d.db.CreateInBatches(docs, batchSize).Error
+	return d.db.WithContext(ctx).CreateInBatches(docs, batchSize).Error
 }
 
-func (d *Database) Update(ctx context.Context, doc any) error {
+func (d *database) Update(ctx context.Context, doc any) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
 
-	return d.db.Save(doc).Error
+	return d.db.WithContext(ctx).Save(doc).Error
 }
 
-func (d *Database) Delete(ctx context.Context, value any, opts ...FindOption) error {
+func (d *database) Delete(ctx context.Context, value any, opts ...FindOption) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
 
 	query := d.applyOptions(opts...)
-	return query.Delete(value).Error
+	return query.WithContext(ctx).Delete(value).Error
 }
 
-func (d *Database) FindById(ctx context.Context, id string, result any) error {
+func (d *database) FindById(ctx context.Context, id string, result any) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
 
-	if err := d.db.Where("id = ? ", id).First(result).Error; err != nil {
+	if err := d.db.WithContext(ctx).Where("id = ? ", id).First(result).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (d *Database) FindOne(ctx context.Context, result any, opts ...FindOption) error {
+func (d *database) FindOne(ctx context.Context, result any, opts ...FindOption) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
 
 	query := d.applyOptions(opts...)
-	if err := query.First(result).Error; err != nil {
+	if err := query.WithContext(ctx).First(result).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (d *Database) Find(ctx context.Context, result any, opts ...FindOption) error {
+func (d *database) Find(ctx context.Context, result any, opts ...FindOption) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
 
 	query := d.applyOptions(opts...)
-	if err := query.Find(result).Error; err != nil {
+	if err := query.WithContext(ctx).Find(result).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (d *Database) Count(ctx context.Context, model any, total *int64, opts ...FindOption) error {
+func (d *database) Count(ctx context.Context, model any, total *int64, opts ...FindOption) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
 
 	query := d.applyOptions(opts...)
-	if err := query.Model(model).Count(total).Error; err != nil {
+	if err := query.WithContext(ctx).Model(model).Count(total).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (d *Database) GetDB() *gorm.DB {
+func (d *database) GetDB() *gorm.DB {
 	return d.db
 }
 
-func (d *Database) applyOptions(opts ...FindOption) *gorm.DB {
+func (d *database) applyOptions(opts ...FindOption) *gorm.DB {
 	query := d.db
 
 	opt := getOption(opts...)
@@ -183,7 +184,7 @@ func (d *Database) applyOptions(opts ...FindOption) *gorm.DB {
 
 	if opt.query != nil {
 		for _, q := range opt.query {
-			query = query.Where(q.Query, q.Args)
+			query = query.Where(q.Query, q.Args...)
 		}
 	}
 

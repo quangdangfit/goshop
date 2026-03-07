@@ -23,14 +23,14 @@ import (
 
 type UserHandlerTestSuite struct {
 	suite.Suite
-	mockService *mocks.IUserService
+	mockService *mocks.UserService
 	handler     *UserHandler
 }
 
 func (suite *UserHandlerTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
-	suite.mockService = mocks.NewIUserService(suite.T())
+	suite.mockService = mocks.NewUserService(suite.T())
 	suite.handler = NewUserHandler(suite.mockService)
 }
 

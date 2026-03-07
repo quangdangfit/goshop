@@ -26,16 +26,16 @@ import (
 
 type OrderHandlerTestSuite struct {
 	suite.Suite
-	mockService        *mocks.IOrderService
-	mockProductService *productMocks.IProductService
+	mockService        *mocks.OrderService
+	mockProductService *productMocks.ProductService
 	handler            *OrderHandler
 }
 
 func (suite *OrderHandlerTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
-	suite.mockService = mocks.NewIOrderService(suite.T())
-	suite.mockProductService = productMocks.NewIProductService(suite.T())
+	suite.mockService = mocks.NewOrderService(suite.T())
+	suite.mockProductService = productMocks.NewProductService(suite.T())
 	suite.handler = NewOrderHandler(suite.mockService)
 }
 

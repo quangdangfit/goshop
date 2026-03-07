@@ -10,23 +10,23 @@ import (
 	"goshop/pkg/paging"
 )
 
-//go:generate mockery --name=IProductRepository
-type IProductRepository interface {
+//go:generate mockery --name=ProductRepository
+type ProductRepository interface {
 	Create(ctx context.Context, product *model.Product) error
 	Update(ctx context.Context, product *model.Product) error
 	ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)
 	GetProductByID(ctx context.Context, id string) (*model.Product, error)
 }
 
-type ProductRepo struct {
-	db dbs.IDatabase
+type productRepo struct {
+	db dbs.Database
 }
 
-func NewProductRepository(db dbs.IDatabase) *ProductRepo {
-	return &ProductRepo{db: db}
+func NewProductRepository(db dbs.Database) ProductRepository {
+	return &productRepo{db: db}
 }
 
-func (r *ProductRepo) ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
+func (r *productRepo) ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 
@@ -68,7 +68,7 @@ func (r *ProductRepo) ListProducts(ctx context.Context, req *dto.ListProductReq)
 	return products, pagination, nil
 }
 
-func (r *ProductRepo) GetProductByID(ctx context.Context, id string) (*model.Product, error) {
+func (r *productRepo) GetProductByID(ctx context.Context, id string) (*model.Product, error) {
 	var product model.Product
 	if err := r.db.FindById(ctx, id, &product); err != nil {
 		return nil, err
@@ -76,10 +76,10 @@ func (r *ProductRepo) GetProductByID(ctx context.Context, id string) (*model.Pro
 	return &product, nil
 }
 
-func (r *ProductRepo) Create(ctx context.Context, product *model.Product) error {
+func (r *productRepo) Create(ctx context.Context, product *model.Product) error {
 	return r.db.Create(ctx, product)
 }
 
-func (r *ProductRepo) Update(ctx context.Context, product *model.Product) error {
+func (r *productRepo) Update(ctx context.Context, product *model.Product) error {
 	return r.db.Update(ctx, product)
 }
