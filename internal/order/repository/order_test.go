@@ -51,6 +51,64 @@ func (suite *OrderRepositoryTestSuite) TestCreateOrderSuccessfully() {
 	suite.Nil(err)
 }
 
+func (suite *OrderRepositoryTestSuite) TestCreateOrderExecutesTransaction() {
+	userID := "userID"
+	orderLines := []*model.OrderLine{
+		{ProductID: "p1", Quantity: 1, Price: 10.0},
+		{ProductID: "p2", Quantity: 2, Price: 20.0},
+	}
+
+	// Use Run to actually invoke the transaction function
+	suite.mockDB.On("WithTransaction", mock.Anything).
+		Run(func(args mock.Arguments) {
+			fn := args.Get(0).(func() error)
+			suite.mockDB.On("Create", mock.Anything, mock.Anything).Return(nil).Once()
+			suite.mockDB.On("CreateInBatches", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+			_ = fn()
+		}).
+		Return(nil).Times(1)
+
+	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines)
+	suite.NotNil(order)
+	suite.Nil(err)
+	suite.Equal(30.0, order.TotalPrice)
+}
+
+func (suite *OrderRepositoryTestSuite) TestCreateOrderTransactionCreateFails() {
+	userID := "userID"
+	orderLines := []*model.OrderLine{{ProductID: "p1", Quantity: 1}}
+
+	suite.mockDB.On("WithTransaction", mock.Anything).
+		Run(func(args mock.Arguments) {
+			fn := args.Get(0).(func() error)
+			suite.mockDB.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error")).Once()
+			_ = fn()
+		}).
+		Return(errors.New("db error")).Times(1)
+
+	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
+func (suite *OrderRepositoryTestSuite) TestCreateOrderTransactionBatchFails() {
+	userID := "userID"
+	orderLines := []*model.OrderLine{{ProductID: "p1", Quantity: 1}}
+
+	suite.mockDB.On("WithTransaction", mock.Anything).
+		Run(func(args mock.Arguments) {
+			fn := args.Get(0).(func() error)
+			suite.mockDB.On("Create", mock.Anything, mock.Anything).Return(nil).Once()
+			suite.mockDB.On("CreateInBatches", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("batch error")).Once()
+			_ = fn()
+		}).
+		Return(errors.New("batch error")).Times(1)
+
+	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
 func (suite *OrderRepositoryTestSuite) TestCreateOrderFail() {
 	userID := "userID"
 	orderLines := []*model.OrderLine{
@@ -113,6 +171,15 @@ func (suite *OrderRepositoryTestSuite) TestGetOrderByIDFail() {
 	order, err := suite.repo.GetOrderByID(context.Background(), "orderId1", true)
 	suite.NotNil(err)
 	suite.Nil(order)
+}
+
+func (suite *OrderRepositoryTestSuite) TestGetOrderByIDNoPreload() {
+	suite.mockDB.On("FindOne", mock.Anything, &model.Order{}, mock.Anything).
+		Return(nil).Times(1)
+
+	order, err := suite.repo.GetOrderByID(context.Background(), "orderId1", false)
+	suite.Nil(err)
+	suite.NotNil(order)
 }
 
 //// GetMyOrders

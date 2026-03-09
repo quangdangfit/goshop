@@ -86,11 +86,6 @@ func (d *database) WithTransaction(function func() error) error {
 	return tx.Commit().Error
 }
 
-func (d *database) Preload(query string, args ...interface{}) Database {
-	d.db = d.db.Preload(query, args...)
-	return d
-}
-
 func (d *database) Create(ctx context.Context, doc any) error {
 	ctx, cancel := context.WithTimeout(ctx, DatabaseTimeout)
 	defer cancel()
