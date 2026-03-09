@@ -11,7 +11,7 @@ import (
 )
 
 func TestRoutes(t *testing.T) {
-	mockDB := dbMocks.NewIDatabase(t)
-	mockRedis := redisMocks.NewIRedis(t)
+	mockDB := dbMocks.NewDatabase(t)
+	mockRedis := redisMocks.NewRedis(t)
 	Routes(gin.New().Group("/"), mockDB, validation.New(), mockRedis)
 }

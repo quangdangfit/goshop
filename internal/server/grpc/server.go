@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	cartGRPC "goshop/internal/cart/port/grpc"
+	orderGRPC "goshop/internal/order/port/grpc"
+	productGRPC "goshop/internal/product/port/grpc"
 	userGRPC "goshop/internal/user/port/grpc"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
@@ -21,11 +23,11 @@ type Server struct {
 	engine    *grpc.Server
 	cfg       *config.Schema
 	validator validation.Validation
-	db        dbs.IDatabase
-	cache     redis.IRedis
+	db        dbs.Database
+	cache     redis.Redis
 }
 
-func NewServer(validator validation.Validation, db dbs.IDatabase, cache redis.IRedis) *Server {
+func NewServer(validator validation.Validation, db dbs.Database, cache redis.Redis) *Server {
 	interceptor := middleware.NewAuthInterceptor(config.AuthIgnoreMethods)
 
 	grpcServer := grpc.NewServer(
@@ -46,6 +48,8 @@ func NewServer(validator validation.Validation, db dbs.IDatabase, cache redis.IR
 func (s Server) Run() error {
 	userGRPC.RegisterHandlers(s.engine, s.db, s.validator)
 	cartGRPC.RegisterHandlers(s.engine, s.db, s.validator)
+	productGRPC.RegisterHandlers(s.engine, s.db, s.validator)
+	orderGRPC.RegisterHandlers(s.engine, s.db, s.validator)
 
 	reflection.Register(s.engine)
 

@@ -19,17 +19,17 @@ import (
 
 type OrderServiceTestSuite struct {
 	suite.Suite
-	mockRepo        *mocks.IOrderRepository
-	mockProductRepo *mocks.IProductRepository
-	service         IOrderService
+	mockRepo        *mocks.OrderRepository
+	mockProductRepo *mocks.ProductRepository
+	service         OrderService
 }
 
 func (suite *OrderServiceTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
-	suite.mockRepo = mocks.NewIOrderRepository(suite.T())
-	suite.mockProductRepo = mocks.NewIProductRepository(suite.T())
+	suite.mockRepo = mocks.NewOrderRepository(suite.T())
+	suite.mockProductRepo = mocks.NewProductRepository(suite.T())
 	suite.service = NewOrderService(validator, suite.mockRepo, suite.mockProductRepo)
 }
 

@@ -16,14 +16,14 @@ import (
 
 type UserRepositoryTestSuite struct {
 	suite.Suite
-	mockDB *mocks.IDatabase
-	repo   IUserRepository
+	mockDB *mocks.Database
+	repo   UserRepository
 }
 
 func (suite *UserRepositoryTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
-	suite.mockDB = mocks.NewIDatabase(suite.T())
+	suite.mockDB = mocks.NewDatabase(suite.T())
 	suite.repo = NewUserRepository(suite.mockDB)
 }
 

@@ -26,8 +26,8 @@ import (
 
 var (
 	testRouter *gin.Engine
-	dbTest     dbs.IDatabase
-	testCache  redis.IRedis
+	dbTest     dbs.Database
+	testCache  redis.Redis
 )
 
 func TestMain(m *testing.M) {

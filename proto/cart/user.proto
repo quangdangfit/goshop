@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package cart;
 
-option go_package = "./;cart";
+option go_package = "goshop/proto/gen/go/cart;cart";
 
 message UserInfo {
   string id    = 1;

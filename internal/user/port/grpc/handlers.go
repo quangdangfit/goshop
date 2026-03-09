@@ -15,10 +15,10 @@ import (
 type UserHandler struct {
 	pb.UnimplementedUserServiceServer
 
-	service service.IUserService
+	service service.UserService
 }
 
-func NewUserHandler(service service.IUserService) *UserHandler {
+func NewUserHandler(service service.UserService) *UserHandler {
 	return &UserHandler{
 		service: service,
 	}

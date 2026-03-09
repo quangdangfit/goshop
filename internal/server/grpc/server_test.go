@@ -11,8 +11,8 @@ import (
 )
 
 func TestNewServer(t *testing.T) {
-	mockDB := dbMocks.NewIDatabase(t)
-	mockRedis := redisMocks.NewIRedis(t)
+	mockDB := dbMocks.NewDatabase(t)
+	mockRedis := redisMocks.NewRedis(t)
 
 	server := NewServer(validation.New(), mockDB, mockRedis)
 	assert.NotNil(t, server)

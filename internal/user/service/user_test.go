@@ -19,15 +19,15 @@ import (
 
 type UserServiceTestSuite struct {
 	suite.Suite
-	mockRepo *mocks.IUserRepository
-	service  IUserService
+	mockRepo *mocks.UserRepository
+	service  UserService
 }
 
 func (suite *UserServiceTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
-	suite.mockRepo = mocks.NewIUserRepository(suite.T())
+	suite.mockRepo = mocks.NewUserRepository(suite.T())
 	suite.service = NewUserService(validator, suite.mockRepo)
 }
 

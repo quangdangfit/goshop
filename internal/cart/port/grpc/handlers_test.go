@@ -18,14 +18,14 @@ import (
 
 type CartHandlerTestSuite struct {
 	suite.Suite
-	mockService *mocks.ICartService
+	mockService *mocks.CartService
 	handler     *CartHandler
 }
 
 func (suite *CartHandlerTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
-	suite.mockService = mocks.NewICartService(suite.T())
+	suite.mockService = mocks.NewCartService(suite.T())
 	suite.handler = NewCartHandler(suite.mockService)
 }
 

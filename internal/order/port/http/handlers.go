@@ -14,10 +14,10 @@ import (
 )
 
 type OrderHandler struct {
-	service service.IOrderService
+	service service.OrderService
 }
 
-func NewOrderHandler(service service.IOrderService) *OrderHandler {
+func NewOrderHandler(service service.OrderService) *OrderHandler {
 	return &OrderHandler{
 		service: service,
 	}

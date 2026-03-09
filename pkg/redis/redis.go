@@ -14,10 +14,10 @@ const (
 	Timeout = 1
 )
 
-// IRedis interface
+// Simple generate directive - config comes from .mockery.yaml
 //
-//go:generate mockery --name=IRedis
-type IRedis interface {
+//go:generate mockery
+type Redis interface {
 	IsConnected() bool
 	Get(key string, value interface{}) error
 	Set(key string, value interface{}) error
@@ -39,7 +39,7 @@ type redis struct {
 }
 
 // New Redis interface with config
-func New(config Config) IRedis {
+func New(config Config) Redis {
 	ctx, cancel := context.WithTimeout(context.Background(), Timeout*time.Second)
 	defer cancel()
 

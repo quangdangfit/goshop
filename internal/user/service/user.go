@@ -15,8 +15,8 @@ import (
 	"goshop/pkg/utils"
 )
 
-//go:generate mockery --name=IUserService
-type IUserService interface {
+//go:generate mockery --name=UserService
+type UserService interface {
 	Login(ctx context.Context, req *dto.LoginReq) (*model.User, string, string, error)
 	Register(ctx context.Context, req *dto.RegisterReq) (*model.User, error)
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
@@ -24,21 +24,21 @@ type IUserService interface {
 	ChangePassword(ctx context.Context, id string, req *dto.ChangePasswordReq) error
 }
 
-type UserService struct {
+type userService struct {
 	validator validation.Validation
-	repo      repository.IUserRepository
+	repo      repository.UserRepository
 }
 
 func NewUserService(
 	validator validation.Validation,
-	repo repository.IUserRepository) *UserService {
-	return &UserService{
+	repo repository.UserRepository) UserService {
+	return &userService{
 		validator: validator,
 		repo:      repo,
 	}
 }
 
-func (s *UserService) Login(ctx context.Context, req *dto.LoginReq) (*model.User, string, string, error) {
+func (s *userService) Login(ctx context.Context, req *dto.LoginReq) (*model.User, string, string, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, "", "", err
 	}
@@ -63,7 +63,7 @@ func (s *UserService) Login(ctx context.Context, req *dto.LoginReq) (*model.User
 	return user, accessToken, refreshToken, nil
 }
 
-func (s *UserService) Register(ctx context.Context, req *dto.RegisterReq) (*model.User, error) {
+func (s *userService) Register(ctx context.Context, req *dto.RegisterReq) (*model.User, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *UserService) Register(ctx context.Context, req *dto.RegisterReq) (*mode
 	return &user, nil
 }
 
-func (s *UserService) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+func (s *userService) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	user, err := s.repo.GetUserByID(ctx, id)
 	if err != nil {
 		logger.Errorf("GetUserByID fail, id: %s, error: %s", id, err)
@@ -88,7 +88,7 @@ func (s *UserService) GetUserByID(ctx context.Context, id string) (*model.User, 
 	return user, nil
 }
 
-func (s *UserService) RefreshToken(ctx context.Context, userID string) (string, error) {
+func (s *userService) RefreshToken(ctx context.Context, userID string) (string, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		logger.Errorf("RefreshToken.GetUserByID fail, id: %s, error: %s", userID, err)
@@ -104,7 +104,7 @@ func (s *UserService) RefreshToken(ctx context.Context, userID string) (string, 
 	return accessToken, nil
 }
 
-func (s *UserService) ChangePassword(ctx context.Context, id string, req *dto.ChangePasswordReq) error {
+func (s *userService) ChangePassword(ctx context.Context, id string, req *dto.ChangePasswordReq) error {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return err
 	}

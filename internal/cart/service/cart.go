@@ -11,29 +11,29 @@ import (
 	"goshop/internal/cart/repository"
 )
 
-//go:generate mockery --name=ICartService
-type ICartService interface {
+//go:generate mockery --name=CartService
+type CartService interface {
 	AddProduct(ctx context.Context, req *dto.AddProductReq) (*model.Cart, error)
 	GetCartByUserID(ctx context.Context, userID string) (*model.Cart, error)
 	RemoveProduct(ctx context.Context, req *dto.RemoveProductReq) (*model.Cart, error)
 }
 
-type CartService struct {
+type cartService struct {
 	validator validation.Validation
-	repo      repository.ICartRepository
+	repo      repository.CartRepository
 }
 
 func NewCartService(
 	validator validation.Validation,
-	repo repository.ICartRepository,
-) *CartService {
-	return &CartService{
+	repo repository.CartRepository,
+) CartService {
+	return &cartService{
 		validator: validator,
 		repo:      repo,
 	}
 }
 
-func (p *CartService) GetCartByUserID(ctx context.Context, userID string) (*model.Cart, error) {
+func (p *cartService) GetCartByUserID(ctx context.Context, userID string) (*model.Cart, error) {
 	cart, err := p.repo.GetCartByUserID(ctx, userID)
 	if err != nil {
 		cart = &model.Cart{
@@ -49,7 +49,7 @@ func (p *CartService) GetCartByUserID(ctx context.Context, userID string) (*mode
 	return cart, nil
 }
 
-func (p *CartService) AddProduct(ctx context.Context, req *dto.AddProductReq) (*model.Cart, error) {
+func (p *cartService) AddProduct(ctx context.Context, req *dto.AddProductReq) (*model.Cart, error) {
 	if err := p.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (p *CartService) AddProduct(ctx context.Context, req *dto.AddProductReq) (*
 	return cart, nil
 }
 
-func (p *CartService) RemoveProduct(ctx context.Context, req *dto.RemoveProductReq) (*model.Cart, error) {
+func (p *cartService) RemoveProduct(ctx context.Context, req *dto.RemoveProductReq) (*model.Cart, error) {
 	if err := p.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}

@@ -10,7 +10,7 @@ import (
 	pb "goshop/proto/gen/go/user"
 )
 
-func RegisterHandlers(svr *grpc.Server, db dbs.IDatabase, validator validation.Validation) {
+func RegisterHandlers(svr *grpc.Server, db dbs.Database, validator validation.Validation) {
 	userRepo := repository.NewUserRepository(db)
 	userSvc := service.NewUserService(validator, userRepo)
 	userHandler := NewUserHandler(userSvc)
