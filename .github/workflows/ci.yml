@@ -1,13 +1,15 @@
-name: master
+name: CI
+
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
-  ci:
+  test:
     runs-on: ubuntu-latest
+
     env:
       environment: production
       database_uri: postgres://postgres:test@localhost:5432/postgres
@@ -15,49 +17,41 @@ jobs:
 
     services:
       postgres:
-        image: postgres:12
+        image: postgres:16-alpine
         env:
-          POSTGRES_PASSWORD: "test"
+          POSTGRES_PASSWORD: test
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis:
         image: redis:alpine
         ports:
           - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Golang
-        uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.20.x
-
-      - name: Setup Golang caches
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-golang-
-
-      - name: Install dependencies
-        run: go mod download
+          go-version: '1.24'
+          cache: true
 
       - name: Build
-        run: go build -o main cmd/api
-        env:
-          GOOS: linux
-          GOARCH: amd64
-          CGO_ENABLED: 0
+        run: go build -o /dev/null ./cmd/api
 
-      - name: Run unit tests
+      - name: Test
         run: make unittest
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
