@@ -5,7 +5,7 @@ package cart;
 import "cart/product.proto";
 import "cart/user.proto";
 
-option go_package = "./;cart";
+option go_package = "goshop/proto/gen/go/cart;cart";
 
 service CartService {
   rpc AddProduct(AddProductReq) returns (AddProductRes);

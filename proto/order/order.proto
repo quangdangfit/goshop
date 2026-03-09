@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package order;
+
+option go_package = "goshop/proto/gen/go/order;order";
+
+service OrderService {
+  rpc PlaceOrder(PlaceOrderReq) returns (PlaceOrderRes);
+  rpc GetOrderByID(GetOrderByIDReq) returns (GetOrderByIDRes);
+  rpc GetMyOrders(GetMyOrdersReq) returns (GetMyOrdersRes);
+  rpc CancelOrder(CancelOrderReq) returns (CancelOrderRes);
+}
+
+// =================================================================
+
+message OrderLineInfo {
+  string product_id   = 1;
+  string product_name = 2;
+  uint32 quantity     = 3;
+  float  price        = 4;
+}
+
+message OrderInfo {
+  string                id          = 1;
+  string                code        = 2;
+  string                user_id     = 3;
+  repeated OrderLineInfo lines       = 4;
+  float                 total_price = 5;
+  string                status      = 6;
+}
+
+// =================================================================
+
+message PlaceOrderLineReq {
+  string product_id = 1;
+  uint32 quantity   = 2;
+}
+
+message PlaceOrderReq { repeated PlaceOrderLineReq lines = 1; }
+
+message PlaceOrderRes { OrderInfo order = 1; }
+
+message GetOrderByIDReq { string id = 1; }
+
+message GetOrderByIDRes { OrderInfo order = 1; }
+
+message GetMyOrdersReq {
+  string status     = 1;
+  int64  page       = 2;
+  int64  limit      = 3;
+  string order_by   = 4;
+  bool   order_desc = 5;
+}
+
+message GetMyOrdersRes {
+  repeated OrderInfo orders       = 1;
+  int64              total        = 2;
+  int64              current_page = 3;
+  int64              limit        = 4;
+}
+
+message CancelOrderReq { string id = 1; }
+
+message CancelOrderRes { OrderInfo order = 1; }

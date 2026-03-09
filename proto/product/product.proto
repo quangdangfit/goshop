@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package product;
+
+option go_package = "goshop/proto/gen/go/product;product";
+
+service ProductService {
+  rpc GetProductByID(GetProductByIDReq) returns (GetProductByIDRes);
+  rpc ListProducts(ListProductsReq) returns (ListProductsRes);
+  rpc CreateProduct(CreateProductReq) returns (CreateProductRes);
+  rpc UpdateProduct(UpdateProductReq) returns (UpdateProductRes);
+}
+
+// =================================================================
+
+message ProductInfo {
+  string id          = 1;
+  string code        = 2;
+  string name        = 3;
+  string description = 4;
+  float  price       = 5;
+  bool   active      = 6;
+}
+
+// =================================================================
+
+message GetProductByIDReq { string id = 1; }
+
+message GetProductByIDRes { ProductInfo product = 1; }
+
+message ListProductsReq {
+  string name       = 1;
+  string code       = 2;
+  int64  page       = 3;
+  int64  limit      = 4;
+  string order_by   = 5;
+  bool   order_desc = 6;
+}
+
+message ListProductsRes {
+  repeated ProductInfo products    = 1;
+  int64                total        = 2;
+  int64                current_page = 3;
+  int64                limit        = 4;
+}
+
+message CreateProductReq {
+  string name        = 1;
+  string description = 2;
+  float  price       = 3;
+}
+
+message CreateProductRes { ProductInfo product = 1; }
+
+message UpdateProductReq {
+  string id          = 1;
+  string name        = 2;
+  string description = 3;
+  float  price       = 4;
+}
+
+message UpdateProductRes { ProductInfo product = 1; }
