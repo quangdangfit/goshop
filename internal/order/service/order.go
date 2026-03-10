@@ -19,6 +19,7 @@ type OrderService interface {
 	GetOrderByID(ctx context.Context, id string) (*model.Order, error)
 	GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error)
 	CancelOrder(ctx context.Context, orderID, userID string) (*model.Order, error)
+	UpdateOrderStatus(ctx context.Context, orderID string, status model.OrderStatus) (*model.Order, error)
 }
 
 type orderService struct {
@@ -85,6 +86,20 @@ func (s *orderService) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) (
 	}
 
 	return orders, pagination, err
+}
+
+func (s *orderService) UpdateOrderStatus(ctx context.Context, orderID string, status model.OrderStatus) (*model.Order, error) {
+	order, err := s.repo.GetOrderByID(ctx, orderID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	order.Status = status
+	if err := s.repo.UpdateOrder(ctx, order); err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
 func (s *orderService) CancelOrder(ctx context.Context, orderID, userID string) (*model.Order, error) {

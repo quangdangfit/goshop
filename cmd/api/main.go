@@ -40,7 +40,11 @@ func main() {
 		logger.Fatal("Cannot connect to database", err)
 	}
 
-	err = db.AutoMigrate(&userModel.User{}, &productModel.Product{}, orderModel.Order{}, orderModel.OrderLine{})
+	err = db.AutoMigrate(
+		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
+		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
+		orderModel.Order{}, orderModel.OrderLine{},
+	)
 	if err != nil {
 		logger.Fatal("Database migration fail", err)
 	}

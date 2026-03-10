@@ -24,5 +24,6 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 		orderRoute.GET("/:id", orderHandler.GetOrderByID)
 		orderRoute.GET("", orderHandler.GetOrders)
 		orderRoute.PUT("/:id/cancel", orderHandler.CancelOrder)
+		orderRoute.PUT("/:id/status", orderHandler.UpdateOrderStatus)
 	}
 }

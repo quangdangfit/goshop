@@ -1,16 +1,46 @@
 all: false
 dir: "{{.InterfaceDir}}/mocks"
-filename: "{{.InterfaceName | snakecase}}.go"
+filename: "{{.InterfaceName}}.go"
 force-file-write: true
 formatter: goimports
 log-level: info
-structname: '{{.Mock}}{{.InterfaceName}}'
-pkgname: '{{.SrcPackageName}}'
+structname: '{{.InterfaceName}}'
+pkgname: mocks
 recursive: false
 require-template-schema-exists: true
 template: testify
 template-schema: '{{.Template}}.schema.json'
 packages:
-  goshop:
+  goshop/pkg/dbs:
+    config:
+      all: true
+  goshop/pkg/redis:
+    config:
+      all: true
+  goshop/pkg/notification:
+    config:
+      all: true
+  goshop/internal/product/repository:
+    config:
+      all: true
+  goshop/internal/product/service:
+    config:
+      all: true
+  goshop/internal/order/repository:
+    config:
+      all: true
+  goshop/internal/order/service:
+    config:
+      all: true
+  goshop/internal/cart/repository:
+    config:
+      all: true
+  goshop/internal/cart/service:
+    config:
+      all: true
+  goshop/internal/user/repository:
+    config:
+      all: true
+  goshop/internal/user/service:
     config:
       all: true
