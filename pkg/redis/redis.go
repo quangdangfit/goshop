@@ -25,6 +25,7 @@ type Redis interface {
 	Remove(keys ...string) error
 	Keys(pattern string) ([]string, error)
 	RemovePattern(pattern string) error
+	Incr(key string, expiration time.Duration) (int64, error)
 }
 
 // Config redis
@@ -158,4 +159,18 @@ func (r *redis) RemovePattern(pattern string) error {
 	}
 
 	return nil
+}
+
+func (r *redis) Incr(key string, expiration time.Duration) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), Timeout*time.Second)
+	defer cancel()
+
+	count, err := r.cmd.Incr(ctx, key).Result()
+	if err != nil {
+		return 0, err
+	}
+	if count == 1 {
+		r.cmd.Expire(ctx, key, expiration)
+	}
+	return count, nil
 }

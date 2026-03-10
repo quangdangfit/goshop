@@ -21,3 +21,10 @@ func TestOrder_BeforeCreate_ExistingStatus(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, OrderStatusInProgress, order.Status)
 }
+
+func TestOrderLine_BeforeCreate(t *testing.T) {
+	line := &OrderLine{}
+	err := line.BeforeCreate(nil)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, line.ID)
+}

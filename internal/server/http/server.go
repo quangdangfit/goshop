@@ -18,6 +18,7 @@ import (
 	userHttp "goshop/internal/user/port/http"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
+	"goshop/pkg/middleware"
 	"goshop/pkg/redis"
 	"goshop/pkg/response"
 )
@@ -45,6 +46,9 @@ func (s Server) Run() error {
 	if s.cfg.Environment == config.ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	s.engine.Use(middleware.CORS())
+	s.engine.Use(middleware.RateLimit(s.cache))
 
 	if err := s.MapRoutes(); err != nil {
 		log.Fatalf("MapRoutes Error: %v", err)

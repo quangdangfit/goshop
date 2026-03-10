@@ -12,7 +12,7 @@ import (
 
 //go:generate mockery --name=OrderRepository
 type OrderRepository interface {
-	CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error)
+	CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine, couponCode string, discountAmount float64) (*model.Order, error)
 	GetOrderByID(ctx context.Context, id string, preload bool) (*model.Order, error)
 	GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error)
 	UpdateOrder(ctx context.Context, order *model.Order) error
@@ -26,7 +26,7 @@ func NewOrderRepository(db dbs.Database) OrderRepository {
 	return &orderRepo{db: db}
 }
 
-func (r *orderRepo) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error) {
+func (r *orderRepo) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine, couponCode string, discountAmount float64) (*model.Order, error) {
 	order := new(model.Order)
 
 	var totalPrice float64
@@ -34,6 +34,9 @@ func (r *orderRepo) CreateOrder(ctx context.Context, userID string, lines []*mod
 		totalPrice += line.Price
 	}
 	order.TotalPrice = totalPrice
+	order.DiscountAmount = discountAmount
+	order.FinalPrice = totalPrice - discountAmount
+	order.CouponCode = couponCode
 	order.UserID = userID
 
 	handler := func() error {

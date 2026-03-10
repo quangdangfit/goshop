@@ -5,11 +5,14 @@ import (
 )
 
 type Order struct {
-	ID         string       `json:"id"`
-	Code       string       `json:"code"`
-	Lines      []*OrderLine `json:"lines"`
-	TotalPrice float64      `json:"total_price"`
-	Status     string       `json:"status"`
+	ID             string       `json:"id"`
+	Code           string       `json:"code"`
+	Lines          []*OrderLine `json:"lines"`
+	TotalPrice     float64      `json:"total_price"`
+	DiscountAmount float64      `json:"discount_amount"`
+	FinalPrice     float64      `json:"final_price"`
+	CouponCode     string       `json:"coupon_code,omitempty"`
+	Status         string       `json:"status"`
 }
 
 type OrderLine struct {
@@ -19,8 +22,9 @@ type OrderLine struct {
 }
 
 type PlaceOrderReq struct {
-	UserID string              `json:"user_id" validate:"required"`
-	Lines  []PlaceOrderLineReq `json:"lines,omitempty" validate:"required,gt=0,lte=5,dive"`
+	UserID     string              `json:"user_id" validate:"required"`
+	CouponCode string              `json:"coupon_code,omitempty"`
+	Lines      []PlaceOrderLineReq `json:"lines,omitempty" validate:"required,gt=0,lte=5,dive"`
 }
 
 type PlaceOrderLineReq struct {

@@ -112,7 +112,7 @@ func (suite *UserRepositoryTestSuite) TestFindByIdFail() {
 // =================================================================
 
 func (suite *UserRepositoryTestSuite) TestGetUserByEmailSuccessfully() {
-	suite.mockDB.On("FindOne", mock.Anything, &model.User{}, mock.AnythingOfType("dbs.optionFn")).
+	suite.mockDB.On("FindOne", mock.Anything, &model.User{}, mock.Anything).
 		Return(nil).Times(1)
 
 	user, err := suite.repo.GetUserByEmail(context.Background(), "email@test.com")
@@ -121,7 +121,7 @@ func (suite *UserRepositoryTestSuite) TestGetUserByEmailSuccessfully() {
 }
 
 func (suite *UserRepositoryTestSuite) TestGetUserByEmailFail() {
-	suite.mockDB.On("FindOne", mock.Anything, &model.User{}, mock.AnythingOfType("dbs.optionFn")).
+	suite.mockDB.On("FindOne", mock.Anything, &model.User{}, mock.Anything).
 		Return(errors.New("error")).Times(1)
 
 	user, err := suite.repo.GetUserByEmail(context.Background(), "email@test.com")

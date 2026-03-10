@@ -22,6 +22,7 @@ require (
 )
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/alicebob/miniredis/v2 v2.37.0 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect

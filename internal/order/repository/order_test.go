@@ -46,7 +46,7 @@ func (suite *OrderRepositoryTestSuite) TestCreateOrderSuccessfully() {
 
 	suite.mockDB.On("WithTransaction", mock.Anything).Return(nil).Times(1)
 
-	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines)
+	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines, "", 0)
 	suite.NotNil(order)
 	suite.Nil(err)
 }
@@ -68,7 +68,7 @@ func (suite *OrderRepositoryTestSuite) TestCreateOrderExecutesTransaction() {
 		}).
 		Return(nil).Times(1)
 
-	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines)
+	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines, "", 0)
 	suite.NotNil(order)
 	suite.Nil(err)
 	suite.Equal(30.0, order.TotalPrice)
@@ -86,7 +86,7 @@ func (suite *OrderRepositoryTestSuite) TestCreateOrderTransactionCreateFails() {
 		}).
 		Return(errors.New("db error")).Times(1)
 
-	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines)
+	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines, "", 0)
 	suite.Nil(order)
 	suite.NotNil(err)
 }
@@ -104,7 +104,7 @@ func (suite *OrderRepositoryTestSuite) TestCreateOrderTransactionBatchFails() {
 		}).
 		Return(errors.New("batch error")).Times(1)
 
-	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines)
+	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines, "", 0)
 	suite.Nil(order)
 	suite.NotNil(err)
 }
@@ -120,7 +120,7 @@ func (suite *OrderRepositoryTestSuite) TestCreateOrderFail() {
 
 	suite.mockDB.On("WithTransaction", mock.Anything).Return(errors.New("error")).Times(1)
 
-	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines)
+	order, err := suite.repo.CreateOrder(context.Background(), userID, orderLines, "", 0)
 	suite.Nil(order)
 	suite.NotNil(err)
 }

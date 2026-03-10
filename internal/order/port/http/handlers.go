@@ -8,6 +8,7 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/internal/order/dto"
+	"goshop/internal/order/model"
 	"goshop/internal/order/service"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
@@ -120,6 +121,40 @@ func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 	if err != nil {
 		logger.Errorf("Failed to get order, id: %s, error: %s ", orderId, err)
 		response.Error(c, http.StatusNotFound, err, "Not found")
+		return
+	}
+
+	var res dto.Order
+	utils.Copy(&res, &order)
+	response.JSON(c, http.StatusOK, res)
+}
+
+// UpdateOrderStatus godoc
+//
+//	@Summary	update order status (admin)
+//	@Tags		orders
+//	@Produce	json
+//	@Security	ApiKeyAuth
+//	@Param		id		path	string	true	"Order ID"
+//	@Param		status	query	string	true	"New status"
+//	@Router		/api/v1/orders/{id}/status [put]
+func (a *OrderHandler) UpdateOrderStatus(c *gin.Context) {
+	orderID := c.Param("id")
+	if orderID == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss Order ID")
+		return
+	}
+
+	status := c.Query("status")
+	if status == "" {
+		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss status")
+		return
+	}
+
+	order, err := a.service.UpdateOrderStatus(c, orderID, model.OrderStatus(status))
+	if err != nil {
+		logger.Errorf("Failed to update order status, id: %s, error: %s", orderID, err)
+		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
 		return
 	}
 

@@ -2,6 +2,9 @@ package repository
 
 import (
 	"context"
+	"errors"
+
+	"gorm.io/gorm"
 
 	"goshop/internal/product/dto"
 	"goshop/internal/product/model"
@@ -16,6 +19,8 @@ type ProductRepository interface {
 	Update(ctx context.Context, product *model.Product) error
 	ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)
 	GetProductByID(ctx context.Context, id string) (*model.Product, error)
+	DecrementStock(ctx context.Context, id string, qty int) error
+	UpdateRating(ctx context.Context, id string, avgRating float64, reviewCount int) error
 }
 
 type productRepo struct {
@@ -36,6 +41,9 @@ func (r *productRepo) ListProducts(ctx context.Context, req *dto.ListProductReq)
 	}
 	if req.Code != "" {
 		query = append(query, dbs.NewQuery("code = ?", req.Code))
+	}
+	if req.CategoryID != "" {
+		query = append(query, dbs.NewQuery("category_id = ?", req.CategoryID))
 	}
 
 	order := "created_at"
@@ -82,4 +90,23 @@ func (r *productRepo) Create(ctx context.Context, product *model.Product) error 
 
 func (r *productRepo) Update(ctx context.Context, product *model.Product) error {
 	return r.db.Update(ctx, product)
+}
+
+func (r *productRepo) DecrementStock(ctx context.Context, id string, qty int) error {
+	result := r.db.GetDB().WithContext(ctx).Model(&model.Product{}).
+		Where("id = ? AND stock_quantity >= ?", id, qty).
+		UpdateColumn("stock_quantity", gorm.Expr("stock_quantity - ?", qty))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("insufficient stock")
+	}
+	return nil
+}
+
+func (r *productRepo) UpdateRating(ctx context.Context, id string, avgRating float64, reviewCount int) error {
+	return r.db.GetDB().WithContext(ctx).Model(&model.Product{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"avg_rating": avgRating, "review_count": reviewCount}).Error
 }

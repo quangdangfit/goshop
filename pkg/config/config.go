@@ -31,6 +31,10 @@ type Schema struct {
 	RedisURI      string `env:"redis_uri"`
 	RedisPassword string `env:"redis_password"`
 	RedisDB       int    `env:"redis_db"`
+
+	CORSAllowedOrigins     string `env:"cors_allowed_origins" envDefault:"*"`
+	RateLimitRequests      int    `env:"rate_limit_requests" envDefault:"100"`
+	RateLimitWindowSeconds int    `env:"rate_limit_window_seconds" envDefault:"60"`
 }
 
 var (

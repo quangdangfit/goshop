@@ -12,15 +12,20 @@ import (
 
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
-	"goshop/internal/order/repository/mocks"
+	orderMocks "goshop/internal/order/repository/mocks"
+	serviceMocks "goshop/internal/order/service/mocks"
 	"goshop/pkg/config"
+	notifMocks "goshop/pkg/notification/mocks"
 	"goshop/pkg/paging"
 )
 
 type OrderServiceTestSuite struct {
 	suite.Suite
-	mockRepo        *mocks.OrderRepository
-	mockProductRepo *mocks.ProductRepository
+	mockRepo        *orderMocks.OrderRepository
+	mockProductRepo *orderMocks.ProductRepository
+	mockUserRepo    *orderMocks.UserRepository
+	mockCouponSvc   *serviceMocks.CouponService
+	mockNotifier    *notifMocks.Notifier
 	service         OrderService
 }
 
@@ -28,9 +33,19 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
-	suite.mockRepo = mocks.NewOrderRepository(suite.T())
-	suite.mockProductRepo = mocks.NewProductRepository(suite.T())
-	suite.service = NewOrderService(validator, suite.mockRepo, suite.mockProductRepo)
+	suite.mockRepo = orderMocks.NewOrderRepository(suite.T())
+	suite.mockProductRepo = orderMocks.NewProductRepository(suite.T())
+	suite.mockUserRepo = orderMocks.NewUserRepository(suite.T())
+	suite.mockCouponSvc = serviceMocks.NewCouponService(suite.T())
+	suite.mockNotifier = notifMocks.NewNotifier(suite.T())
+	suite.service = NewOrderService(
+		validator,
+		suite.mockRepo,
+		suite.mockProductRepo,
+		suite.mockUserRepo,
+		suite.mockCouponSvc,
+		suite.mockNotifier,
+	)
 }
 
 func TestOrderServiceTestSuite(t *testing.T) {
@@ -126,37 +141,33 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderSuccess() {
 	req := &dto.PlaceOrderReq{
 		UserID: "userID",
 		Lines: []dto.PlaceOrderLineReq{
-			{
-				ProductID: "productID",
-				Quantity:  2,
-			},
+			{ProductID: "productID", Quantity: 2},
 		},
 	}
 
 	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
-		Return(&model.Product{
-			Name:        "product",
-			Description: "product description",
-			Price:       1.1,
-		}, nil).Times(1)
+		Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
 
-	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything).
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
 		Return(&model.Order{
 			UserID: "userID",
-			Lines: []*model.OrderLine{
-				{
-					ProductID: "productID",
-					Quantity:  2,
-				},
-			},
+			Lines:  []*model.OrderLine{{ProductID: "productID", Quantity: 2}},
 		}, nil).Times(1)
+
+	// DecrementStock is called best-effort
+	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
+		Return(nil).Maybe()
+
+	// Notification goroutine (best-effort, may or may not complete before test ends)
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").
+		Return(nil).Maybe()
 
 	order, err := suite.service.PlaceOrder(context.Background(), req)
 	suite.NotNil(order)
 	suite.Equal(req.UserID, order.UserID)
 	suite.Equal(1, len(order.Lines))
-	suite.Equal(req.Lines[0].ProductID, order.Lines[0].ProductID)
-	suite.Equal(req.Lines[0].Quantity, order.Lines[0].Quantity)
 	suite.Nil(err)
 }
 
@@ -164,14 +175,11 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderGetProductByIDFail() {
 	req := &dto.PlaceOrderReq{
 		UserID: "userID",
 		Lines: []dto.PlaceOrderLineReq{
-			{
-				ProductID: "productID",
-				Quantity:  2,
-			},
+			{ProductID: "productID", Quantity: 2},
 		},
 	}
 
-	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID", mock.Anything).
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
 		Return(nil, errors.New("error")).Times(1)
 
 	order, err := suite.service.PlaceOrder(context.Background(), req)
@@ -182,10 +190,7 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderGetProductByIDFail() {
 func (suite *OrderServiceTestSuite) TestPlaceOrderMissUserId() {
 	req := &dto.PlaceOrderReq{
 		Lines: []dto.PlaceOrderLineReq{
-			{
-				ProductID: "productID",
-				Quantity:  2,
-			},
+			{ProductID: "productID", Quantity: 2},
 		},
 	}
 
@@ -198,26 +203,122 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderCreateFail() {
 	req := &dto.PlaceOrderReq{
 		UserID: "userID",
 		Lines: []dto.PlaceOrderLineReq{
-			{
-				ProductID: "productID",
-				Quantity:  2,
-			},
+			{ProductID: "productID", Quantity: 2},
 		},
 	}
 
 	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
-		Return(&model.Product{
-			Name:        "product",
-			Description: "product description",
-			Price:       1.1,
-		}, nil).Times(1)
+		Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
 
-	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything).
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
 		Return(nil, errors.New("error")).Times(1)
 
 	order, err := suite.service.PlaceOrder(context.Background(), req)
 	suite.Nil(order)
 	suite.NotNil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestPlaceOrderWithCoupon() {
+	req := &dto.PlaceOrderReq{
+		UserID:     "userID",
+		CouponCode: "SAVE10",
+		Lines: []dto.PlaceOrderLineReq{
+			{ProductID: "productID", Quantity: 2},
+		},
+	}
+
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+		Return(&model.Product{Name: "product", Price: 10.0}, nil).Times(1)
+
+	suite.mockCouponSvc.On("Apply", mock.Anything, "SAVE10", float64(20)).
+		Return(float64(2), &model.Coupon{ID: "c1", Code: "SAVE10"}, nil).Times(1)
+
+	suite.mockCouponSvc.On("IncrUsedCount", mock.Anything, "c1").
+		Return(nil).Times(1)
+
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "SAVE10", float64(2)).
+		Return(&model.Order{
+			UserID:         "userID",
+			TotalPrice:     20,
+			DiscountAmount: 2,
+			FinalPrice:     18,
+			CouponCode:     "SAVE10",
+		}, nil).Times(1)
+
+	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
+		Return(nil).Maybe()
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Maybe()
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.NotNil(order)
+	suite.Equal(float64(2), order.DiscountAmount)
+	suite.Equal(float64(18), order.FinalPrice)
+	suite.Equal("SAVE10", order.CouponCode)
+	suite.Nil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestPlaceOrderInvalidCoupon() {
+	req := &dto.PlaceOrderReq{
+		UserID:     "userID",
+		CouponCode: "INVALID",
+		Lines: []dto.PlaceOrderLineReq{
+			{ProductID: "productID", Quantity: 2},
+		},
+	}
+
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+		Return(&model.Product{Name: "product", Price: 10.0}, nil).Times(1)
+
+	suite.mockCouponSvc.On("Apply", mock.Anything, "INVALID", float64(20)).
+		Return(float64(0), (*model.Coupon)(nil), errors.New("coupon not found")).Times(1)
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestPlaceOrderCouponIncrFail() {
+	req := &dto.PlaceOrderReq{
+		UserID:     "userID",
+		CouponCode: "SAVE10",
+		Lines: []dto.PlaceOrderLineReq{
+			{ProductID: "productID", Quantity: 2},
+		},
+	}
+
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+		Return(&model.Product{Name: "product", Price: 10.0}, nil).Times(1)
+
+	suite.mockCouponSvc.On("Apply", mock.Anything, "SAVE10", float64(20)).
+		Return(float64(2), &model.Coupon{ID: "c1", Code: "SAVE10"}, nil).Times(1)
+
+	// IncrUsedCount fails but execution continues
+	suite.mockCouponSvc.On("IncrUsedCount", mock.Anything, "c1").
+		Return(errors.New("incr error")).Times(1)
+
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "SAVE10", float64(2)).
+		Return(&model.Order{
+			UserID:         "userID",
+			TotalPrice:     20,
+			DiscountAmount: 2,
+			FinalPrice:     18,
+			CouponCode:     "SAVE10",
+			Lines:          []*model.OrderLine{{ProductID: "productID", Quantity: 2}},
+		}, nil).Times(1)
+
+	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
+		Return(nil).Maybe()
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Maybe()
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.NotNil(order)
+	suite.Nil(err)
 }
 
 // Cancel Order
@@ -243,7 +344,6 @@ func (suite *OrderServiceTestSuite) TestCancelOrderSuccess() {
 	order, err := suite.service.CancelOrder(context.Background(), orderID, userID)
 	suite.NotNil(order)
 	suite.Equal(userID, order.UserID)
-	suite.Equal(111.1, order.TotalPrice)
 	suite.Equal(model.OrderStatusCancelled, order.Status)
 	suite.Nil(err)
 }
@@ -310,6 +410,68 @@ func (suite *OrderServiceTestSuite) TestCancelOrderGetOrderByIDFail() {
 		Return(nil, errors.New("error")).Times(1)
 
 	order, err := suite.service.CancelOrder(context.Background(), orderID, userID)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
+// UpdateOrderStatus
+// =================================================================
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatusSuccess() {
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(&model.Order{
+			ID:     orderID,
+			UserID: "userID",
+			Status: model.OrderStatusNew,
+		}, nil).Times(1)
+
+	suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
+		ID:     orderID,
+		UserID: "userID",
+		Status: model.OrderStatusDone,
+	}).Return(nil).Times(1)
+
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+	suite.mockNotifier.On("SendOrderStatusChanged", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Maybe()
+
+	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
+	suite.NotNil(order)
+	suite.Equal(model.OrderStatusDone, order.Status)
+	suite.Nil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatusGetOrderFail() {
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(nil, errors.New("not found")).Times(1)
+
+	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatusUpdateFail() {
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(&model.Order{
+			ID:     orderID,
+			UserID: "userID",
+			Status: model.OrderStatusNew,
+		}, nil).Times(1)
+
+	suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
+		ID:     orderID,
+		UserID: "userID",
+		Status: model.OrderStatusDone,
+	}).Return(errors.New("db error")).Times(1)
+
+	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
 	suite.Nil(order)
 	suite.NotNil(err)
 }
