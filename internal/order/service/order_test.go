@@ -280,6 +280,47 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderInvalidCoupon() {
 	suite.NotNil(err)
 }
 
+func (suite *OrderServiceTestSuite) TestPlaceOrderCouponIncrFail() {
+	req := &dto.PlaceOrderReq{
+		UserID:     "userID",
+		CouponCode: "SAVE10",
+		Lines: []dto.PlaceOrderLineReq{
+			{ProductID: "productID", Quantity: 2},
+		},
+	}
+
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+		Return(&model.Product{Name: "product", Price: 10.0}, nil).Times(1)
+
+	suite.mockCouponSvc.On("Apply", mock.Anything, "SAVE10", float64(20)).
+		Return(float64(2), &model.Coupon{ID: "c1", Code: "SAVE10"}, nil).Times(1)
+
+	// IncrUsedCount fails but execution continues
+	suite.mockCouponSvc.On("IncrUsedCount", mock.Anything, "c1").
+		Return(errors.New("incr error")).Times(1)
+
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "SAVE10", float64(2)).
+		Return(&model.Order{
+			UserID:         "userID",
+			TotalPrice:     20,
+			DiscountAmount: 2,
+			FinalPrice:     18,
+			CouponCode:     "SAVE10",
+			Lines:          []*model.OrderLine{{ProductID: "productID", Quantity: 2}},
+		}, nil).Times(1)
+
+	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
+		Return(nil).Maybe()
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Maybe()
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.NotNil(order)
+	suite.Nil(err)
+}
+
 // Cancel Order
 // =================================================================
 
@@ -369,6 +410,68 @@ func (suite *OrderServiceTestSuite) TestCancelOrderGetOrderByIDFail() {
 		Return(nil, errors.New("error")).Times(1)
 
 	order, err := suite.service.CancelOrder(context.Background(), orderID, userID)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
+// UpdateOrderStatus
+// =================================================================
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatusSuccess() {
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(&model.Order{
+			ID:     orderID,
+			UserID: "userID",
+			Status: model.OrderStatusNew,
+		}, nil).Times(1)
+
+	suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
+		ID:     orderID,
+		UserID: "userID",
+		Status: model.OrderStatusDone,
+	}).Return(nil).Times(1)
+
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+	suite.mockNotifier.On("SendOrderStatusChanged", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Maybe()
+
+	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
+	suite.NotNil(order)
+	suite.Equal(model.OrderStatusDone, order.Status)
+	suite.Nil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatusGetOrderFail() {
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(nil, errors.New("not found")).Times(1)
+
+	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
+	suite.Nil(order)
+	suite.NotNil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatusUpdateFail() {
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(&model.Order{
+			ID:     orderID,
+			UserID: "userID",
+			Status: model.OrderStatusNew,
+		}, nil).Times(1)
+
+	suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
+		ID:     orderID,
+		UserID: "userID",
+		Status: model.OrderStatusDone,
+	}).Return(errors.New("db error")).Times(1)
+
+	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
 	suite.Nil(order)
 	suite.NotNil(err)
 }
