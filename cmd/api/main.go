@@ -43,7 +43,7 @@ func main() {
 	err = db.AutoMigrate(
 		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
 		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
-		orderModel.Order{}, orderModel.OrderLine{},
+		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{},
 	)
 	if err != nil {
 		logger.Fatal("Database migration fail", err)

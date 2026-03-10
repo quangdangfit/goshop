@@ -41,8 +41,8 @@ func (_m *OrderRepository) EXPECT() *OrderRepository_Expecter {
 }
 
 // CreateOrder provides a mock function for the type OrderRepository
-func (_mock *OrderRepository) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error) {
-	ret := _mock.Called(ctx, userID, lines)
+func (_mock *OrderRepository) CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine, couponCode string, discountAmount float64) (*model.Order, error) {
+	ret := _mock.Called(ctx, userID, lines, couponCode, discountAmount)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateOrder")
@@ -50,18 +50,18 @@ func (_mock *OrderRepository) CreateOrder(ctx context.Context, userID string, li
 
 	var r0 *model.Order
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []*model.OrderLine) (*model.Order, error)); ok {
-		return returnFunc(ctx, userID, lines)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []*model.OrderLine, string, float64) (*model.Order, error)); ok {
+		return returnFunc(ctx, userID, lines, couponCode, discountAmount)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []*model.OrderLine) *model.Order); ok {
-		r0 = returnFunc(ctx, userID, lines)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []*model.OrderLine, string, float64) *model.Order); ok {
+		r0 = returnFunc(ctx, userID, lines, couponCode, discountAmount)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Order)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []*model.OrderLine) error); ok {
-		r1 = returnFunc(ctx, userID, lines)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []*model.OrderLine, string, float64) error); ok {
+		r1 = returnFunc(ctx, userID, lines, couponCode, discountAmount)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -77,11 +77,13 @@ type OrderRepository_CreateOrder_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - lines []*model.OrderLine
-func (_e *OrderRepository_Expecter) CreateOrder(ctx interface{}, userID interface{}, lines interface{}) *OrderRepository_CreateOrder_Call {
-	return &OrderRepository_CreateOrder_Call{Call: _e.mock.On("CreateOrder", ctx, userID, lines)}
+//   - couponCode string
+//   - discountAmount float64
+func (_e *OrderRepository_Expecter) CreateOrder(ctx interface{}, userID interface{}, lines interface{}, couponCode interface{}, discountAmount interface{}) *OrderRepository_CreateOrder_Call {
+	return &OrderRepository_CreateOrder_Call{Call: _e.mock.On("CreateOrder", ctx, userID, lines, couponCode, discountAmount)}
 }
 
-func (_c *OrderRepository_CreateOrder_Call) Run(run func(ctx context.Context, userID string, lines []*model.OrderLine)) *OrderRepository_CreateOrder_Call {
+func (_c *OrderRepository_CreateOrder_Call) Run(run func(ctx context.Context, userID string, lines []*model.OrderLine, couponCode string, discountAmount float64)) *OrderRepository_CreateOrder_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -95,10 +97,20 @@ func (_c *OrderRepository_CreateOrder_Call) Run(run func(ctx context.Context, us
 		if args[2] != nil {
 			arg2 = args[2].([]*model.OrderLine)
 		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 float64
+		if args[4] != nil {
+			arg4 = args[4].(float64)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -109,7 +121,7 @@ func (_c *OrderRepository_CreateOrder_Call) Return(order *model.Order, err error
 	return _c
 }
 
-func (_c *OrderRepository_CreateOrder_Call) RunAndReturn(run func(ctx context.Context, userID string, lines []*model.OrderLine) (*model.Order, error)) *OrderRepository_CreateOrder_Call {
+func (_c *OrderRepository_CreateOrder_Call) RunAndReturn(run func(ctx context.Context, userID string, lines []*model.OrderLine, couponCode string, discountAmount float64) (*model.Order, error)) *OrderRepository_CreateOrder_Call {
 	_c.Call.Return(run)
 	return _c
 }
