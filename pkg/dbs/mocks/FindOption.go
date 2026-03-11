@@ -38,7 +38,7 @@ func (_m *FindOption) EXPECT() *FindOption_Expecter {
 }
 
 // apply provides a mock function for the type FindOption
-func (_mock *FindOption) apply(optionMoqParam *dbs.option) {
+func (_mock *FindOption) apply(optionMoqParam *dbs.Option) {
 	_mock.Called(optionMoqParam)
 	return
 }
@@ -49,16 +49,16 @@ type FindOption_apply_Call struct {
 }
 
 // apply is a helper method to define mock.On call
-//   - optionMoqParam *dbs.option
+//   - optionMoqParam *dbs.Option
 func (_e *FindOption_Expecter) apply(optionMoqParam interface{}) *FindOption_apply_Call {
 	return &FindOption_apply_Call{Call: _e.mock.On("apply", optionMoqParam)}
 }
 
-func (_c *FindOption_apply_Call) Run(run func(optionMoqParam *dbs.option)) *FindOption_apply_Call {
+func (_c *FindOption_apply_Call) Run(run func(optionMoqParam *dbs.Option)) *FindOption_apply_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *dbs.option
+		var arg0 *dbs.Option
 		if args[0] != nil {
-			arg0 = args[0].(*dbs.option)
+			arg0 = args[0].(*dbs.Option)
 		}
 		run(
 			arg0,
@@ -72,7 +72,7 @@ func (_c *FindOption_apply_Call) Return() *FindOption_apply_Call {
 	return _c
 }
 
-func (_c *FindOption_apply_Call) RunAndReturn(run func(optionMoqParam *dbs.option)) *FindOption_apply_Call {
+func (_c *FindOption_apply_Call) RunAndReturn(run func(optionMoqParam *dbs.Option)) *FindOption_apply_Call {
 	_c.Run(run)
 	return _c
 }

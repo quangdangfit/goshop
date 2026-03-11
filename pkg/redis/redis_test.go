@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -162,4 +164,51 @@ func (s *RedisTestSuite) TestRemovePattern_KeysError() {
 	s.mr.Close()
 	err := s.r.RemovePattern("*")
 	assert.Error(s.T(), err)
+}
+
+type failOnDelCmdable struct {
+	goredis.Cmdable
+}
+
+func (f *failOnDelCmdable) Del(ctx context.Context, keys ...string) *goredis.IntCmd {
+	return goredis.NewIntResult(0, errors.New("del error"))
+}
+
+func (s *RedisTestSuite) TestRemovePattern_RemoveError() {
+	// Create a miniredis instance with a real key
+	mr2, err2 := miniredis.Run()
+	s.Require().NoError(err2)
+	defer mr2.Close()
+
+	rdb2 := goredis.NewClient(&goredis.Options{Addr: mr2.Addr()})
+	baseRedis := &redis{cmd: rdb2}
+
+	// Set a key so Keys returns results
+	err := baseRedis.Set("pattern:key1", "val")
+	s.Require().NoError(err)
+
+	// Wrap with a custom cmdable that fails on Del
+	r2 := &redis{cmd: &failOnDelCmdable{rdb2}}
+	err = r2.RemovePattern("pattern:*")
+	assert.Error(s.T(), err)
+}
+
+func (s *RedisTestSuite) TestIncr_FirstTime() {
+	count, err := s.r.Incr("incr_key", 60*time.Second)
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), int64(1), count)
+}
+
+func (s *RedisTestSuite) TestIncr_SubsequentTimes() {
+	_, _ = s.r.Incr("incr_key2", 60*time.Second)
+	count, err := s.r.Incr("incr_key2", 60*time.Second)
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), int64(2), count)
+}
+
+func (s *RedisTestSuite) TestIncr_ServerDown() {
+	s.mr.Close()
+	count, err := s.r.Incr("incr_key", 60*time.Second)
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), int64(0), count)
 }

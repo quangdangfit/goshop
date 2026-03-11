@@ -29,21 +29,23 @@ func (r *cartRepo) Create(ctx context.Context, cart *model.Cart) error {
 }
 
 func (r *cartRepo) Update(ctx context.Context, cart *model.Cart) error {
-	db := r.db.GetDB().WithContext(ctx)
-	// Only upsert the CartLine rows (no nested Product), skip associations
 	for _, line := range cart.Lines {
 		line.CartID = cart.ID
-		if err := db.Omit("Product").Save(line).Error; err != nil {
+		// Nil out Product to avoid GORM cascade-saving the nested product
+		product := line.Product
+		line.Product = nil
+		if err := r.db.Update(ctx, line); err != nil {
+			line.Product = product
 			return err
 		}
+		line.Product = product
 	}
 	return nil
 }
 
 func (r *cartRepo) DeleteLine(ctx context.Context, cartID, productID string) error {
-	return r.db.GetDB().WithContext(ctx).
-		Where("cart_id = ? AND product_id = ?", cartID, productID).
-		Delete(&model.CartLine{}).Error
+	return r.db.Delete(ctx, &model.CartLine{},
+		dbs.WithQuery(dbs.NewQuery("cart_id = ? AND product_id = ?", cartID, productID)))
 }
 
 func (r *cartRepo) ClearCart(ctx context.Context, userID string) error {
@@ -51,9 +53,8 @@ func (r *cartRepo) ClearCart(ctx context.Context, userID string) error {
 	if err != nil {
 		return nil // cart doesn't exist, nothing to clear
 	}
-	return r.db.GetDB().WithContext(ctx).
-		Where("cart_id = ?", cart.ID).
-		Delete(&model.CartLine{}).Error
+	return r.db.Delete(ctx, &model.CartLine{},
+		dbs.WithQuery(dbs.NewQuery("cart_id = ?", cart.ID)))
 }
 
 func (r *cartRepo) GetCartByUserID(ctx context.Context, userID string) (*model.Cart, error) {

@@ -52,3 +52,16 @@ func TestServer_Run(t *testing.T) {
 		t.Error("server did not stop in time")
 	}
 }
+
+func TestServer_Run_ListenError(t *testing.T) {
+	mockDB := dbMocks.NewDatabase(t)
+	mockRedis := redisMocks.NewRedis(t)
+
+	server := NewServer(validation.New(), mockDB, mockRedis)
+
+	// Use an invalid port to force net.Listen to fail
+	server.cfg.GrpcPort = -1
+
+	err := server.Run()
+	assert.Error(t, err)
+}

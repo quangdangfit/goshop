@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"goshop/internal/user/model"
 	"goshop/pkg/dbs"
@@ -53,12 +52,8 @@ func (r *addressRepo) Update(ctx context.Context, address *model.Address) error 
 }
 
 func (r *addressRepo) Delete(ctx context.Context, id, userID string) error {
-	address, err := r.GetByID(ctx, id, userID)
-	if err != nil {
+	if _, err := r.GetByID(ctx, id, userID); err != nil {
 		return err
-	}
-	if address == nil {
-		return errors.New("address not found")
 	}
 	return r.db.Delete(ctx, &model.Address{}, dbs.WithQuery(dbs.NewQuery("id = ? AND user_id = ?", id, userID)))
 }

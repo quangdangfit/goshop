@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
@@ -288,6 +289,72 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderInvalidCoupon() {
 	suite.NotNil(err)
 }
 
+func (suite *OrderServiceTestSuite) TestPlaceOrderClearCartFail() {
+	req := &dto.PlaceOrderReq{
+		UserID: "userID",
+		Lines: []dto.PlaceOrderLineReq{
+			{ProductID: "productID", Quantity: 2},
+		},
+	}
+
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+		Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
+
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
+		Return(&model.Order{
+			UserID: "userID",
+			Lines:  []*model.OrderLine{{ProductID: "productID", Quantity: 2}},
+		}, nil).Times(1)
+
+	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
+		Return(nil).Maybe()
+
+	// ClearCart fails (best-effort, execution continues)
+	suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(errors.New("clear error")).Times(1)
+
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").
+		Return(nil).Maybe()
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.NotNil(order)
+	suite.Nil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestPlaceOrderDecrementStockFail() {
+	req := &dto.PlaceOrderReq{
+		UserID: "userID",
+		Lines: []dto.PlaceOrderLineReq{
+			{ProductID: "productID", Quantity: 2},
+		},
+	}
+
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+		Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
+
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
+		Return(&model.Order{
+			UserID: "userID",
+			Lines:  []*model.OrderLine{{ProductID: "productID", Quantity: 2}},
+		}, nil).Times(1)
+
+	// DecrementStock fails (best-effort)
+	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
+		Return(errors.New("stock error")).Times(1)
+
+	suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
+
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").
+		Return(nil).Maybe()
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.NotNil(order)
+	suite.Nil(err)
+}
+
 func (suite *OrderServiceTestSuite) TestPlaceOrderCouponIncrFail() {
 	req := &dto.PlaceOrderReq{
 		UserID:     "userID",
@@ -483,4 +550,130 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatusUpdateFail() {
 	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
 	suite.Nil(order)
 	suite.NotNil(err)
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatusGetUserFail() {
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(&model.Order{
+			ID:     orderID,
+			UserID: "userID",
+			Status: model.OrderStatusNew,
+		}, nil).Times(1)
+
+	suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
+		ID:     orderID,
+		UserID: "userID",
+		Status: model.OrderStatusDone,
+	}).Return(nil).Times(1)
+
+	// GetUserByID fails in goroutine — order still succeeds
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(nil, errors.New("user not found")).Times(1)
+
+	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
+	suite.NotNil(order)
+	suite.Nil(err)
+
+	// Wait for goroutine to finish
+	time.Sleep(20 * time.Millisecond)
+}
+
+func (suite *OrderServiceTestSuite) TestUpdateOrderStatusSendNotifFail() {
+	orderID := "orderID"
+
+	suite.mockRepo.On("GetOrderByID", mock.Anything, orderID, false).
+		Return(&model.Order{
+			ID:     orderID,
+			UserID: "userID",
+			Status: model.OrderStatusNew,
+		}, nil).Times(1)
+
+	suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
+		ID:     orderID,
+		UserID: "userID",
+		Status: model.OrderStatusDone,
+	}).Return(nil).Times(1)
+
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Times(1)
+	// Notification fails in goroutine — order still succeeds
+	suite.mockNotifier.On("SendOrderStatusChanged", mock.Anything, mock.Anything, "user@test.com", string(model.OrderStatusDone)).
+		Return(errors.New("notif error")).Times(1)
+
+	order, err := suite.service.UpdateOrderStatus(context.Background(), orderID, model.OrderStatusDone)
+	suite.NotNil(order)
+	suite.Nil(err)
+
+	// Wait for goroutine to finish
+	time.Sleep(20 * time.Millisecond)
+}
+
+func (suite *OrderServiceTestSuite) TestPlaceOrderGetUserForNotifFail() {
+	req := &dto.PlaceOrderReq{
+		UserID: "userID",
+		Lines: []dto.PlaceOrderLineReq{
+			{ProductID: "productID", Quantity: 2},
+		},
+	}
+
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+		Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
+
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
+		Return(&model.Order{
+			UserID: "userID",
+			Lines:  []*model.OrderLine{{ProductID: "productID", Quantity: 2}},
+		}, nil).Times(1)
+
+	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
+		Return(nil).Maybe()
+	suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
+
+	// GetUserByID fails in goroutine
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(nil, errors.New("user not found")).Times(1)
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.NotNil(order)
+	suite.Nil(err)
+
+	// Wait for goroutine to finish
+	time.Sleep(20 * time.Millisecond)
+}
+
+func (suite *OrderServiceTestSuite) TestPlaceOrderSendOrderPlacedNotifFail() {
+	req := &dto.PlaceOrderReq{
+		UserID: "userID",
+		Lines: []dto.PlaceOrderLineReq{
+			{ProductID: "productID", Quantity: 2},
+		},
+	}
+
+	suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+		Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
+
+	suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
+		Return(&model.Order{
+			UserID: "userID",
+			Lines:  []*model.OrderLine{{ProductID: "productID", Quantity: 2}},
+		}, nil).Times(1)
+
+	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
+		Return(nil).Maybe()
+	suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
+
+	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Times(1)
+	// SendOrderPlaced fails in goroutine
+	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").
+		Return(errors.New("notif error")).Times(1)
+
+	order, err := suite.service.PlaceOrder(context.Background(), req)
+	suite.NotNil(order)
+	suite.Nil(err)
+
+	// Wait for goroutine to finish
+	time.Sleep(20 * time.Millisecond)
 }

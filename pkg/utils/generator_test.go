@@ -50,3 +50,40 @@ func TestGenerateCode_Unique(t *testing.T) {
 	assert.NotEmpty(t, code1)
 	assert.NotEmpty(t, code2)
 }
+
+// generateCode branch coverage with injected times
+
+func TestGenerateCode_SingleDigitYear(t *testing.T) {
+	// year % 100 < 10: e.g. 2005 → year=05
+	d := time.Date(2005, time.March, 15, 0, 0, 0, 0, time.UTC)
+	code := generateCode("P", d)
+	assert.True(t, strings.HasPrefix(code, "P05"))
+}
+
+func TestGenerateCode_DoubleDigitYear(t *testing.T) {
+	// year % 100 >= 10: e.g. 2026 → year=26
+	d := time.Date(2026, time.November, 20, 0, 0, 0, 0, time.UTC)
+	code := generateCode("P", d)
+	assert.True(t, strings.HasPrefix(code, "P26"))
+}
+
+func TestGenerateCode_SingleDigitDay(t *testing.T) {
+	// day < 10: e.g. day=5
+	d := time.Date(2026, time.March, 5, 0, 0, 0, 0, time.UTC)
+	code := generateCode("P", d)
+	assert.Contains(t, code, "0305")
+}
+
+func TestGenerateCode_DoubleDigitDay(t *testing.T) {
+	// day >= 10: e.g. day=15
+	d := time.Date(2026, time.March, 15, 0, 0, 0, 0, time.UTC)
+	code := generateCode("P", d)
+	assert.Contains(t, code, "0315")
+}
+
+func TestGenerateCode_DoubleDigitMonth(t *testing.T) {
+	// month >= 10: e.g. November=11
+	d := time.Date(2026, time.November, 15, 0, 0, 0, 0, time.UTC)
+	code := generateCode("P", d)
+	assert.Contains(t, code, "1115")
+}

@@ -15,7 +15,10 @@ const (
 var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func GenerateCode(prefix string) string {
-	t := time.Now()
+	return generateCode(prefix, time.Now())
+}
+
+func generateCode(prefix string, t time.Time) string {
 	y := ""
 	if t.Year()%100 < 10 {
 		y = fmt.Sprintf("0%d", t.Year()%100)
