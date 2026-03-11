@@ -29,6 +29,7 @@ export default function ProductDetailPage() {
   const { isAuthenticated, user } = useAuth()
   const queryClient = useQueryClient()
   const [quantity, setQuantity] = useState(1)
+  const [selectedImage, setSelectedImage] = useState(0)
   const [reviewPage, setReviewPage] = useState(1)
   const [reviewForm, setReviewForm] = useState<CreateReviewRequest>({
     rating: 5,
@@ -147,9 +148,34 @@ export default function ProductDetailPage() {
       {/* Product Info */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Image placeholder */}
-          <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl h-80 md:h-96 flex items-center justify-center">
-            <ShoppingCart className="h-24 w-24 text-gray-300" />
+          {/* Image gallery */}
+          <div>
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl h-80 md:h-96 overflow-hidden flex items-center justify-center">
+              {product.images?.[selectedImage] ? (
+                <img
+                  src={product.images[selectedImage]}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <ShoppingCart className="h-24 w-24 text-gray-300" />
+              )}
+            </div>
+            {product.images?.length > 1 && (
+              <div className="flex gap-2 mt-3">
+                {product.images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 ${
+                      selectedImage === i ? 'border-primary-500' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details */}

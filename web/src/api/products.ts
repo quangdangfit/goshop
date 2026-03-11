@@ -15,7 +15,10 @@ export const productsApi = {
     params?: ProductsQueryParams
   ): Promise<PaginatedResponse<Product>> => {
     const response = await apiClient.get('/products', { params })
-    return response.data.result
+    return {
+      items: response.data.result.products ?? [],
+      pagination: response.data.result.pagination,
+    }
   },
 
   getProduct: async (id: string): Promise<Product> => {
@@ -43,7 +46,10 @@ export const productsApi = {
     const response = await apiClient.get(`/products/${productId}/reviews`, {
       params,
     })
-    return response.data.result
+    return {
+      items: response.data.result.reviews ?? [],
+      pagination: response.data.result.pagination,
+    }
   },
 
   createReview: async (

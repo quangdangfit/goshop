@@ -46,6 +46,7 @@ export interface Product {
   description: string
   price: number
   stock_quantity: number
+  images: string[]
   category_id: string
   category: Category
   average_rating: number
@@ -169,6 +170,7 @@ export interface CreateProductRequest {
   description: string
   price: number
   stock_quantity: number
+  images?: string[]
   category_id: string
 }
 

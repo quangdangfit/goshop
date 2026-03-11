@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/validation"
 
+	cartRepository "goshop/internal/cart/repository"
 	"goshop/internal/order/repository"
 	"goshop/internal/order/service"
 	"goshop/pkg/dbs"
@@ -16,11 +17,12 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	orderRepo := repository.NewOrderRepository(db)
 	couponRepo := repository.NewCouponRepository(db)
 	userRepo := repository.NewUserRepository(db)
+	cartRepo := cartRepository.NewCartRepository(db)
 
 	couponSvc := service.NewCouponService(validator, couponRepo)
 	notifier := notification.NewLoggerNotifier()
 
-	orderSvc := service.NewOrderService(validator, orderRepo, productRepo, userRepo, couponSvc, notifier)
+	orderSvc := service.NewOrderService(validator, orderRepo, productRepo, userRepo, cartRepo, couponSvc, notifier)
 	orderHandler := NewOrderHandler(orderSvc)
 	couponHandler := NewCouponHandler(couponSvc)
 

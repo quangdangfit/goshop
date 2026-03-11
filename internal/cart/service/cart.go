@@ -103,27 +103,24 @@ func (p *cartService) RemoveProduct(ctx context.Context, req *dto.RemoveProductR
 
 	cart, err := p.repo.GetCartByUserID(ctx, req.UserID)
 	if err != nil {
-		cart = &model.Cart{
-			UserID: req.UserID,
-		}
-		err = p.repo.Create(ctx, cart)
-		if err != nil {
+		cart = &model.Cart{UserID: req.UserID}
+		if err = p.repo.Create(ctx, cart); err != nil {
 			return nil, err
 		}
-		return cart, err
+		return cart, nil
 	}
 
+	if err = p.repo.DeleteLine(ctx, cart.ID, req.ProductID); err != nil {
+		logger.Errorf("RemoveProductReq.DeleteLine fail, userID: %s, error: %s", req.UserID, err)
+		return nil, err
+	}
+
+	// Remove from in-memory slice for the response
 	for i, line := range cart.Lines {
 		if line.ProductID == req.ProductID {
 			cart.Lines = append(cart.Lines[:i], cart.Lines[i+1:]...)
 			break
 		}
-	}
-
-	err = p.repo.Update(ctx, cart)
-	if err != nil {
-		logger.Errorf("RemoveProductReq.Update fail, userID: %s, error: %s", req.UserID, err)
-		return nil, err
 	}
 
 	return cart, nil

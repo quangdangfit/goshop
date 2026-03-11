@@ -16,7 +16,10 @@ export const ordersApi = {
     params?: OrdersQueryParams
   ): Promise<PaginatedResponse<Order>> => {
     const response = await apiClient.get('/orders', { params })
-    return response.data.result
+    return {
+      items: response.data.result.orders ?? [],
+      pagination: response.data.result.pagination,
+    }
   },
 
   getOrder: async (id: string): Promise<Order> => {

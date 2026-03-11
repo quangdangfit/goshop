@@ -377,11 +377,7 @@ func (suite *CartServiceTestSuite) TestRemoveProductSuccessfully() {
 			nil,
 		).Times(1)
 
-	suite.mockRepo.On("Update", mock.Anything, &model.Cart{
-		ID:     "cartId1",
-		UserID: "userID",
-		Lines:  []*model.CartLine{},
-	}).Return(nil).Times(1)
+	suite.mockRepo.On("DeleteLine", mock.Anything, "cartId1", "productID1").Return(nil).Times(1)
 
 	cart, err := suite.service.RemoveProduct(context.Background(), req)
 	suite.NotNil(cart)
@@ -465,11 +461,7 @@ func (suite *CartServiceTestSuite) TestRemoveProductUpdateFail() {
 			nil,
 		).Times(1)
 
-	suite.mockRepo.On("Update", mock.Anything, &model.Cart{
-		ID:     "cartId1",
-		UserID: "userID",
-		Lines:  []*model.CartLine{},
-	}).Return(errors.New("error")).Times(1)
+	suite.mockRepo.On("DeleteLine", mock.Anything, "cartId1", "productID1").Return(errors.New("error")).Times(1)
 
 	cart, err := suite.service.RemoveProduct(context.Background(), req)
 	suite.Nil(cart)

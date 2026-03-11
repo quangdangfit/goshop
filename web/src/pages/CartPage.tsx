@@ -66,8 +66,16 @@ export default function CartPage() {
               className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4"
             >
               {/* Image */}
-              <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center">
-                <ShoppingCart className="h-8 w-8 text-gray-300" />
+              <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
+                {line.product?.images?.[0] ? (
+                  <img
+                    src={line.product.images[0]}
+                    alt={line.product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ShoppingCart className="h-8 w-8 text-gray-300" />
+                )}
               </div>
 
               {/* Info */}

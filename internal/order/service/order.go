@@ -7,9 +7,10 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
+	"goshop/internal/cart/repository"
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
-	"goshop/internal/order/repository"
+	orderRepo "goshop/internal/order/repository"
 	"goshop/pkg/notification"
 	"goshop/pkg/paging"
 	"goshop/pkg/utils"
@@ -26,18 +27,20 @@ type OrderService interface {
 
 type orderService struct {
 	validator   validation.Validation
-	repo        repository.OrderRepository
-	productRepo repository.ProductRepository
-	userRepo    repository.UserRepository
+	repo        orderRepo.OrderRepository
+	productRepo orderRepo.ProductRepository
+	userRepo    orderRepo.UserRepository
+	cartRepo    repository.CartRepository
 	couponSvc   CouponService
 	notifier    notification.Notifier
 }
 
 func NewOrderService(
 	validator validation.Validation,
-	repo repository.OrderRepository,
-	productRepo repository.ProductRepository,
-	userRepo repository.UserRepository,
+	repo orderRepo.OrderRepository,
+	productRepo orderRepo.ProductRepository,
+	userRepo orderRepo.UserRepository,
+	cartRepo repository.CartRepository,
 	couponSvc CouponService,
 	notifier notification.Notifier,
 ) OrderService {
@@ -46,6 +49,7 @@ func NewOrderService(
 		repo:        repo,
 		productRepo: productRepo,
 		userRepo:    userRepo,
+		cartRepo:    cartRepo,
 		couponSvc:   couponSvc,
 		notifier:    notifier,
 	}
@@ -97,6 +101,11 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (
 
 	for _, line := range order.Lines {
 		line.Product = productMap[line.ProductID]
+	}
+
+	// Clear cart after successful order (best effort)
+	if err := s.cartRepo.ClearCart(ctx, req.UserID); err != nil {
+		logger.Errorf("Failed to clear cart for user %s: %s", req.UserID, err)
 	}
 
 	// Decrement stock (best effort — non-blocking)

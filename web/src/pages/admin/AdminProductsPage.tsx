@@ -9,7 +9,7 @@ import { productsApi } from '@/api/products'
 import { categoriesApi } from '@/api/categories'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Pagination from '@/components/Pagination'
-import type { Product } from '@/types'
+import type { Product, UpdateProductRequest } from '@/types'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -17,6 +17,7 @@ const schema = z.object({
   price: z.coerce.number().positive('Price must be positive'),
   stock_quantity: z.coerce.number().int().min(0, 'Stock cannot be negative'),
   category_id: z.string().min(1, 'Category is required'),
+  images: z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -55,7 +56,7 @@ export default function AdminProductsPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: FormData }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductRequest }) =>
       productsApi.updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] })
@@ -80,6 +81,7 @@ export default function AdminProductsPage() {
       price: product.price,
       stock_quantity: product.stock_quantity,
       category_id: product.category_id,
+      images: product.images?.join('\n') ?? '',
     })
     setShowModal(true)
   }
@@ -90,11 +92,16 @@ export default function AdminProductsPage() {
     reset()
   }
 
+  const parseImages = (raw?: string): string[] =>
+    raw ? raw.split('\n').map((s) => s.trim()).filter(Boolean) : []
+
   const onSubmit = (data: FormData) => {
+    const { images: rawImages, ...rest } = data
+    const images = parseImages(rawImages)
     if (editingProduct) {
-      updateMutation.mutate({ id: editingProduct.id, data })
+      updateMutation.mutate({ id: editingProduct.id, data: { ...rest, images } })
     } else {
-      createMutation.mutate(data)
+      createMutation.mutate({ ...rest, images })
     }
   }
 
@@ -263,6 +270,16 @@ export default function AdminProductsPage() {
                 {errors.category_id && (
                   <p className="mt-1 text-xs text-red-500">{errors.category_id.message}</p>
                 )}
+              </div>
+
+              <div>
+                <label className="label">Image URLs (one per line)</label>
+                <textarea
+                  {...register('images')}
+                  rows={3}
+                  className="input resize-none font-mono text-xs"
+                  placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
+                />
               </div>
 
               <div className="flex gap-2 pt-2">

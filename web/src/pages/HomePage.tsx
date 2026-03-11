@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { productsApi } from '@/api/products'
 import { categoriesApi } from '@/api/categories'
+import { useAuth } from '@/context/AuthContext'
 import ProductCard from '@/components/ProductCard'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function HomePage() {
+  const { isAuthenticated } = useAuth()
   const { data: productsData, isLoading: loadingProducts } = useQuery({
     queryKey: ['products', { page: 1, limit: 8 }],
     queryFn: () => productsApi.getProducts({ page: 1, limit: 8 }),
@@ -38,12 +40,14 @@ export default function HomePage() {
                 Shop Now
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                to="/register"
-                className="inline-flex items-center gap-2 bg-primary-500/40 text-white font-semibold px-6 py-3 rounded-xl hover:bg-primary-500/60 transition-colors border border-white/20"
-              >
-                Create Account
-              </Link>
+              {!isAuthenticated && (
+                <Link
+                  to="/register"
+                  className="inline-flex items-center gap-2 bg-primary-500/40 text-white font-semibold px-6 py-3 rounded-xl hover:bg-primary-500/60 transition-colors border border-white/20"
+                >
+                  Create Account
+                </Link>
+              )}
             </div>
           </div>
         </div>
