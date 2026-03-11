@@ -92,3 +92,7 @@ fabric.properties
 pkg/config/config.yaml
 vendor/
 CLAUDE.md
+
+./web/node_modules
+./web/dist
+./web/package-lock.json

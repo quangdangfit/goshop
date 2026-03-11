@@ -5,11 +5,11 @@
 ![Go Version](https://img.shields.io/github/go-mod/go-version/quangdangfit/goshop?style=flat-square)
 [![License](https://img.shields.io/github/license/jrapoport/gothic?style=flat-square)](https://github.com/quangdangfit/goshop/blob/master/LICENSE)
 
-A production-ready e-commerce backend built with Go, featuring a dual-server architecture that exposes both a REST API and a gRPC API from a single service.
+A production-ready e-commerce application built with Go (REST + gRPC backend) and React (web frontend).
 
 ## Architecture
 
-The application runs two servers concurrently:
+The application runs two servers concurrently (backend) plus a React web frontend:
 
 - **HTTP (REST)** — Gin framework, port `8888`
 - **gRPC** — port `8889`, with JWT auth interceptor
@@ -36,6 +36,8 @@ internal/{domain}/
 
 ## Tech Stack
 
+**Backend**
+
 | Concern | Library |
 |---------|---------|
 | HTTP framework | [Gin](https://github.com/gin-gonic/gin) |
@@ -48,9 +50,22 @@ internal/{domain}/
 | Testing | [testify](https://github.com/stretchr/testify) + [mockery](https://github.com/vektra/mockery) |
 | Proto codegen | [buf](https://buf.build) |
 
+**Frontend**
+
+| Concern | Library |
+|---------|---------|
+| Framework | [React 18](https://react.dev) + TypeScript |
+| Build tool | [Vite](https://vitejs.dev) |
+| Styling | [Tailwind CSS](https://tailwindcss.com) |
+| Routing | [React Router v6](https://reactrouter.com) |
+| Data fetching | [TanStack Query](https://tanstack.com/query) |
+| Forms | [React Hook Form](https://react-hook-form.com) + [Zod](https://zod.dev) |
+| HTTP client | [Axios](https://axios-http.com) |
+
 ## Prerequisites
 
 - Go 1.24+
+- Node.js 18+
 - PostgreSQL
 - Redis
 
@@ -79,7 +94,7 @@ redis_password:
 redis_db: 0
 ```
 
-**2. Run**
+**2. Run the backend**
 
 ```bash
 go run cmd/api/main.go
@@ -90,7 +105,19 @@ INFO    HTTP server is listening on PORT: 8888
 INFO    GRPC server is listening on PORT: 8889
 ```
 
-**3. Browse the API**
+**3. Run the web frontend**
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Web UI: [http://localhost:3000](http://localhost:3000)
+
+> The frontend proxies all `/api` requests to the backend at `http://localhost:8888`, so both servers must be running.
+
+**4. Browse the API**
 
 Swagger UI: [http://localhost:8888/swagger/index.html](http://localhost:8888/swagger/index.html)
 
@@ -102,20 +129,46 @@ Swagger UI: [http://localhost:8888/swagger/index.html](http://localhost:8888/swa
 | POST | `/api/v1/auth/register` | Register |
 | POST | `/api/v1/auth/login` | Login |
 | POST | `/api/v1/auth/refresh` | Refresh access token |
+| GET | `/api/v1/auth/me` | Get current user |
+| PUT | `/api/v1/auth/change-password` | Change password |
 
-### Users
+### Addresses
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/users/me` | Get current user |
-| PUT | `/api/v1/users/change-password` | Change password |
+| GET | `/api/v1/addresses` | List my addresses |
+| POST | `/api/v1/addresses` | Create address |
+| GET | `/api/v1/addresses/:id` | Get address |
+| PUT | `/api/v1/addresses/:id` | Update address |
+| DELETE | `/api/v1/addresses/:id` | Delete address |
+| PUT | `/api/v1/addresses/:id/default` | Set default address |
+
+### Wishlist
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/wishlist` | Get my wishlist |
+| POST | `/api/v1/wishlist` | Add product to wishlist |
+| DELETE | `/api/v1/wishlist/:productId` | Remove from wishlist |
+
+### Categories
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/categories` | List categories |
+| GET | `/api/v1/categories/:id` | Get category |
+| POST | `/api/v1/categories` | Create category (auth) |
+| PUT | `/api/v1/categories/:id` | Update category (auth) |
+| DELETE | `/api/v1/categories/:id` | Delete category (auth) |
 
 ### Products
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/products` | List products (cached) |
 | GET | `/api/v1/products/:id` | Get product (cached) |
-| POST | `/api/v1/products` | Create product |
-| PUT | `/api/v1/products/:id` | Update product |
+| POST | `/api/v1/products` | Create product (auth) |
+| PUT | `/api/v1/products/:id` | Update product (auth) |
+| GET | `/api/v1/products/:id/reviews` | List product reviews |
+| POST | `/api/v1/products/:id/reviews` | Create review (auth) |
+| PUT | `/api/v1/products/:id/reviews/:reviewId` | Update review (auth) |
+| DELETE | `/api/v1/products/:id/reviews/:reviewId` | Delete review (auth) |
 
 ### Orders
 | Method | Endpoint | Description |
@@ -124,12 +177,19 @@ Swagger UI: [http://localhost:8888/swagger/index.html](http://localhost:8888/swa
 | GET | `/api/v1/orders` | List my orders |
 | GET | `/api/v1/orders/:id` | Get order details |
 | PUT | `/api/v1/orders/:id/cancel` | Cancel order |
+| PUT | `/api/v1/orders/:id/status` | Update order status (admin) |
+
+### Coupons
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/coupons` | Create coupon (auth) |
+| GET | `/api/v1/coupons/:code` | Get coupon by code |
 
 ### Cart
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/cart` | Get my cart |
-| POST | `/api/v1/cart` | Add product to cart |
+| POST | `/api/v1/cart` | Add / update product in cart |
 | DELETE | `/api/v1/cart/:productId` | Remove product from cart |
 
 ## Development
