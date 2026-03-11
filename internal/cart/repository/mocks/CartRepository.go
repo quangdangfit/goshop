@@ -38,6 +38,63 @@ func (_m *CartRepository) EXPECT() *CartRepository_Expecter {
 	return &CartRepository_Expecter{mock: &_m.Mock}
 }
 
+// ClearCart provides a mock function for the type CartRepository
+func (_mock *CartRepository) ClearCart(ctx context.Context, userID string) error {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearCart")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// CartRepository_ClearCart_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearCart'
+type CartRepository_ClearCart_Call struct {
+	*mock.Call
+}
+
+// ClearCart is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *CartRepository_Expecter) ClearCart(ctx interface{}, userID interface{}) *CartRepository_ClearCart_Call {
+	return &CartRepository_ClearCart_Call{Call: _e.mock.On("ClearCart", ctx, userID)}
+}
+
+func (_c *CartRepository_ClearCart_Call) Run(run func(ctx context.Context, userID string)) *CartRepository_ClearCart_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *CartRepository_ClearCart_Call) Return(err error) *CartRepository_ClearCart_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *CartRepository_ClearCart_Call) RunAndReturn(run func(ctx context.Context, userID string) error) *CartRepository_ClearCart_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type CartRepository
 func (_mock *CartRepository) Create(ctx context.Context, cart *model.Cart) error {
 	ret := _mock.Called(ctx, cart)
@@ -91,6 +148,69 @@ func (_c *CartRepository_Create_Call) Return(err error) *CartRepository_Create_C
 }
 
 func (_c *CartRepository_Create_Call) RunAndReturn(run func(ctx context.Context, cart *model.Cart) error) *CartRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteLine provides a mock function for the type CartRepository
+func (_mock *CartRepository) DeleteLine(ctx context.Context, cartID string, productID string) error {
+	ret := _mock.Called(ctx, cartID, productID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteLine")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, cartID, productID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// CartRepository_DeleteLine_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteLine'
+type CartRepository_DeleteLine_Call struct {
+	*mock.Call
+}
+
+// DeleteLine is a helper method to define mock.On call
+//   - ctx context.Context
+//   - cartID string
+//   - productID string
+func (_e *CartRepository_Expecter) DeleteLine(ctx interface{}, cartID interface{}, productID interface{}) *CartRepository_DeleteLine_Call {
+	return &CartRepository_DeleteLine_Call{Call: _e.mock.On("DeleteLine", ctx, cartID, productID)}
+}
+
+func (_c *CartRepository_DeleteLine_Call) Run(run func(ctx context.Context, cartID string, productID string)) *CartRepository_DeleteLine_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *CartRepository_DeleteLine_Call) Return(err error) *CartRepository_DeleteLine_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *CartRepository_DeleteLine_Call) RunAndReturn(run func(ctx context.Context, cartID string, productID string) error) *CartRepository_DeleteLine_Call {
 	_c.Call.Return(run)
 	return _c
 }

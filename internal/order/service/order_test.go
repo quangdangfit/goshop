@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	cartMocks "goshop/internal/cart/repository/mocks"
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
 	orderMocks "goshop/internal/order/repository/mocks"
@@ -24,6 +25,7 @@ type OrderServiceTestSuite struct {
 	mockRepo        *orderMocks.OrderRepository
 	mockProductRepo *orderMocks.ProductRepository
 	mockUserRepo    *orderMocks.UserRepository
+	mockCartRepo    *cartMocks.CartRepository
 	mockCouponSvc   *serviceMocks.CouponService
 	mockNotifier    *notifMocks.Notifier
 	service         OrderService
@@ -36,6 +38,7 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.mockRepo = orderMocks.NewOrderRepository(suite.T())
 	suite.mockProductRepo = orderMocks.NewProductRepository(suite.T())
 	suite.mockUserRepo = orderMocks.NewUserRepository(suite.T())
+	suite.mockCartRepo = cartMocks.NewCartRepository(suite.T())
 	suite.mockCouponSvc = serviceMocks.NewCouponService(suite.T())
 	suite.mockNotifier = notifMocks.NewNotifier(suite.T())
 	suite.service = NewOrderService(
@@ -43,6 +46,7 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 		suite.mockRepo,
 		suite.mockProductRepo,
 		suite.mockUserRepo,
+		suite.mockCartRepo,
 		suite.mockCouponSvc,
 		suite.mockNotifier,
 	)
@@ -158,6 +162,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderSuccess() {
 	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
 		Return(nil).Maybe()
 
+	// ClearCart is called best-effort after order creation
+	suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
+
 	// Notification goroutine (best-effort, may or may not complete before test ends)
 	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
@@ -247,6 +254,7 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderWithCoupon() {
 
 	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
 		Return(nil).Maybe()
+	suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
 	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
 	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).
@@ -311,6 +319,7 @@ func (suite *OrderServiceTestSuite) TestPlaceOrderCouponIncrFail() {
 
 	suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).
 		Return(nil).Maybe()
+	suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
 	suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 		Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
 	suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).

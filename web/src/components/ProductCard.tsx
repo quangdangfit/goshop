@@ -72,11 +72,19 @@ export default function ProductCard({ product }: ProductCardProps) {
       to={`/products/${product.id}`}
       className="group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow overflow-hidden"
     >
-      {/* Image placeholder */}
+      {/* Image */}
       <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <ShoppingCart className="h-16 w-16 text-gray-300" />
-        </div>
+        {product.images?.[0] ? (
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ShoppingCart className="h-16 w-16 text-gray-300" />
+          </div>
+        )}
         <button
           onClick={handleWishlist}
           className={`absolute top-2 right-2 p-1.5 rounded-full shadow transition-all ${

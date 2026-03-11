@@ -22,6 +22,7 @@ type Product struct {
 	StockQuantity int        `json:"stock_quantity" gorm:"default:0"`
 	AvgRating     float64    `json:"avg_rating" gorm:"default:0"`
 	ReviewCount   int        `json:"review_count" gorm:"default:0"`
+	Images        []string   `json:"images" gorm:"serializer:json"`
 	CategoryID    *string    `json:"category_id"`
 	Category      *Category  `json:"category,omitempty"`
 }

@@ -1,14 +1,15 @@
 package dto
 
 type Cart struct {
-	ID    string         `json:"id"`
-	User  *User          `json:"user"`
-	Lines []*CartLineReq `json:"lines"`
+	ID    string      `json:"id"`
+	User  *User       `json:"user"`
+	Lines []*CartLine `json:"lines"`
 }
 
 type CartLine struct {
-	Product  *Product `json:"product"`
-	Quantity uint     `json:"quantity" validate:"required"`
+	ProductID string   `json:"product_id"`
+	Product   *Product `json:"product"`
+	Quantity  uint     `json:"quantity"`
 }
 
 type CartLineReq struct {
