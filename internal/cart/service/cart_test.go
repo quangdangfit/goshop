@@ -245,7 +245,7 @@ func (suite *CartServiceTestSuite) TestAddProductAlreadyExistInCart() {
 		UserID: "userID",
 		Line: &dto.CartLineReq{
 			ProductID: "productID2",
-			Quantity:  3,
+			Quantity:  5,
 		},
 	}
 
@@ -268,11 +268,45 @@ func (suite *CartServiceTestSuite) TestAddProductAlreadyExistInCart() {
 			nil,
 		).Times(1)
 
+	suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Times(1)
+
 	cart, err := suite.service.AddProduct(context.Background(), req)
 	suite.NotNil(cart)
 	suite.Equal("userID", cart.UserID)
 	suite.Equal(2, len(cart.Lines))
+	suite.Equal(uint(5), cart.Lines[1].Quantity)
 	suite.Nil(err)
+}
+
+func (suite *CartServiceTestSuite) TestAddProductAlreadyExistInCartUpdateFail() {
+	req := &dto.AddProductReq{
+		UserID: "userID",
+		Line: &dto.CartLineReq{
+			ProductID: "productID2",
+			Quantity:  5,
+		},
+	}
+
+	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+		Return(
+			&model.Cart{
+				ID:     "cartId1",
+				UserID: "userID",
+				Lines: []*model.CartLine{
+					{
+						ProductID: "productID2",
+						Quantity:  3,
+					},
+				},
+			},
+			nil,
+		).Times(1)
+
+	suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)
+
+	cart, err := suite.service.AddProduct(context.Background(), req)
+	suite.Nil(cart)
+	suite.NotNil(err)
 }
 
 func (suite *CartServiceTestSuite) TestAddProductUpdateFail() {

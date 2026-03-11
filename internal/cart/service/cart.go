@@ -72,6 +72,12 @@ func (p *cartService) AddProduct(ctx context.Context, req *dto.AddProductReq) (*
 
 	for _, line := range cart.Lines {
 		if line.ProductID == req.Line.ProductID {
+			line.Quantity = req.Line.Quantity
+			err = p.repo.Update(ctx, cart)
+			if err != nil {
+				logger.Errorf("AddProductReq.Update fail, userID: %s, error: %s", req.UserID, err)
+				return nil, err
+			}
 			return cart, nil
 		}
 	}
