@@ -2,12 +2,12 @@ package grpc
 
 import (
 	"context"
-	"errors"
 
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/internal/cart/dto"
 	"goshop/internal/cart/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
 	pb "goshop/proto/gen/go/cart"
 )
@@ -27,7 +27,7 @@ func NewCartHandler(service service.CartService) *CartHandler {
 func (h *CartHandler) AddProduct(ctx context.Context, req *pb.AddProductReq) (*pb.AddProductRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	cart, err := h.service.AddProduct(ctx, &dto.AddProductReq{
@@ -39,7 +39,7 @@ func (h *CartHandler) AddProduct(ctx context.Context, req *pb.AddProductReq) (*p
 	})
 	if err != nil {
 		logger.Error("Failed to add product ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.AddProductRes
@@ -50,7 +50,7 @@ func (h *CartHandler) AddProduct(ctx context.Context, req *pb.AddProductReq) (*p
 func (h *CartHandler) RemoveProduct(ctx context.Context, req *pb.RemoveProductReq) (*pb.RemoveProductRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	cart, err := h.service.RemoveProduct(ctx, &dto.RemoveProductReq{
@@ -59,7 +59,7 @@ func (h *CartHandler) RemoveProduct(ctx context.Context, req *pb.RemoveProductRe
 	})
 	if err != nil {
 		logger.Error("Failed to remove product ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.RemoveProductRes
@@ -70,13 +70,13 @@ func (h *CartHandler) RemoveProduct(ctx context.Context, req *pb.RemoveProductRe
 func (h *CartHandler) GetCart(ctx context.Context, req *pb.GetCartReq) (*pb.GetCartRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	cart, err := h.service.GetCartByUserID(ctx, userID)
 	if err != nil {
 		logger.Error("Failed to get cart ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.GetCartRes

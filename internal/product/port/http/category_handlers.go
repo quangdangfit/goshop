@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +8,7 @@ import (
 
 	"goshop/internal/product/dto"
 	"goshop/internal/product/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )
@@ -25,7 +25,7 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 	categories, err := h.service.ListCategories(c)
 	if err != nil {
 		logger.Error("Failed to list categories: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	var res []*dto.Category
@@ -36,12 +36,12 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("missing id"), "Missing category ID")
+		apperror.WrapMessage(apperror.ErrBadRequest, nil, "Missing category ID").HTTPError(c)
 		return
 	}
 	category, err := h.service.GetCategoryByID(c, id)
 	if err != nil {
-		response.Error(c, http.StatusNotFound, err, "Not found")
+		apperror.Wrap(apperror.ErrNotFound, err).HTTPError(c)
 		return
 	}
 	var res dto.Category
@@ -52,13 +52,13 @@ func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	var req dto.CreateCategoryReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 	category, err := h.service.Create(c, &req)
 	if err != nil {
 		logger.Error("Failed to create category: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	var res dto.Category
@@ -70,12 +70,12 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 	id := c.Param("id")
 	var req dto.UpdateCategoryReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 	category, err := h.service.Update(c, id, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	var res dto.Category
@@ -86,7 +86,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.service.Delete(c, id); err != nil {
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	response.JSON(c, http.StatusOK, nil)

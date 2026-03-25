@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +8,7 @@ import (
 
 	"goshop/internal/cart/dto"
 	"goshop/internal/cart/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )
@@ -32,14 +32,14 @@ func NewCartHandler(service service.CartService) *CartHandler {
 func (h *CartHandler) GetCart(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	cart, err := h.service.GetCartByUserID(c, userID)
 	if err != nil {
 		logger.Error("Failed to get cart: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -60,14 +60,14 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 func (h *CartHandler) AddProduct(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	var line dto.CartLineReq
 	if err := c.ShouldBindJSON(&line); err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
@@ -77,7 +77,7 @@ func (h *CartHandler) AddProduct(c *gin.Context) {
 	})
 	if err != nil {
 		logger.Error("Failed to add product to cart: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -97,13 +97,13 @@ func (h *CartHandler) AddProduct(c *gin.Context) {
 func (h *CartHandler) RemoveProduct(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	productID := c.Param("productId")
 	if productID == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss Product ID")
+		apperror.WrapMessage(apperror.ErrBadRequest, nil, "Missing product ID").HTTPError(c)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h *CartHandler) RemoveProduct(c *gin.Context) {
 	})
 	if err != nil {
 		logger.Error("Failed to remove product from cart: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 

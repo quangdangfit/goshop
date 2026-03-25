@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
@@ -11,6 +10,7 @@ import (
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
 	orderRepo "goshop/internal/order/repository"
+	"goshop/pkg/apperror"
 	"goshop/pkg/notification"
 	"goshop/pkg/paging"
 	"goshop/pkg/utils"
@@ -181,11 +181,11 @@ func (s *orderService) CancelOrder(ctx context.Context, orderID, userID string) 
 	}
 
 	if userID != order.UserID {
-		return nil, errors.New("permission denied")
+		return nil, apperror.ErrForbidden
 	}
 
 	if order.Status == model.OrderStatusDone || order.Status == model.OrderStatusCancelled {
-		return nil, errors.New("invalid order status")
+		return nil, apperror.ErrInvalidStatus
 	}
 
 	order.Status = model.OrderStatusCancelled

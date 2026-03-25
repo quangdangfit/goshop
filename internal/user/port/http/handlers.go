@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +8,7 @@ import (
 
 	"goshop/internal/user/dto"
 	"goshop/internal/user/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )
@@ -35,14 +35,14 @@ func (h *UserHandler) Login(c *gin.Context) {
 	var req dto.LoginReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body ", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
 	user, accessToken, refreshToken, err := h.service.Login(c, &req)
 	if err != nil {
 		logger.Error("Failed to login ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -65,14 +65,14 @@ func (h *UserHandler) Register(c *gin.Context) {
 	var req dto.RegisterReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
 	user, err := h.service.Register(c, &req)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -92,14 +92,14 @@ func (h *UserHandler) Register(c *gin.Context) {
 func (h *UserHandler) GetMe(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	user, err := h.service.GetUserByID(c, userID)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -111,14 +111,14 @@ func (h *UserHandler) GetMe(c *gin.Context) {
 func (h *UserHandler) RefreshToken(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	accessToken, err := h.service.RefreshToken(c, userID)
 	if err != nil {
 		logger.Error("Failed to refresh token", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	var req dto.ChangePasswordReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
@@ -148,7 +148,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	err := h.service.ChangePassword(c, userID, &req)
 	if err != nil {
 		logger.Error(err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	response.JSON(c, http.StatusOK, nil)

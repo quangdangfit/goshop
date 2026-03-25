@@ -152,7 +152,7 @@ func (suite *ReviewServiceTestSuite) TestUpdateReviewPermissionDenied() {
 	review, err := suite.service.UpdateReview(context.Background(), "r1", "u1", req)
 	suite.NotNil(err)
 	suite.Nil(review)
-	suite.Equal("permission denied", err.Error())
+	suite.Equal("Permission denied", err.Error())
 }
 
 func (suite *ReviewServiceTestSuite) TestUpdateReviewDBFail() {
@@ -197,7 +197,7 @@ func (suite *ReviewServiceTestSuite) TestDeleteReviewPermissionDenied() {
 
 	err := suite.service.DeleteReview(context.Background(), "r1", "u1")
 	suite.NotNil(err)
-	suite.Equal("permission denied", err.Error())
+	suite.Equal("Permission denied", err.Error())
 }
 
 func (suite *ReviewServiceTestSuite) TestDeleteReviewDBFail() {

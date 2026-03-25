@@ -99,7 +99,7 @@ func TestOrderAPI_PlaceOrderInvalidFieldType(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
-	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+	assert.Equal(t, "Invalid request parameters", response["error"]["message"])
 }
 
 func TestOrderAPI_PlaceOrderInvalidMissProductID(t *testing.T) {
@@ -307,7 +307,7 @@ func TestOrderAPI_GetOrderByIDNotFound(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusNotFound, writer.Code)
-	assert.Equal(t, "Not found", response["error"]["message"])
+	assert.Equal(t, "Resource not found", response["error"]["message"])
 }
 
 // Cancel Order
@@ -408,8 +408,8 @@ func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
 	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, token)
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
-	assert.Equal(t, http.StatusInternalServerError, writer.Code)
-	assert.Equal(t, "Something went wrong", response["error"]["message"])
+	assert.Equal(t, http.StatusUnprocessableEntity, writer.Code)
+	assert.Equal(t, "Invalid status transition", response["error"]["message"])
 }
 
 func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
@@ -455,8 +455,8 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, token)
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
-	assert.Equal(t, http.StatusInternalServerError, writer.Code)
-	assert.Equal(t, "Something went wrong", response["error"]["message"])
+	assert.Equal(t, http.StatusUnprocessableEntity, writer.Code)
+	assert.Equal(t, "Invalid status transition", response["error"]["message"])
 }
 
 func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
@@ -501,8 +501,8 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
-	assert.Equal(t, http.StatusInternalServerError, writer.Code)
-	assert.Equal(t, "Something went wrong", response["error"]["message"])
+	assert.Equal(t, http.StatusForbidden, writer.Code)
+	assert.Equal(t, "Permission denied", response["error"]["message"])
 }
 
 // List My Orders
@@ -589,7 +589,7 @@ func TestOrderAPI_ListOrdersInvalidFieldType(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
-	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+	assert.Equal(t, "Invalid request parameters", response["error"]["message"])
 }
 
 func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {

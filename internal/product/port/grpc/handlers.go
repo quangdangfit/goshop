@@ -2,12 +2,12 @@ package grpc
 
 import (
 	"context"
-	"errors"
 
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/internal/product/dto"
 	"goshop/internal/product/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
 	pb "goshop/proto/gen/go/product"
 )
@@ -26,13 +26,13 @@ func NewProductHandler(service service.ProductService) *ProductHandler {
 
 func (h *ProductHandler) GetProductByID(ctx context.Context, req *pb.GetProductByIDReq) (*pb.GetProductByIDRes, error) {
 	if req.Id == "" {
-		return nil, errors.New("id is required")
+		return nil, apperror.WrapMessage(apperror.ErrBadRequest, nil, "ID is required").GRPCStatus()
 	}
 
 	product, err := h.service.GetProductByID(ctx, req.Id)
 	if err != nil {
 		logger.Error("Failed to get product ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.GetProductByIDRes
@@ -51,7 +51,7 @@ func (h *ProductHandler) ListProducts(ctx context.Context, req *pb.ListProductsR
 	})
 	if err != nil {
 		logger.Error("Failed to list products ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.ListProductsRes
@@ -72,7 +72,7 @@ func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProduc
 	})
 	if err != nil {
 		logger.Error("Failed to create product ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.CreateProductRes
@@ -82,7 +82,7 @@ func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProduc
 
 func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProductReq) (*pb.UpdateProductRes, error) {
 	if req.Id == "" {
-		return nil, errors.New("id is required")
+		return nil, apperror.WrapMessage(apperror.ErrBadRequest, nil, "ID is required").GRPCStatus()
 	}
 
 	product, err := h.service.Update(ctx, req.Id, &dto.UpdateProductReq{
@@ -92,7 +92,7 @@ func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProduc
 	})
 	if err != nil {
 		logger.Error("Failed to update product ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.UpdateProductRes

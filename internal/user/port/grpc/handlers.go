@@ -2,12 +2,12 @@ package grpc
 
 import (
 	"context"
-	"errors"
 
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/internal/user/dto"
 	"goshop/internal/user/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
 	pb "goshop/proto/gen/go/user"
 )
@@ -30,8 +30,8 @@ func (h *UserHandler) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes
 		Password: req.Password,
 	})
 	if err != nil {
-		logger.Error("Failed to register ", err)
-		return nil, err
+		logger.Error("Failed to login ", err)
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.LoginRes
@@ -48,7 +48,7 @@ func (h *UserHandler) Register(ctx context.Context, req *pb.RegisterReq) (*pb.Re
 	})
 	if err != nil {
 		logger.Error("Failed to register ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.RegisterRes
@@ -59,13 +59,13 @@ func (h *UserHandler) Register(ctx context.Context, req *pb.RegisterReq) (*pb.Re
 func (h *UserHandler) GetMe(ctx context.Context, _ *pb.GetMeReq) (*pb.GetMeRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	user, err := h.service.GetUserByID(ctx, userID)
 	if err != nil {
-		logger.Error("Failed to register ", err)
-		return nil, err
+		logger.Error("Failed to get user ", err)
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.GetMeRes
@@ -76,13 +76,13 @@ func (h *UserHandler) GetMe(ctx context.Context, _ *pb.GetMeReq) (*pb.GetMeRes, 
 func (h *UserHandler) RefreshToken(ctx context.Context, req *pb.RefreshTokenReq) (*pb.RefreshTokenRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	accessToken, err := h.service.RefreshToken(ctx, userID)
 	if err != nil {
-		logger.Error("Failed to register ", err)
-		return nil, err
+		logger.Error("Failed to refresh token ", err)
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	res := pb.RefreshTokenRes{
@@ -94,7 +94,7 @@ func (h *UserHandler) RefreshToken(ctx context.Context, req *pb.RefreshTokenReq)
 func (h *UserHandler) ChangePassword(ctx context.Context, req *pb.ChangePasswordReq) (*pb.ChangePasswordRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	err := h.service.ChangePassword(ctx, userID, &dto.ChangePasswordReq{
@@ -102,8 +102,8 @@ func (h *UserHandler) ChangePassword(ctx context.Context, req *pb.ChangePassword
 		NewPassword: req.NewPassword,
 	})
 	if err != nil {
-		logger.Error("Failed to register ", err)
-		return nil, err
+		logger.Error("Failed to change password ", err)
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	return &pb.ChangePasswordRes{}, nil

@@ -70,7 +70,7 @@ func TestProductAPI_GetProductByIDNotFound(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusNotFound, writer.Code)
-	assert.Equal(t, "Not found", response["error"]["message"])
+	assert.Equal(t, "Resource not found", response["error"]["message"])
 }
 
 // Get List Products
@@ -155,7 +155,7 @@ func TestProductAPI_ListProductsInvalidFieldType(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
-	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+	assert.Equal(t, "Invalid request parameters", response["error"]["message"])
 }
 
 func TestProductAPI_ListProductsFindByNameSuccess(t *testing.T) {
@@ -356,7 +356,7 @@ func TestProductAPI_CreateProductInvalidFieldType(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
-	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+	assert.Equal(t, "Invalid request parameters", response["error"]["message"])
 }
 
 func TestProductAPI_CreateProductMissingName(t *testing.T) {
@@ -483,7 +483,7 @@ func TestProductAPI_UpdateProductInvalidFieldType(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
-	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+	assert.Equal(t, "Invalid request parameters", response["error"]["message"])
 }
 
 func TestProductAPI_UpdateProductPriceLessThanZero(t *testing.T) {

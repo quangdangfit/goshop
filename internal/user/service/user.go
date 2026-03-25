@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
@@ -11,6 +10,7 @@ import (
 	"goshop/internal/user/dto"
 	"goshop/internal/user/model"
 	"goshop/internal/user/repository"
+	"goshop/pkg/apperror"
 	"goshop/pkg/jtoken"
 	"goshop/pkg/utils"
 )
@@ -46,11 +46,11 @@ func (s *userService) Login(ctx context.Context, req *dto.LoginReq) (*model.User
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		logger.Errorf("Login.GetUserByEmail fail, email: %s, error: %s", req.Email, err)
-		return nil, "", "", err
+		return nil, "", "", apperror.Wrap(apperror.ErrInvalidCredentials, err)
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return nil, "", "", errors.New("wrong password")
+		return nil, "", "", apperror.ErrInvalidCredentials
 	}
 
 	tokenData := map[string]interface{}{
@@ -115,7 +115,7 @@ func (s *userService) ChangePassword(ctx context.Context, id string, req *dto.Ch
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return errors.New("wrong password")
+		return apperror.ErrInvalidCredentials
 	}
 
 	user.Password = utils.HashAndSalt([]byte(req.NewPassword))

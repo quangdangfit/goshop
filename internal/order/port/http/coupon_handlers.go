@@ -8,6 +8,7 @@ import (
 
 	"goshop/internal/order/dto"
 	"goshop/internal/order/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )
@@ -33,14 +34,14 @@ func (h *CouponHandler) CreateCoupon(c *gin.Context) {
 	var req dto.CreateCouponReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Failed to get body: ", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
 	coupon, err := h.service.Create(c, &req)
 	if err != nil {
 		logger.Error("Failed to create coupon: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -62,7 +63,7 @@ func (h *CouponHandler) GetCouponByCode(c *gin.Context) {
 	coupon, err := h.service.GetByCode(c, code)
 	if err != nil {
 		logger.Errorf("Failed to get coupon %s: %s", code, err)
-		response.Error(c, http.StatusNotFound, err, "Not found")
+		apperror.Wrap(apperror.ErrNotFound, err).HTTPError(c)
 		return
 	}
 

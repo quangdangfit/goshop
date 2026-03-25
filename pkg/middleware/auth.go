@@ -1,10 +1,9 @@
 package middleware
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 
+	"goshop/pkg/apperror"
 	"goshop/pkg/jtoken"
 )
 
@@ -20,14 +19,14 @@ func JWT(tokenType string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
 		if token == "" {
-			c.JSON(http.StatusUnauthorized, nil)
+			apperror.ErrUnauthorized.HTTPError(c)
 			c.Abort()
 			return
 		}
 
 		payload, err := jtoken.ValidateToken(token)
 		if err != nil || payload == nil || payload["type"] != tokenType {
-			c.JSON(http.StatusUnauthorized, nil)
+			apperror.ErrUnauthorized.HTTPError(c)
 			c.Abort()
 			return
 		}

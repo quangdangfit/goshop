@@ -8,6 +8,7 @@ import (
 
 	"goshop/internal/product/dto"
 	"goshop/internal/product/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/config"
 	"goshop/pkg/redis"
 	"goshop/pkg/response"
@@ -49,7 +50,7 @@ func (p *ProductHandler) GetProductByID(c *gin.Context) {
 	product, err := p.service.GetProductByID(c, productId)
 	if err != nil {
 		logger.Error("Failed to get product detail: ", err)
-		response.Error(c, http.StatusNotFound, err, "Not found")
+		apperror.Wrap(apperror.ErrNotFound, err).HTTPError(c)
 		return
 	}
 
@@ -69,7 +70,7 @@ func (p *ProductHandler) ListProducts(c *gin.Context) {
 	var req dto.ListProductReq
 	if err := c.ShouldBindQuery(&req); err != nil {
 		logger.Error("Failed to parse request query: ", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
@@ -84,7 +85,7 @@ func (p *ProductHandler) ListProducts(c *gin.Context) {
 	products, pagination, err := p.service.ListProducts(c, &req)
 	if err != nil {
 		logger.Error("Failed to get list products: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -106,14 +107,14 @@ func (p *ProductHandler) CreateProduct(c *gin.Context) {
 	var req dto.CreateProductReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
 	product, err := p.service.Create(c, &req)
 	if err != nil {
 		logger.Error("Failed to create product", err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -137,14 +138,14 @@ func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 	var req dto.UpdateProductReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
 	product, err := p.service.Update(c, productId, &req)
 	if err != nil {
 		logger.Error("Failed to update product", err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 

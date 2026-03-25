@@ -2,12 +2,12 @@ package grpc
 
 import (
 	"context"
-	"errors"
 
 	"github.com/quangdangfit/gocommon/logger"
 
 	"goshop/internal/order/dto"
 	"goshop/internal/order/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
 	pb "goshop/proto/gen/go/order"
 )
@@ -27,7 +27,7 @@ func NewOrderHandler(service service.OrderService) *OrderHandler {
 func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReq) (*pb.PlaceOrderRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	var lines []dto.PlaceOrderLineReq
@@ -44,7 +44,7 @@ func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReq) (*
 	})
 	if err != nil {
 		logger.Error("Failed to place order ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.PlaceOrderRes
@@ -55,17 +55,17 @@ func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReq) (*
 func (h *OrderHandler) GetOrderByID(ctx context.Context, req *pb.GetOrderByIDReq) (*pb.GetOrderByIDRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	if req.Id == "" {
-		return nil, errors.New("id is required")
+		return nil, apperror.WrapMessage(apperror.ErrBadRequest, nil, "ID is required").GRPCStatus()
 	}
 
 	order, err := h.service.GetOrderByID(ctx, req.Id)
 	if err != nil {
 		logger.Error("Failed to get order ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.GetOrderByIDRes
@@ -76,7 +76,7 @@ func (h *OrderHandler) GetOrderByID(ctx context.Context, req *pb.GetOrderByIDReq
 func (h *OrderHandler) GetMyOrders(ctx context.Context, req *pb.GetMyOrdersReq) (*pb.GetMyOrdersRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	orders, pagination, err := h.service.GetMyOrders(ctx, &dto.ListOrderReq{
@@ -89,7 +89,7 @@ func (h *OrderHandler) GetMyOrders(ctx context.Context, req *pb.GetMyOrdersReq) 
 	})
 	if err != nil {
 		logger.Error("Failed to get orders ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.GetMyOrdersRes
@@ -105,17 +105,17 @@ func (h *OrderHandler) GetMyOrders(ctx context.Context, req *pb.GetMyOrdersReq) 
 func (h *OrderHandler) CancelOrder(ctx context.Context, req *pb.CancelOrderReq) (*pb.CancelOrderRes, error) {
 	userID, _ := ctx.Value("userId").(string)
 	if userID == "" {
-		return nil, errors.New("unauthorized")
+		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
 	if req.Id == "" {
-		return nil, errors.New("id is required")
+		return nil, apperror.WrapMessage(apperror.ErrBadRequest, nil, "ID is required").GRPCStatus()
 	}
 
 	order, err := h.service.CancelOrder(ctx, req.Id, userID)
 	if err != nil {
 		logger.Error("Failed to cancel order ", err)
-		return nil, err
+		return nil, apperror.ToGRPCStatus(err)
 	}
 
 	var res pb.CancelOrderRes

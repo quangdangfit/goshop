@@ -228,7 +228,7 @@ func (suite *ProductHandlerTestSuite) TestCreateProductInvalidPriceType() {
 	var res map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &res)
 	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid parameters", res["error"]["message"])
+	suite.Equal("Invalid request parameters", res["error"]["message"])
 }
 
 func (suite *ProductHandlerTestSuite) TestCreateProductFail() {
@@ -302,7 +302,7 @@ func (suite *ProductHandlerTestSuite) TestUpdateProductInvalidPriceType() {
 	var res map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &res)
 	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid parameters", res["error"]["message"])
+	suite.Equal("Invalid request parameters", res["error"]["message"])
 }
 
 func (suite *ProductHandlerTestSuite) TestUpdateProductFail() {

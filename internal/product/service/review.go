@@ -2,13 +2,13 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/internal/product/dto"
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository"
+	"goshop/pkg/apperror"
 	"goshop/pkg/paging"
 	"goshop/pkg/utils"
 )
@@ -60,7 +60,7 @@ func (s *reviewSvc) UpdateReview(ctx context.Context, id, userID string, req *dt
 		return nil, err
 	}
 	if review.UserID != userID {
-		return nil, errors.New("permission denied")
+		return nil, apperror.ErrForbidden
 	}
 	utils.Copy(review, req)
 	if err := s.repo.Update(ctx, review); err != nil {
@@ -76,7 +76,7 @@ func (s *reviewSvc) DeleteReview(ctx context.Context, id, userID string) error {
 		return err
 	}
 	if review.UserID != userID {
-		return errors.New("permission denied")
+		return apperror.ErrForbidden
 	}
 	if err := s.repo.Delete(ctx, id, userID); err != nil {
 		return err

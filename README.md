@@ -40,15 +40,15 @@ internal/{domain}/
 
 | Concern | Library |
 |---------|---------|
-| HTTP framework | [Gin](https://github.com/gin-gonic/gin) |
-| gRPC | [grpc-go](https://github.com/grpc/grpc-go) |
-| ORM | [GORM](https://gorm.io) + PostgreSQL |
-| Cache | [go-redis](https://github.com/go-redis/redis) |
-| Auth | JWT ([golang-jwt](https://github.com/golang-jwt/jwt)) |
+| HTTP framework | [Gin v1.12](https://github.com/gin-gonic/gin) |
+| gRPC | [grpc-go v1.79](https://github.com/grpc/grpc-go) |
+| ORM | [GORM v1.31](https://gorm.io) + PostgreSQL |
+| Cache | [go-redis v9](https://github.com/redis/go-redis) |
+| Auth | JWT ([golang-jwt v5](https://github.com/golang-jwt/jwt)) |
 | Validation | [gocommon/validation](https://github.com/quangdangfit/gocommon) |
 | API Docs | [Swagger](https://github.com/swaggo/swag) |
-| Testing | [testify](https://github.com/stretchr/testify) + [mockery](https://github.com/vektra/mockery) |
-| Proto codegen | [buf](https://buf.build) |
+| Testing | [testify v1.11](https://github.com/stretchr/testify) + [mockery](https://github.com/vektra/mockery) |
+| Proto codegen | [buf](https://buf.build) + [protobuf v1.36](https://google.golang.org/protobuf) |
 
 **Frontend**
 
@@ -64,7 +64,7 @@ internal/{domain}/
 
 ## Prerequisites
 
-- Go 1.24+
+- Go 1.26+
 - Node.js 18+
 - PostgreSQL
 - Redis

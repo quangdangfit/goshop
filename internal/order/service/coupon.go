@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/quangdangfit/gocommon/validation"
@@ -10,6 +9,7 @@ import (
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
 	"goshop/internal/order/repository"
+	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
 )
 
@@ -49,18 +49,18 @@ func (s *couponSvc) Create(ctx context.Context, req *dto.CreateCouponReq) (*mode
 func (s *couponSvc) Apply(ctx context.Context, code string, totalPrice float64) (float64, *model.Coupon, error) {
 	coupon, err := s.repo.GetByCode(ctx, code)
 	if err != nil {
-		return 0, nil, errors.New("coupon not found")
+		return 0, nil, apperror.Wrap(apperror.ErrNotFound, err)
 	}
 
 	now := time.Now()
 	if coupon.ExpiresAt != nil && coupon.ExpiresAt.Before(now) {
-		return 0, nil, errors.New("coupon has expired")
+		return 0, nil, apperror.ErrCouponExpired
 	}
 	if coupon.MaxUsage > 0 && coupon.UsedCount >= coupon.MaxUsage {
-		return 0, nil, errors.New("coupon has reached maximum usage")
+		return 0, nil, apperror.ErrCouponMaxUsage
 	}
 	if totalPrice < coupon.MinOrderAmount {
-		return 0, nil, errors.New("order total is below minimum required for this coupon")
+		return 0, nil, apperror.ErrCouponMinOrder
 	}
 
 	var discount float64

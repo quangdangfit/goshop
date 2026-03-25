@@ -96,7 +96,7 @@ func (suite *UserHandlerTestSuite) TestLoginInvalidEmailType() {
 	var res map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &res)
 	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid parameters", res["error"]["message"])
+	suite.Equal("Invalid request parameters", res["error"]["message"])
 }
 
 func (suite *UserHandlerTestSuite) TestLoginInvalidPasswordType() {
@@ -112,7 +112,7 @@ func (suite *UserHandlerTestSuite) TestLoginInvalidPasswordType() {
 	var res map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &res)
 	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid parameters", res["error"]["message"])
+	suite.Equal("Invalid request parameters", res["error"]["message"])
 }
 
 func (suite *UserHandlerTestSuite) TestLoginFail() {
@@ -178,7 +178,7 @@ func (suite *UserHandlerTestSuite) TestRegisterInvalidEmailType() {
 	var res map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &res)
 	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid parameters", res["error"]["message"])
+	suite.Equal("Invalid request parameters", res["error"]["message"])
 }
 
 func (suite *UserHandlerTestSuite) TestRegisterInvalidPasswordType() {
@@ -194,7 +194,7 @@ func (suite *UserHandlerTestSuite) TestRegisterInvalidPasswordType() {
 	var res map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &res)
 	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid parameters", res["error"]["message"])
+	suite.Equal("Invalid request parameters", res["error"]["message"])
 }
 
 func (suite *UserHandlerTestSuite) TestRegisterFail() {
@@ -348,7 +348,7 @@ func (suite *UserHandlerTestSuite) TestChangePasswordInvalidPasswordType() {
 	var res map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &res)
 	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid parameters", res["error"]["message"])
+	suite.Equal("Invalid request parameters", res["error"]["message"])
 }
 
 func (suite *UserHandlerTestSuite) TestChangePasswordFail() {

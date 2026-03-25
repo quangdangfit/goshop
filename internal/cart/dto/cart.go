@@ -19,7 +19,7 @@ type CartLineReq struct {
 
 type AddProductReq struct {
 	UserID string       `json:"user_id" validate:"required"`
-	Line   *CartLineReq `json:"line"  validate:"required,dive"`
+	Line   *CartLineReq `json:"line"  validate:"required"`
 }
 
 type RemoveProductReq struct {

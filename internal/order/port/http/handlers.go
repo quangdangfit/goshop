@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +9,7 @@ import (
 	"goshop/internal/order/dto"
 	"goshop/internal/order/model"
 	"goshop/internal/order/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )
@@ -37,20 +37,20 @@ func (a *OrderHandler) PlaceOrder(c *gin.Context) {
 	var req dto.PlaceOrderReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Failed to get body", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
 	req.UserID = c.GetString("userId")
 	if req.UserID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	order, err := a.service.PlaceOrder(c, &req)
 	if err != nil {
 		logger.Error("Failed to create OrderHandler: ", err.Error())
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -72,20 +72,20 @@ func (a *OrderHandler) GetOrders(c *gin.Context) {
 	var req dto.ListOrderReq
 	if err := c.ShouldBindQuery(&req); err != nil {
 		logger.Error("Failed to parse request req: ", err)
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
 	req.UserID = c.GetString("userId")
 	if req.UserID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	orders, pagination, err := a.service.GetMyOrders(c, &req)
 	if err != nil {
 		logger.Error("Failed to get orders: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -107,20 +107,20 @@ func (a *OrderHandler) GetOrders(c *gin.Context) {
 func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 	userId := c.GetString("userId")
 	if userId == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	orderId := c.Param("id")
 	if orderId == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss Order ID")
+		apperror.WrapMessage(apperror.ErrBadRequest, nil, "Missing order ID").HTTPError(c)
 		return
 	}
 
 	order, err := a.service.GetOrderByID(c, orderId)
 	if err != nil {
 		logger.Errorf("Failed to get order, id: %s, error: %s ", orderId, err)
-		response.Error(c, http.StatusNotFound, err, "Not found")
+		apperror.Wrap(apperror.ErrNotFound, err).HTTPError(c)
 		return
 	}
 
@@ -141,20 +141,20 @@ func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 func (a *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 	orderID := c.Param("id")
 	if orderID == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss Order ID")
+		apperror.WrapMessage(apperror.ErrBadRequest, nil, "Missing order ID").HTTPError(c)
 		return
 	}
 
 	status := c.Query("status")
 	if status == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss status")
+		apperror.WrapMessage(apperror.ErrBadRequest, nil, "Missing status").HTTPError(c)
 		return
 	}
 
 	order, err := a.service.UpdateOrderStatus(c, orderID, model.OrderStatus(status))
 	if err != nil {
 		logger.Errorf("Failed to update order status, id: %s, error: %s", orderID, err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
@@ -174,20 +174,20 @@ func (a *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 func (a *OrderHandler) CancelOrder(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 
 	orderID := c.Param("id")
 	if orderID == "" {
-		response.Error(c, http.StatusBadRequest, errors.New("bad request"), "Miss Order ID")
+		apperror.WrapMessage(apperror.ErrBadRequest, nil, "Missing order ID").HTTPError(c)
 		return
 	}
 
 	order, err := a.service.CancelOrder(c, orderID, userID)
 	if err != nil {
 		logger.Errorf("Failed to cancel order, id: %s, error: %s", orderID, err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 

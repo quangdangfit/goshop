@@ -3,18 +3,12 @@ package response
 import (
 	"github.com/gin-gonic/gin"
 
-	"goshop/pkg/config"
+	"goshop/pkg/apperror"
 )
 
+// Error sends an error response. If err is an *apperror.AppError, the HTTP status
+// and user-facing message are derived automatically via err.HTTPError(c).
+// Otherwise it falls back to the provided status and message.
 func Error(c *gin.Context, status int, err error, message string) {
-	cfg := config.GetConfig()
-	errorRes := map[string]interface{}{
-		"message": message,
-	}
-
-	if cfg.Environment != config.ProductionEnv {
-		errorRes["debug"] = err.Error()
-	}
-
-	c.JSON(status, Response{Error: errorRes})
+	apperror.ToHTTPError(c, err, status, message)
 }

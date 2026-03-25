@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -10,6 +9,7 @@ import (
 
 	"goshop/internal/product/dto"
 	"goshop/internal/product/service"
+	"goshop/pkg/apperror"
 	"goshop/pkg/response"
 	"goshop/pkg/utils"
 )
@@ -30,7 +30,7 @@ func (h *ReviewHandler) ListReviews(c *gin.Context) {
 	reviews, pagination, err := h.service.ListReviews(c, productID, page, limit)
 	if err != nil {
 		logger.Error("Failed to list reviews: ", err)
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	var res dto.ListReviewRes
@@ -42,18 +42,18 @@ func (h *ReviewHandler) ListReviews(c *gin.Context) {
 func (h *ReviewHandler) CreateReview(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 	productID := c.Param("id")
 	var req dto.CreateReviewReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 	review, err := h.service.CreateReview(c, productID, userID, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	var res dto.Review
@@ -64,18 +64,18 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 	reviewID := c.Param("reviewId")
 	var req dto.UpdateReviewReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
-		response.Error(c, http.StatusBadRequest, err, "Invalid parameters")
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 	review, err := h.service.UpdateReview(c, reviewID, userID, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	var res dto.Review
@@ -86,12 +86,12 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 func (h *ReviewHandler) DeleteReview(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
-		response.Error(c, http.StatusUnauthorized, errors.New("unauthorized"), "Unauthorized")
+		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
 	reviewID := c.Param("reviewId")
 	if err := h.service.DeleteReview(c, reviewID, userID); err != nil {
-		response.Error(c, http.StatusInternalServerError, err, "Something went wrong")
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 	response.JSON(c, http.StatusOK, nil)

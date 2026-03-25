@@ -41,7 +41,7 @@ func TestUserAPI_LoginInvalidFieldType(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
-	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+	assert.Equal(t, "Invalid request parameters", response["error"]["message"])
 }
 
 func TestUserAPI_LoginInvalidEmailFormat(t *testing.T) {
@@ -79,8 +79,8 @@ func TestUserAPI_LoginUserNotFound(t *testing.T) {
 	writer := makeRequest("POST", "/api/v1/auth/login", user, "")
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
-	assert.Equal(t, http.StatusInternalServerError, writer.Code)
-	assert.Equal(t, "Something went wrong", response["error"]["message"])
+	assert.Equal(t, http.StatusUnauthorized, writer.Code)
+	assert.Equal(t, "Invalid email or password", response["error"]["message"])
 }
 
 func TestUserAPI_LoginUserWrongPassword(t *testing.T) {
@@ -92,8 +92,8 @@ func TestUserAPI_LoginUserWrongPassword(t *testing.T) {
 	writer := makeRequest("POST", "/api/v1/auth/login", user, "")
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
-	assert.Equal(t, http.StatusInternalServerError, writer.Code)
-	assert.Equal(t, "Something went wrong", response["error"]["message"])
+	assert.Equal(t, http.StatusUnauthorized, writer.Code)
+	assert.Equal(t, "Invalid email or password", response["error"]["message"])
 }
 
 // Register
@@ -121,7 +121,7 @@ func TestUserAPI_RegisterInvalidFieldType(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
-	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+	assert.Equal(t, "Invalid request parameters", response["error"]["message"])
 }
 
 func TestUserAPI_RegisterInvalidEmail(t *testing.T) {
@@ -295,8 +295,8 @@ func TestUserAPI_ChangePasswordIsWrong(t *testing.T) {
 	writer := makeRequest("PUT", "/api/v1/auth/change-password", req, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
-	assert.Equal(t, http.StatusInternalServerError, writer.Code)
-	assert.Equal(t, "Something went wrong", response["error"]["message"])
+	assert.Equal(t, http.StatusUnauthorized, writer.Code)
+	assert.Equal(t, "Invalid email or password", response["error"]["message"])
 }
 
 func TestUserAPI_ChangePasswordInvalidNewPassword(t *testing.T) {
@@ -324,5 +324,5 @@ func TestUserAPI_ChangePasswordInvalidFieldType(t *testing.T) {
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
-	assert.Equal(t, "Invalid parameters", response["error"]["message"])
+	assert.Equal(t, "Invalid request parameters", response["error"]["message"])
 }
