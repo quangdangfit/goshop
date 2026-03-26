@@ -45,13 +45,39 @@ func TestNew_Success(t *testing.T) {
 	assert.NotNil(t, r)
 }
 
-func (s *RedisTestSuite) TestIsConnected_True() {
-	assert.True(s.T(), s.r.IsConnected())
-}
+func (s *RedisTestSuite) TestIsConnected() {
+	tests := []struct {
+		name     string
+		setup    func() Redis
+		expected bool
+	}{
+		{
+			name:     "True",
+			setup:    func() Redis { return s.r },
+			expected: true,
+		},
+		{
+			name:     "NilCmd",
+			setup:    func() Redis { return &redis{cmd: nil} },
+			expected: false,
+		},
+		{
+			name: "ServerDown",
+			setup: func() Redis {
+				s.mr.Close()
+				return s.r
+			},
+			expected: false,
+		},
+	}
 
-func (s *RedisTestSuite) TestIsConnected_NilCmd() {
-	r := &redis{cmd: nil}
-	assert.False(s.T(), r.IsConnected())
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			r := tc.setup()
+			assert.Equal(s.T(), tc.expected, r.IsConnected())
+		})
+	}
 }
 
 func (s *RedisTestSuite) TestSet_And_Get() {
@@ -109,32 +135,128 @@ func (s *RedisTestSuite) TestKeys() {
 }
 
 func (s *RedisTestSuite) TestRemovePattern() {
-	_ = s.r.Set("pattern:x", "1")
-	_ = s.r.Set("pattern:y", "2")
-	_ = s.r.Set("other", "3")
+	tests := []struct {
+		name  string
+		setup func()
+		check func()
+	}{
+		{
+			name: "MatchingKeys",
+			setup: func() {
+				_ = s.r.Set("pattern:x", "1")
+				_ = s.r.Set("pattern:y", "2")
+				_ = s.r.Set("other", "3")
+			},
+			check: func() {
+				keys, _ := s.r.Keys("pattern:*")
+				assert.Empty(s.T(), keys)
+				var v interface{}
+				assert.NoError(s.T(), s.r.Get("other", &v))
+			},
+		},
+		{
+			name:  "NoMatch",
+			setup: func() {},
+			check: func() {},
+		},
+	}
 
-	err := s.r.RemovePattern("pattern:*")
-	assert.NoError(s.T(), err)
-
-	keys, _ := s.r.Keys("pattern:*")
-	assert.Empty(s.T(), keys)
-
-	// "other" should still exist
-	var v interface{}
-	assert.NoError(s.T(), s.r.Get("other", &v))
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			tc.setup()
+			var pattern string
+			if tc.name == "NoMatch" {
+				pattern = "nomatch:*"
+			} else {
+				pattern = "pattern:*"
+			}
+			err := s.r.RemovePattern(pattern)
+			assert.NoError(s.T(), err)
+			tc.check()
+		})
+	}
 }
 
-func (s *RedisTestSuite) TestRemovePattern_NoMatch() {
-	err := s.r.RemovePattern("nomatch:*")
-	assert.NoError(s.T(), err)
+func (s *RedisTestSuite) TestRemovePattern_KeysError() {
+	s.mr.Close()
+	err := s.r.RemovePattern("*")
+	assert.Error(s.T(), err)
+}
+
+type failOnDelCmdable struct {
+	goredis.Cmdable
+}
+
+func (f *failOnDelCmdable) Del(ctx context.Context, keys ...string) *goredis.IntCmd {
+	return goredis.NewIntResult(0, errors.New("del error"))
+}
+
+func (s *RedisTestSuite) TestRemovePattern_RemoveError() {
+	mr2, err2 := miniredis.Run()
+	s.Require().NoError(err2)
+	defer mr2.Close()
+
+	rdb2 := goredis.NewClient(&goredis.Options{Addr: mr2.Addr()})
+	baseRedis := &redis{cmd: rdb2}
+
+	err := baseRedis.Set("pattern:key1", "val")
+	s.Require().NoError(err)
+
+	r2 := &redis{cmd: &failOnDelCmdable{rdb2}}
+	err = r2.RemovePattern("pattern:*")
+	assert.Error(s.T(), err)
+}
+
+func (s *RedisTestSuite) TestIncr() {
+	tests := []struct {
+		name     string
+		setup    func()
+		key      string
+		expected int64
+		wantErr  bool
+	}{
+		{
+			name:     "FirstTime",
+			setup:    func() {},
+			key:      "incr_key",
+			expected: int64(1),
+		},
+		{
+			name: "SubsequentTimes",
+			setup: func() {
+				_, _ = s.r.Incr("incr_key2", 60*time.Second)
+			},
+			key:      "incr_key2",
+			expected: int64(2),
+		},
+		{
+			name: "ServerDown",
+			setup: func() {
+				s.mr.Close()
+			},
+			key:      "incr_key",
+			expected: int64(0),
+			wantErr:  true,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			tc.setup()
+			count, err := s.r.Incr(tc.key, 60*time.Second)
+			if tc.wantErr {
+				assert.Error(s.T(), err)
+			} else {
+				assert.NoError(s.T(), err)
+			}
+			assert.Equal(s.T(), tc.expected, count)
+		})
+	}
 }
 
 // Error path tests — close server to force failures
-
-func (s *RedisTestSuite) TestIsConnected_ServerDown() {
-	s.mr.Close()
-	assert.False(s.T(), s.r.IsConnected())
-}
 
 func (s *RedisTestSuite) TestSet_ServerDown() {
 	s.mr.Close()
@@ -158,57 +280,4 @@ func (s *RedisTestSuite) TestKeys_ServerDown() {
 	s.mr.Close()
 	_, err := s.r.Keys("*")
 	assert.Error(s.T(), err)
-}
-
-func (s *RedisTestSuite) TestRemovePattern_KeysError() {
-	s.mr.Close()
-	err := s.r.RemovePattern("*")
-	assert.Error(s.T(), err)
-}
-
-type failOnDelCmdable struct {
-	goredis.Cmdable
-}
-
-func (f *failOnDelCmdable) Del(ctx context.Context, keys ...string) *goredis.IntCmd {
-	return goredis.NewIntResult(0, errors.New("del error"))
-}
-
-func (s *RedisTestSuite) TestRemovePattern_RemoveError() {
-	// Create a miniredis instance with a real key
-	mr2, err2 := miniredis.Run()
-	s.Require().NoError(err2)
-	defer mr2.Close()
-
-	rdb2 := goredis.NewClient(&goredis.Options{Addr: mr2.Addr()})
-	baseRedis := &redis{cmd: rdb2}
-
-	// Set a key so Keys returns results
-	err := baseRedis.Set("pattern:key1", "val")
-	s.Require().NoError(err)
-
-	// Wrap with a custom cmdable that fails on Del
-	r2 := &redis{cmd: &failOnDelCmdable{rdb2}}
-	err = r2.RemovePattern("pattern:*")
-	assert.Error(s.T(), err)
-}
-
-func (s *RedisTestSuite) TestIncr_FirstTime() {
-	count, err := s.r.Incr("incr_key", 60*time.Second)
-	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), int64(1), count)
-}
-
-func (s *RedisTestSuite) TestIncr_SubsequentTimes() {
-	_, _ = s.r.Incr("incr_key2", 60*time.Second)
-	count, err := s.r.Incr("incr_key2", 60*time.Second)
-	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), int64(2), count)
-}
-
-func (s *RedisTestSuite) TestIncr_ServerDown() {
-	s.mr.Close()
-	count, err := s.r.Incr("incr_key", 60*time.Second)
-	assert.Error(s.T(), err)
-	assert.Equal(s.T(), int64(0), count)
 }

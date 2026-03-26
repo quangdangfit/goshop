@@ -6,20 +6,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOrder_BeforeCreate_DefaultStatus(t *testing.T) {
-	order := &Order{}
-	err := order.BeforeCreate(nil)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, order.ID)
-	assert.NotEmpty(t, order.Code)
-	assert.Equal(t, OrderStatusNew, order.Status)
-}
+func TestOrder_BeforeCreate(t *testing.T) {
+	tests := []struct {
+		name           string
+		order          *Order
+		expectedStatus OrderStatus
+	}{
+		{
+			name:           "DefaultStatus",
+			order:          &Order{},
+			expectedStatus: OrderStatusNew,
+		},
+		{
+			name:           "ExistingStatus",
+			order:          &Order{Status: OrderStatusInProgress},
+			expectedStatus: OrderStatusInProgress,
+		},
+	}
 
-func TestOrder_BeforeCreate_ExistingStatus(t *testing.T) {
-	order := &Order{Status: OrderStatusInProgress}
-	err := order.BeforeCreate(nil)
-	assert.NoError(t, err)
-	assert.Equal(t, OrderStatusInProgress, order.Status)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.order.BeforeCreate(nil)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, tc.order.ID)
+			assert.NotEmpty(t, tc.order.Code)
+			assert.Equal(t, tc.expectedStatus, tc.order.Status)
+		})
+	}
 }
 
 func TestOrderLine_BeforeCreate(t *testing.T) {

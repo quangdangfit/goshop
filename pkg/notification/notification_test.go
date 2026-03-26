@@ -19,14 +19,30 @@ func TestNewLoggerNotifier(t *testing.T) {
 	assert.NotNil(t, n)
 }
 
-func TestLoggerNotifier_SendOrderPlaced(t *testing.T) {
-	n := NewLoggerNotifier()
-	err := n.SendOrderPlaced(context.Background(), "order-123", "user@example.com")
-	assert.NoError(t, err)
-}
+func TestLoggerNotifier_Send(t *testing.T) {
+	tests := []struct {
+		name string
+		send func(n Notifier) error
+	}{
+		{
+			name: "OrderPlaced",
+			send: func(n Notifier) error {
+				return n.SendOrderPlaced(context.Background(), "order-123", "user@example.com")
+			},
+		},
+		{
+			name: "OrderStatusChanged",
+			send: func(n Notifier) error {
+				return n.SendOrderStatusChanged(context.Background(), "order-123", "user@example.com", "done")
+			},
+		},
+	}
 
-func TestLoggerNotifier_SendOrderStatusChanged(t *testing.T) {
-	n := NewLoggerNotifier()
-	err := n.SendOrderStatusChanged(context.Background(), "order-123", "user@example.com", "done")
-	assert.NoError(t, err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			n := NewLoggerNotifier()
+			err := tc.send(n)
+			assert.NoError(t, err)
+		})
+	}
 }

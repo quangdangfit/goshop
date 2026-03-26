@@ -19,84 +19,75 @@ func setupGinTest() {
 	gin.SetMode(gin.TestMode)
 }
 
-// JWT / JWTAuth / JWTRefresh
-// =================================================================
-
-func TestJWTAuth_NoToken(t *testing.T) {
-	setupGinTest()
-	w := httptest.NewRecorder()
-	c, engine := gin.CreateTestContext(w)
-	engine.Use(JWTAuth())
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	c.Request, _ = http.NewRequest(http.MethodGet, "/test", nil)
-	engine.ServeHTTP(w, c.Request)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-}
-
-func TestJWTAuth_ValidToken(t *testing.T) {
-	config.LoadConfig()
-	setupGinTest()
-
-	payload := map[string]interface{}{
-		"id":    "user-1",
-		"email": "test@example.com",
-		"role":  "customer",
+func TestJWTAuth(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func()
+		token    string
+		expected int
+	}{
+		{
+			name:     "NoToken",
+			setup:    func() {},
+			token:    "",
+			expected: http.StatusUnauthorized,
+		},
+		{
+			name: "ValidToken",
+			setup: func() {
+				config.LoadConfig()
+			},
+			token: func() string {
+				config.LoadConfig()
+				return jtoken.GenerateAccessToken(map[string]interface{}{
+					"id": "user-1", "email": "test@example.com", "role": "customer",
+				})
+			}(),
+			expected: http.StatusOK,
+		},
+		{
+			name:     "InvalidToken",
+			setup:    func() {},
+			token:    "invalid.token.value",
+			expected: http.StatusUnauthorized,
+		},
+		{
+			name: "WrongTokenType",
+			setup: func() {
+				config.LoadConfig()
+			},
+			token: func() string {
+				config.LoadConfig()
+				return jtoken.GenerateRefreshToken(map[string]interface{}{
+					"id": "user-1", "email": "test@example.com", "role": "customer",
+				})
+			}(),
+			expected: http.StatusUnauthorized,
+		},
 	}
-	token := jtoken.GenerateAccessToken(payload)
 
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(JWTAuth())
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setup()
+			setupGinTest()
 
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set("Authorization", token)
-	engine.ServeHTTP(w, req)
+			w := httptest.NewRecorder()
+			_, engine := gin.CreateTestContext(w)
+			engine.Use(JWTAuth())
+			engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
 
-	assert.Equal(t, http.StatusOK, w.Code)
-}
+			req, _ := http.NewRequest(http.MethodGet, "/test", nil)
+			if tc.token != "" {
+				req.Header.Set("Authorization", tc.token)
+			}
+			engine.ServeHTTP(w, req)
 
-func TestJWTAuth_InvalidToken(t *testing.T) {
-	setupGinTest()
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(JWTAuth())
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set("Authorization", "invalid.token.value")
-	engine.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-}
-
-func TestJWTAuth_WrongTokenType(t *testing.T) {
-	config.LoadConfig()
-	setupGinTest()
-
-	// Generate a refresh token but use it where access token is expected
-	payload := map[string]interface{}{
-		"id":    "user-1",
-		"email": "test@example.com",
-		"role":  "customer",
+			assert.Equal(t, tc.expected, w.Code)
+		})
 	}
-	token := jtoken.GenerateRefreshToken(payload)
-
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(JWTAuth()) // expects access token
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set("Authorization", token)
-	engine.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
-func TestJWTRefresh_ValidToken(t *testing.T) {
+func TestJWTRefresh(t *testing.T) {
 	config.LoadConfig()
 	setupGinTest()
 
@@ -119,157 +110,142 @@ func TestJWTRefresh_ValidToken(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-// CORS
-// =================================================================
+func TestCORS(t *testing.T) {
+	tests := []struct {
+		name           string
+		allowedOrigins string
+		origin         string
+		method         string
+		expectedStatus int
+		checkHeader    func(t *testing.T, w *httptest.ResponseRecorder)
+	}{
+		{
+			name:           "WildcardOrigin",
+			allowedOrigins: "*",
+			origin:         "http://example.com",
+			method:         http.MethodGet,
+			expectedStatus: http.StatusOK,
+			checkHeader: func(t *testing.T, w *httptest.ResponseRecorder) {
+				assert.Equal(t, "http://example.com", w.Header().Get("Access-Control-Allow-Origin"))
+			},
+		},
+		{
+			name:           "SpecificOriginAllowed",
+			allowedOrigins: "http://example.com",
+			origin:         "http://example.com",
+			method:         http.MethodGet,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "OriginNotAllowed",
+			allowedOrigins: "http://allowed.com",
+			origin:         "http://notallowed.com",
+			method:         http.MethodGet,
+			expectedStatus: http.StatusOK,
+			checkHeader: func(t *testing.T, w *httptest.ResponseRecorder) {
+				assert.Equal(t, "http://allowed.com", w.Header().Get("Access-Control-Allow-Origin"))
+			},
+		},
+		{
+			name:           "OptionsMethod",
+			allowedOrigins: "*",
+			origin:         "http://example.com",
+			method:         http.MethodOptions,
+			expectedStatus: http.StatusNoContent,
+		},
+	}
 
-func TestCORS_WildcardOrigin(t *testing.T) {
-	config.LoadConfig()
-	config.GetConfig().CORSAllowedOrigins = "*"
-	setupGinTest()
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			config.LoadConfig()
+			config.GetConfig().CORSAllowedOrigins = tc.allowedOrigins
+			setupGinTest()
 
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(CORS())
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+			w := httptest.NewRecorder()
+			_, engine := gin.CreateTestContext(w)
+			engine.Use(CORS())
+			if tc.method == http.MethodOptions {
+				engine.OPTIONS("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+			} else {
+				engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+			}
 
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set("Origin", "http://example.com")
-	engine.ServeHTTP(w, req)
+			req, _ := http.NewRequest(tc.method, "/test", nil)
+			req.Header.Set("Origin", tc.origin)
+			engine.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "http://example.com", w.Header().Get("Access-Control-Allow-Origin"))
+			assert.Equal(t, tc.expectedStatus, w.Code)
+			if tc.checkHeader != nil {
+				tc.checkHeader(t, w)
+			}
+		})
+	}
 }
 
-func TestCORS_SpecificOriginAllowed(t *testing.T) {
-	config.LoadConfig()
-	config.GetConfig().CORSAllowedOrigins = "http://example.com"
-	setupGinTest()
+func TestRateLimit(t *testing.T) {
+	tests := []struct {
+		name          string
+		maxRequests   int
+		windowSeconds int
+		setupMock     func(m *redisMocks.Redis)
+		expected      int
+	}{
+		{
+			name:        "Disabled",
+			maxRequests: 0,
+			setupMock:   func(m *redisMocks.Redis) {},
+			expected:    http.StatusOK,
+		},
+		{
+			name:          "Allowed",
+			maxRequests:   100,
+			windowSeconds: 60,
+			setupMock: func(m *redisMocks.Redis) {
+				m.On("Incr", mock.Anything, mock.Anything).Return(int64(1), nil).Times(1)
+			},
+			expected: http.StatusOK,
+		},
+		{
+			name:          "Exceeded",
+			maxRequests:   1,
+			windowSeconds: 60,
+			setupMock: func(m *redisMocks.Redis) {
+				m.On("Incr", mock.Anything, mock.Anything).Return(int64(2), nil).Times(1)
+			},
+			expected: http.StatusTooManyRequests,
+		},
+		{
+			name:          "RedisError",
+			maxRequests:   100,
+			windowSeconds: 60,
+			setupMock: func(m *redisMocks.Redis) {
+				m.On("Incr", mock.Anything, mock.Anything).Return(int64(0), errors.New("redis error")).Times(1)
+			},
+			expected: http.StatusOK,
+		},
+	}
 
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(CORS())
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			config.LoadConfig()
+			config.GetConfig().RateLimitRequests = tc.maxRequests
+			if tc.windowSeconds > 0 {
+				config.GetConfig().RateLimitWindowSeconds = tc.windowSeconds
+			}
+			setupGinTest()
 
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set("Origin", "http://example.com")
-	engine.ServeHTTP(w, req)
+			mockRedis := redisMocks.NewRedis(t)
+			tc.setupMock(mockRedis)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-}
+			w := httptest.NewRecorder()
+			_, engine := gin.CreateTestContext(w)
+			engine.Use(RateLimit(mockRedis))
+			engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
 
-func TestCORS_OriginNotAllowed(t *testing.T) {
-	config.LoadConfig()
-	config.GetConfig().CORSAllowedOrigins = "http://allowed.com"
-	setupGinTest()
+			req, _ := http.NewRequest(http.MethodGet, "/test", nil)
+			engine.ServeHTTP(w, req)
 
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(CORS())
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set("Origin", "http://notallowed.com")
-	engine.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "http://allowed.com", w.Header().Get("Access-Control-Allow-Origin"))
-}
-
-func TestCORS_OptionsMethod(t *testing.T) {
-	config.LoadConfig()
-	config.GetConfig().CORSAllowedOrigins = "*"
-	setupGinTest()
-
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(CORS())
-	engine.OPTIONS("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	req, _ := http.NewRequest(http.MethodOptions, "/test", nil)
-	req.Header.Set("Origin", "http://example.com")
-	engine.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusNoContent, w.Code)
-}
-
-// RateLimit
-// =================================================================
-
-func TestRateLimit_Disabled(t *testing.T) {
-	config.LoadConfig()
-	config.GetConfig().RateLimitRequests = 0
-	setupGinTest()
-
-	mockRedis := redisMocks.NewRedis(t)
-
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(RateLimit(mockRedis))
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	engine.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestRateLimit_Allowed(t *testing.T) {
-	config.LoadConfig()
-	config.GetConfig().RateLimitRequests = 100
-	config.GetConfig().RateLimitWindowSeconds = 60
-	setupGinTest()
-
-	mockRedis := redisMocks.NewRedis(t)
-	mockRedis.On("Incr", mock.Anything, mock.Anything).Return(int64(1), nil).Times(1)
-
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(RateLimit(mockRedis))
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	engine.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestRateLimit_Exceeded(t *testing.T) {
-	config.LoadConfig()
-	config.GetConfig().RateLimitRequests = 1
-	config.GetConfig().RateLimitWindowSeconds = 60
-	setupGinTest()
-
-	mockRedis := redisMocks.NewRedis(t)
-	mockRedis.On("Incr", mock.Anything, mock.Anything).Return(int64(2), nil).Times(1)
-
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(RateLimit(mockRedis))
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	engine.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusTooManyRequests, w.Code)
-}
-
-func TestRateLimit_RedisError(t *testing.T) {
-	config.LoadConfig()
-	config.GetConfig().RateLimitRequests = 100
-	config.GetConfig().RateLimitWindowSeconds = 60
-	setupGinTest()
-
-	mockRedis := redisMocks.NewRedis(t)
-	mockRedis.On("Incr", mock.Anything, mock.Anything).Return(int64(0), errors.New("redis error")).Times(1)
-
-	w := httptest.NewRecorder()
-	_, engine := gin.CreateTestContext(w)
-	engine.Use(RateLimit(mockRedis))
-	engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-
-	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-	engine.ServeHTTP(w, req)
-
-	// On Redis error, request is allowed through
-	assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, tc.expected, w.Code)
+		})
+	}
 }

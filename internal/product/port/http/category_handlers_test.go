@@ -49,216 +49,336 @@ func (suite *CategoryHandlerTestSuite) prepareContext(method, path string, body 
 // ListCategories
 // =================================================================================================
 
-func (suite *CategoryHandlerTestSuite) TestListCategoriesSuccess() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/categories", nil)
+func (suite *CategoryHandlerTestSuite) TestListCategories() {
+	tests := []struct {
+		name      string
+		body      any
+		params    gin.Params
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockService.On("ListCategories", mock.Anything).
+					Return([]*model.Category{
+						{ID: "c1", Name: "Electronics", Slug: "electronics"},
+						{ID: "c2", Name: "Books", Slug: "books"},
+					}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var categories []*dto.Category
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&categories, &res.Result)
+				suite.Equal(2, len(categories))
+				suite.Equal("c1", categories[0].ID)
+				suite.Equal("Electronics", categories[0].Name)
+			},
+		},
+		{
+			name: "Fail",
+			setup: func() {
+				suite.mockService.On("ListCategories", mock.Anything).
+					Return(nil, errors.New("db error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
+	}
 
-	suite.mockService.On("ListCategories", mock.Anything).
-		Return([]*model.Category{
-			{ID: "c1", Name: "Electronics", Slug: "electronics"},
-			{ID: "c2", Name: "Books", Slug: "books"},
-		}, nil).Times(1)
-
-	suite.handler.ListCategories(ctx)
-
-	var res response.Response
-	var categories []*dto.Category
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&categories, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal(2, len(categories))
-	suite.Equal("c1", categories[0].ID)
-	suite.Equal("Electronics", categories[0].Name)
-}
-
-func (suite *CategoryHandlerTestSuite) TestListCategoriesFail() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/categories", nil)
-
-	suite.mockService.On("ListCategories", mock.Anything).
-		Return(nil, errors.New("db error")).Times(1)
-
-	suite.handler.ListCategories(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("GET", "/api/v1/categories", tc.body)
+			if tc.params != nil {
+				ctx.Params = tc.params
+			}
+			tc.setup()
+			suite.handler.ListCategories(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
 // GetCategoryByID
 // =================================================================================================
 
-func (suite *CategoryHandlerTestSuite) TestGetCategoryByIDSuccess() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/categories/c1", nil)
-	ctx.Params = gin.Params{{Key: "id", Value: "c1"}}
+func (suite *CategoryHandlerTestSuite) TestGetCategoryByID() {
+	tests := []struct {
+		name      string
+		body      any
+		params    gin.Params
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "Success",
+			params: gin.Params{{Key: "id", Value: "c1"}},
+			setup: func() {
+				suite.mockService.On("GetCategoryByID", mock.Anything, "c1").
+					Return(&model.Category{ID: "c1", Name: "Electronics", Slug: "electronics"}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var category dto.Category
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&category, &res.Result)
+				suite.Equal("c1", category.ID)
+				suite.Equal("Electronics", category.Name)
+			},
+		},
+		{
+			name:     "MissingID",
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name:   "NotFound",
+			params: gin.Params{{Key: "id", Value: "notfound"}},
+			setup: func() {
+				suite.mockService.On("GetCategoryByID", mock.Anything, "notfound").
+					Return(nil, errors.New("not found")).Times(1)
+			},
+			expected: http.StatusNotFound,
+		},
+	}
 
-	suite.mockService.On("GetCategoryByID", mock.Anything, "c1").
-		Return(&model.Category{ID: "c1", Name: "Electronics", Slug: "electronics"}, nil).Times(1)
-
-	suite.handler.GetCategoryByID(ctx)
-
-	var res response.Response
-	var category dto.Category
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&category, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("c1", category.ID)
-	suite.Equal("Electronics", category.Name)
-}
-
-func (suite *CategoryHandlerTestSuite) TestGetCategoryByIDMissingID() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/categories/", nil)
-	// id param is empty string
-
-	suite.handler.GetCategoryByID(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *CategoryHandlerTestSuite) TestGetCategoryByIDNotFound() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/categories/notfound", nil)
-	ctx.Params = gin.Params{{Key: "id", Value: "notfound"}}
-
-	suite.mockService.On("GetCategoryByID", mock.Anything, "notfound").
-		Return(nil, errors.New("not found")).Times(1)
-
-	suite.handler.GetCategoryByID(ctx)
-
-	suite.Equal(http.StatusNotFound, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("GET", "/api/v1/categories/c1", tc.body)
+			if tc.params != nil {
+				ctx.Params = tc.params
+			}
+			tc.setup()
+			suite.handler.GetCategoryByID(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
 // CreateCategory
 // =================================================================================================
 
-func (suite *CategoryHandlerTestSuite) TestCreateCategorySuccess() {
-	req := &dto.CreateCategoryReq{
-		Name:        "Electronics",
-		Slug:        "electronics",
-		Description: "Electronic devices",
+func (suite *CategoryHandlerTestSuite) TestCreateCategory() {
+	tests := []struct {
+		name      string
+		body      any
+		params    gin.Params
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			body: &dto.CreateCategoryReq{
+				Name:        "Electronics",
+				Slug:        "electronics",
+				Description: "Electronic devices",
+			},
+			setup: func() {
+				suite.mockService.On("Create", mock.Anything, &dto.CreateCategoryReq{
+					Name:        "Electronics",
+					Slug:        "electronics",
+					Description: "Electronic devices",
+				}).
+					Return(&model.Category{
+						ID:          "c1",
+						Name:        "Electronics",
+						Slug:        "electronics",
+						Description: "Electronic devices",
+					}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var category dto.Category
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&category, &res.Result)
+				suite.Equal("c1", category.ID)
+				suite.Equal("Electronics", category.Name)
+				suite.Equal("electronics", category.Slug)
+			},
+		},
+		{
+			name: "InvalidBody",
+			body: map[string]any{
+				"name": 123,
+				"slug": "electronics",
+			},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name: "Fail",
+			body: &dto.CreateCategoryReq{
+				Name: "Electronics",
+				Slug: "electronics",
+			},
+			setup: func() {
+				suite.mockService.On("Create", mock.Anything, &dto.CreateCategoryReq{
+					Name: "Electronics",
+					Slug: "electronics",
+				}).
+					Return(nil, errors.New("duplicate key")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
 	}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/categories", req)
 
-	suite.mockService.On("Create", mock.Anything, req).
-		Return(&model.Category{
-			ID:          "c1",
-			Name:        "Electronics",
-			Slug:        "electronics",
-			Description: "Electronic devices",
-		}, nil).Times(1)
-
-	suite.handler.CreateCategory(ctx)
-
-	var res response.Response
-	var category dto.Category
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&category, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("c1", category.ID)
-	suite.Equal("Electronics", category.Name)
-	suite.Equal("electronics", category.Slug)
-}
-
-func (suite *CategoryHandlerTestSuite) TestCreateCategoryInvalidBody() {
-	req := map[string]any{
-		"name": 123,
-		"slug": "electronics",
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("POST", "/api/v1/categories", tc.body)
+			if tc.params != nil {
+				ctx.Params = tc.params
+			}
+			tc.setup()
+			suite.handler.CreateCategory(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
 	}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/categories", req)
-
-	suite.handler.CreateCategory(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *CategoryHandlerTestSuite) TestCreateCategoryFail() {
-	req := &dto.CreateCategoryReq{
-		Name: "Electronics",
-		Slug: "electronics",
-	}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/categories", req)
-
-	suite.mockService.On("Create", mock.Anything, req).
-		Return(nil, errors.New("duplicate key")).Times(1)
-
-	suite.handler.CreateCategory(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
 }
 
 // UpdateCategory
 // =================================================================================================
 
-func (suite *CategoryHandlerTestSuite) TestUpdateCategorySuccess() {
-	req := &dto.UpdateCategoryReq{
-		Name:        "Updated Electronics",
-		Description: "Updated description",
+func (suite *CategoryHandlerTestSuite) TestUpdateCategory() {
+	tests := []struct {
+		name      string
+		body      any
+		params    gin.Params
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			body: &dto.UpdateCategoryReq{
+				Name:        "Updated Electronics",
+				Description: "Updated description",
+			},
+			params: gin.Params{{Key: "id", Value: "c1"}},
+			setup: func() {
+				suite.mockService.On("Update", mock.Anything, "c1", &dto.UpdateCategoryReq{
+					Name:        "Updated Electronics",
+					Description: "Updated description",
+				}).
+					Return(&model.Category{
+						ID:          "c1",
+						Name:        "Updated Electronics",
+						Slug:        "electronics",
+						Description: "Updated description",
+					}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var category dto.Category
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&category, &res.Result)
+				suite.Equal("c1", category.ID)
+				suite.Equal("Updated Electronics", category.Name)
+			},
+		},
+		{
+			name: "InvalidBody",
+			body: map[string]any{
+				"name": 123,
+			},
+			params:   gin.Params{{Key: "id", Value: "c1"}},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name: "Fail",
+			body: &dto.UpdateCategoryReq{
+				Name: "Updated Electronics",
+			},
+			params: gin.Params{{Key: "id", Value: "c1"}},
+			setup: func() {
+				suite.mockService.On("Update", mock.Anything, "c1", &dto.UpdateCategoryReq{
+					Name: "Updated Electronics",
+				}).
+					Return(nil, errors.New("not found")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
 	}
-	ctx, writer := suite.prepareContext("PUT", "/api/v1/categories/c1", req)
-	ctx.Params = gin.Params{{Key: "id", Value: "c1"}}
 
-	suite.mockService.On("Update", mock.Anything, "c1", req).
-		Return(&model.Category{
-			ID:          "c1",
-			Name:        "Updated Electronics",
-			Slug:        "electronics",
-			Description: "Updated description",
-		}, nil).Times(1)
-
-	suite.handler.UpdateCategory(ctx)
-
-	var res response.Response
-	var category dto.Category
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&category, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("c1", category.ID)
-	suite.Equal("Updated Electronics", category.Name)
-}
-
-func (suite *CategoryHandlerTestSuite) TestUpdateCategoryInvalidBody() {
-	req := map[string]any{
-		"name": 123,
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("PUT", "/api/v1/categories/c1", tc.body)
+			if tc.params != nil {
+				ctx.Params = tc.params
+			}
+			tc.setup()
+			suite.handler.UpdateCategory(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
 	}
-	ctx, writer := suite.prepareContext("PUT", "/api/v1/categories/c1", req)
-	ctx.Params = gin.Params{{Key: "id", Value: "c1"}}
-
-	suite.handler.UpdateCategory(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *CategoryHandlerTestSuite) TestUpdateCategoryFail() {
-	req := &dto.UpdateCategoryReq{
-		Name: "Updated Electronics",
-	}
-	ctx, writer := suite.prepareContext("PUT", "/api/v1/categories/c1", req)
-	ctx.Params = gin.Params{{Key: "id", Value: "c1"}}
-
-	suite.mockService.On("Update", mock.Anything, "c1", req).
-		Return(nil, errors.New("not found")).Times(1)
-
-	suite.handler.UpdateCategory(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
 }
 
 // DeleteCategory
 // =================================================================================================
 
-func (suite *CategoryHandlerTestSuite) TestDeleteCategorySuccess() {
-	ctx, writer := suite.prepareContext("DELETE", "/api/v1/categories/c1", nil)
-	ctx.Params = gin.Params{{Key: "id", Value: "c1"}}
+func (suite *CategoryHandlerTestSuite) TestDeleteCategory() {
+	tests := []struct {
+		name      string
+		body      any
+		params    gin.Params
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "Success",
+			params: gin.Params{{Key: "id", Value: "c1"}},
+			setup: func() {
+				suite.mockService.On("Delete", mock.Anything, "c1").Return(nil).Times(1)
+			},
+			expected: http.StatusOK,
+		},
+		{
+			name:   "Fail",
+			params: gin.Params{{Key: "id", Value: "c1"}},
+			setup: func() {
+				suite.mockService.On("Delete", mock.Anything, "c1").Return(errors.New("not found")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
+	}
 
-	suite.mockService.On("Delete", mock.Anything, "c1").Return(nil).Times(1)
-
-	suite.handler.DeleteCategory(ctx)
-
-	suite.Equal(http.StatusOK, writer.Code)
-}
-
-func (suite *CategoryHandlerTestSuite) TestDeleteCategoryFail() {
-	ctx, writer := suite.prepareContext("DELETE", "/api/v1/categories/c1", nil)
-	ctx.Params = gin.Params{{Key: "id", Value: "c1"}}
-
-	suite.mockService.On("Delete", mock.Anything, "c1").Return(errors.New("not found")).Times(1)
-
-	suite.handler.DeleteCategory(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("DELETE", "/api/v1/categories/c1", tc.body)
+			if tc.params != nil {
+				ctx.Params = tc.params
+			}
+			tc.setup()
+			suite.handler.DeleteCategory(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }

@@ -51,322 +51,441 @@ func (suite *UserHandlerTestSuite) prepareContext(body any) (*gin.Context, *http
 // Login
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestLoginSuccess() {
-	req := &dto.LoginReq{
-		Email:    "login@test.com",
-		Password: "test123456",
-	}
-
-	ctx, writer := suite.prepareContext(req)
-
-	suite.mockService.On("Login", mock.Anything, req).
-		Return(
-			&model.User{
+func (suite *UserHandlerTestSuite) TestLogin() {
+	tests := []struct {
+		name      string
+		body      any
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			body: &dto.LoginReq{
 				Email:    "login@test.com",
 				Password: "test123456",
 			},
-			"access-token",
-			"refresh-token",
-			nil,
-		).Times(1)
+			setup: func() {
+				suite.mockService.On("Login", mock.Anything, &dto.LoginReq{
+					Email:    "login@test.com",
+					Password: "test123456",
+				}).Return(
+					&model.User{
+						Email:    "login@test.com",
+						Password: "test123456",
+					},
+					"access-token",
+					"refresh-token",
+					nil,
+				).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var loginRes dto.LoginRes
 
-	suite.handler.Login(ctx)
-
-	var res response.Response
-	var loginRes dto.LoginRes
-
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&loginRes, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal(req.Email, loginRes.User.Email)
-	suite.Equal("access-token", loginRes.AccessToken)
-	suite.Equal("refresh-token", loginRes.RefreshToken)
-}
-
-func (suite *UserHandlerTestSuite) TestLoginInvalidEmailType() {
-	req := map[string]interface{}{
-		"email":    1,
-		"password": "test123456",
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&loginRes, &res.Result)
+				suite.Equal("login@test.com", loginRes.User.Email)
+				suite.Equal("access-token", loginRes.AccessToken)
+				suite.Equal("refresh-token", loginRes.RefreshToken)
+			},
+		},
+		{
+			name: "InvalidEmailType",
+			body: map[string]interface{}{
+				"email":    1,
+				"password": "test123456",
+			},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Invalid request parameters", res["error"]["message"])
+			},
+		},
+		{
+			name: "InvalidPasswordType",
+			body: map[string]interface{}{
+				"email":    "login@test.com",
+				"password": 12345,
+			},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Invalid request parameters", res["error"]["message"])
+			},
+		},
+		{
+			name: "Fail",
+			body: &dto.LoginReq{
+				Email:    "login@test.com",
+				Password: "test123456",
+			},
+			setup: func() {
+				suite.mockService.On("Login", mock.Anything, &dto.LoginReq{
+					Email:    "login@test.com",
+					Password: "test123456",
+				}).Return(nil, "", "", errors.New("error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Something went wrong", res["error"]["message"])
+			},
+		},
 	}
 
-	ctx, writer := suite.prepareContext(req)
-
-	suite.handler.Login(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid request parameters", res["error"]["message"])
-}
-
-func (suite *UserHandlerTestSuite) TestLoginInvalidPasswordType() {
-	req := map[string]interface{}{
-		"email":    "login@test.com",
-		"password": 12345,
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext(tc.body)
+			tc.setup()
+			suite.handler.Login(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
 	}
-
-	ctx, writer := suite.prepareContext(req)
-
-	suite.handler.Login(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid request parameters", res["error"]["message"])
-}
-
-func (suite *UserHandlerTestSuite) TestLoginFail() {
-	req := &dto.LoginReq{
-		Email:    "login@test.com",
-		Password: "test123456",
-	}
-
-	ctx, writer := suite.prepareContext(req)
-
-	suite.mockService.On("Login", mock.Anything, req).
-		Return(nil, "", "", errors.New("error")).Times(1)
-
-	suite.handler.Login(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusInternalServerError, writer.Code)
-	suite.Equal("Something went wrong", res["error"]["message"])
 }
 
 // Register
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestRegisterSuccess() {
-	req := &dto.RegisterReq{
-		Email:    "register@test.com",
-		Password: "test123456",
-	}
-
-	ctx, writer := suite.prepareContext(req)
-
-	suite.mockService.On("Register", mock.Anything, req).
-		Return(
-			&model.User{
+func (suite *UserHandlerTestSuite) TestRegister() {
+	tests := []struct {
+		name      string
+		body      any
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			body: &dto.RegisterReq{
 				Email:    "register@test.com",
 				Password: "test123456",
 			},
-			nil,
-		).Times(1)
+			setup: func() {
+				suite.mockService.On("Register", mock.Anything, &dto.RegisterReq{
+					Email:    "register@test.com",
+					Password: "test123456",
+				}).Return(
+					&model.User{
+						Email:    "register@test.com",
+						Password: "test123456",
+					},
+					nil,
+				).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var registerRes dto.RegisterRes
 
-	suite.handler.Register(ctx)
-
-	var res response.Response
-	var registerRes dto.RegisterRes
-
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&registerRes, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal(req.Email, registerRes.User.Email)
-}
-
-func (suite *UserHandlerTestSuite) TestRegisterInvalidEmailType() {
-	req := map[string]interface{}{
-		"email":    1,
-		"password": "test123456",
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&registerRes, &res.Result)
+				suite.Equal("register@test.com", registerRes.User.Email)
+			},
+		},
+		{
+			name: "InvalidEmailType",
+			body: map[string]interface{}{
+				"email":    1,
+				"password": "test123456",
+			},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Invalid request parameters", res["error"]["message"])
+			},
+		},
+		{
+			name: "InvalidPasswordType",
+			body: map[string]interface{}{
+				"email":    "login@test.com",
+				"password": 12345,
+			},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Invalid request parameters", res["error"]["message"])
+			},
+		},
+		{
+			name: "Fail",
+			body: &dto.RegisterReq{
+				Email:    "register@test.com",
+				Password: "test123456",
+			},
+			setup: func() {
+				suite.mockService.On("Register", mock.Anything, &dto.RegisterReq{
+					Email:    "register@test.com",
+					Password: "test123456",
+				}).Return(nil, errors.New("error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Something went wrong", res["error"]["message"])
+			},
+		},
 	}
 
-	ctx, writer := suite.prepareContext(req)
-
-	suite.handler.Register(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid request parameters", res["error"]["message"])
-}
-
-func (suite *UserHandlerTestSuite) TestRegisterInvalidPasswordType() {
-	req := map[string]interface{}{
-		"email":    "login@test.com",
-		"password": 12345,
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext(tc.body)
+			tc.setup()
+			suite.handler.Register(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
 	}
-
-	ctx, writer := suite.prepareContext(req)
-
-	suite.handler.Register(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid request parameters", res["error"]["message"])
-}
-
-func (suite *UserHandlerTestSuite) TestRegisterFail() {
-	req := &dto.RegisterReq{
-		Email:    "register@test.com",
-		Password: "test123456",
-	}
-
-	ctx, writer := suite.prepareContext(req)
-
-	suite.mockService.On("Register", mock.Anything, req).
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.handler.Register(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusInternalServerError, writer.Code)
-	suite.Equal("Something went wrong", res["error"]["message"])
 }
 
 // GetMe
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestGetMeSuccess() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "123456")
-
-	suite.mockService.On("GetUserByID", mock.Anything, "123456").
-		Return(
-			&model.User{
-				ID:       "123456",
-				Email:    "user@test.com",
-				Password: "test123456",
+func (suite *UserHandlerTestSuite) TestGetMe() {
+	tests := []struct {
+		name      string
+		userId    string
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "Success",
+			userId: "123456",
+			setup: func() {
+				suite.mockService.On("GetUserByID", mock.Anything, "123456").
+					Return(
+						&model.User{
+							ID:       "123456",
+							Email:    "user@test.com",
+							Password: "test123456",
+						},
+						nil,
+					).Times(1)
 			},
-			nil,
-		).Times(1)
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var getMeRes dto.User
 
-	suite.handler.GetMe(ctx)
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&getMeRes, &res.Result)
+				suite.Equal("123456", getMeRes.ID)
+				suite.Equal("user@test.com", getMeRes.Email)
+			},
+		},
+		{
+			name:     "Unauthorized",
+			userId:   "",
+			setup:    func() {},
+			expected: http.StatusUnauthorized,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Unauthorized", res["error"]["message"])
+			},
+		},
+		{
+			name:   "Fail",
+			userId: "123456",
+			setup: func() {
+				suite.mockService.On("GetUserByID", mock.Anything, "123456").
+					Return(nil, errors.New("error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Something went wrong", res["error"]["message"])
+			},
+		},
+	}
 
-	var res response.Response
-	var getMeRes dto.User
-
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&getMeRes, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("123456", getMeRes.ID)
-	suite.Equal("user@test.com", getMeRes.Email)
-}
-
-func (suite *UserHandlerTestSuite) TestGetMeUnauthorized() {
-	ctx, writer := suite.prepareContext(nil)
-	suite.handler.GetMe(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusUnauthorized, writer.Code)
-	suite.Equal("Unauthorized", res["error"]["message"])
-}
-
-func (suite *UserHandlerTestSuite) TestGetMeFail() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "123456")
-
-	suite.mockService.On("GetUserByID", mock.Anything, "123456").
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.handler.GetMe(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusInternalServerError, writer.Code)
-	suite.Equal("Something went wrong", res["error"]["message"])
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext(nil)
+			if tc.userId != "" {
+				ctx.Set("userId", tc.userId)
+			}
+			tc.setup()
+			suite.handler.GetMe(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
 // Refresh Token
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestRefreshTokenSuccess() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "123456")
+func (suite *UserHandlerTestSuite) TestRefreshToken() {
+	tests := []struct {
+		name      string
+		userId    string
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "Success",
+			userId: "123456",
+			setup: func() {
+				suite.mockService.On("RefreshToken", mock.Anything, "123456").
+					Return("access-token", nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var refreshRes dto.RefreshTokenRes
 
-	suite.mockService.On("RefreshToken", mock.Anything, "123456").
-		Return("access-token", nil).Times(1)
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&refreshRes, &res.Result)
+				suite.Equal("access-token", refreshRes.AccessToken)
+			},
+		},
+		{
+			name:     "Unauthorized",
+			userId:   "",
+			setup:    func() {},
+			expected: http.StatusUnauthorized,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Unauthorized", res["error"]["message"])
+			},
+		},
+		{
+			name:   "Fail",
+			userId: "123456",
+			setup: func() {
+				suite.mockService.On("RefreshToken", mock.Anything, "123456").
+					Return("", errors.New("error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Something went wrong", res["error"]["message"])
+			},
+		},
+	}
 
-	suite.handler.RefreshToken(ctx)
-
-	var res response.Response
-	var getMeRes dto.RefreshTokenRes
-
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&getMeRes, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("access-token", getMeRes.AccessToken)
-}
-
-func (suite *UserHandlerTestSuite) TestRefreshTokenUnauthorized() {
-	ctx, writer := suite.prepareContext(nil)
-	suite.handler.RefreshToken(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusUnauthorized, writer.Code)
-	suite.Equal("Unauthorized", res["error"]["message"])
-}
-
-func (suite *UserHandlerTestSuite) TestRefreshTokenFail() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "123456")
-
-	suite.mockService.On("RefreshToken", mock.Anything, "123456").
-		Return("", errors.New("error")).Times(1)
-
-	suite.handler.RefreshToken(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusInternalServerError, writer.Code)
-	suite.Equal("Something went wrong", res["error"]["message"])
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext(nil)
+			if tc.userId != "" {
+				ctx.Set("userId", tc.userId)
+			}
+			tc.setup()
+			suite.handler.RefreshToken(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
 // Change Password
 // =================================================================================================
 
-func (suite *UserHandlerTestSuite) TestChangePasswordSuccess() {
-	req := &dto.ChangePasswordReq{
-		Password:    "test123456",
-		NewPassword: "new-test123456",
+func (suite *UserHandlerTestSuite) TestChangePassword() {
+	tests := []struct {
+		name      string
+		body      any
+		userId    string
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			body: &dto.ChangePasswordReq{
+				Password:    "test123456",
+				NewPassword: "new-test123456",
+			},
+			userId: "123456",
+			setup: func() {
+				suite.mockService.On("ChangePassword", mock.Anything, "123456", &dto.ChangePasswordReq{
+					Password:    "test123456",
+					NewPassword: "new-test123456",
+				}).Return(nil).Times(1)
+			},
+			expected:  http.StatusOK,
+			checkBody: nil,
+		},
+		{
+			name: "InvalidPasswordType",
+			body: map[string]interface{}{
+				"password":     12345,
+				"new_password": 12345,
+			},
+			userId:   "",
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Invalid request parameters", res["error"]["message"])
+			},
+		},
+		{
+			name: "Fail",
+			body: &dto.ChangePasswordReq{
+				Password:    "test123456",
+				NewPassword: "new-test123456",
+			},
+			userId: "123456",
+			setup: func() {
+				suite.mockService.On("ChangePassword", mock.Anything, "123456", &dto.ChangePasswordReq{
+					Password:    "test123456",
+					NewPassword: "new-test123456",
+				}).Return(errors.New("error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res map[string]map[string]string
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				suite.Equal("Something went wrong", res["error"]["message"])
+			},
+		},
 	}
 
-	ctx, writer := suite.prepareContext(req)
-	ctx.Set("userId", "123456")
-
-	suite.mockService.On("ChangePassword", mock.Anything, "123456", req).
-		Return(nil).Times(1)
-
-	suite.handler.ChangePassword(ctx)
-
-	suite.Equal(http.StatusOK, writer.Code)
-}
-
-func (suite *UserHandlerTestSuite) TestChangePasswordInvalidPasswordType() {
-	req := map[string]interface{}{
-		"password":     12345,
-		"new_password": 12345,
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext(tc.body)
+			if tc.userId != "" {
+				ctx.Set("userId", tc.userId)
+			}
+			tc.setup()
+			suite.handler.ChangePassword(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
 	}
-
-	ctx, writer := suite.prepareContext(req)
-	suite.handler.ChangePassword(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusBadRequest, writer.Code)
-	suite.Equal("Invalid request parameters", res["error"]["message"])
-}
-
-func (suite *UserHandlerTestSuite) TestChangePasswordFail() {
-	req := &dto.ChangePasswordReq{
-		Password:    "test123456",
-		NewPassword: "new-test123456",
-	}
-
-	ctx, writer := suite.prepareContext(req)
-	ctx.Set("userId", "123456")
-
-	suite.mockService.On("ChangePassword", mock.Anything, "123456", req).
-		Return(errors.New("error")).Times(1)
-
-	suite.handler.ChangePassword(ctx)
-
-	var res map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	suite.Equal(http.StatusInternalServerError, writer.Code)
-	suite.Equal("Something went wrong", res["error"]["message"])
 }

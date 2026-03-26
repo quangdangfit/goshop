@@ -49,135 +49,196 @@ func (suite *WishlistHandlerTestSuite) prepareContext(method, path string, body 
 // GetWishlist
 // =================================================================================================
 
-func (suite *WishlistHandlerTestSuite) TestGetWishlistSuccess() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/wishlist", nil)
-	ctx.Set("userId", "u1")
+func (suite *WishlistHandlerTestSuite) TestGetWishlist() {
+	tests := []struct {
+		name      string
+		body      any
+		userId    string
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "Success",
+			userId: "u1",
+			setup: func() {
+				suite.mockService.On("GetWishlist", mock.Anything, "u1").
+					Return([]*model.Wishlist{
+						{UserID: "u1", ProductID: "p1"},
+						{UserID: "u1", ProductID: "p2"},
+					}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var items []*dto.WishlistItem
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&items, &res.Result)
+				suite.Equal(2, len(items))
+			},
+		},
+		{
+			name:     "Unauthorized",
+			userId:   "",
+			setup:    func() {},
+			expected: http.StatusUnauthorized,
+		},
+		{
+			name:   "Fail",
+			userId: "u1",
+			setup: func() {
+				suite.mockService.On("GetWishlist", mock.Anything, "u1").
+					Return(nil, errors.New("db error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
+	}
 
-	suite.mockService.On("GetWishlist", mock.Anything, "u1").
-		Return([]*model.Wishlist{
-			{UserID: "u1", ProductID: "p1"},
-			{UserID: "u1", ProductID: "p2"},
-		}, nil).Times(1)
-
-	suite.handler.GetWishlist(ctx)
-
-	var res response.Response
-	var items []*dto.WishlistItem
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&items, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal(2, len(items))
-}
-
-func (suite *WishlistHandlerTestSuite) TestGetWishlistUnauthorized() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/wishlist", nil)
-
-	suite.handler.GetWishlist(ctx)
-
-	suite.Equal(http.StatusUnauthorized, writer.Code)
-}
-
-func (suite *WishlistHandlerTestSuite) TestGetWishlistFail() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/wishlist", nil)
-	ctx.Set("userId", "u1")
-
-	suite.mockService.On("GetWishlist", mock.Anything, "u1").
-		Return(nil, errors.New("db error")).Times(1)
-
-	suite.handler.GetWishlist(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("GET", "/api/v1/wishlist", tc.body)
+			if tc.userId != "" {
+				ctx.Set("userId", tc.userId)
+			}
+			tc.setup()
+			suite.handler.GetWishlist(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
 // AddProduct
 // =================================================================================================
 
-func (suite *WishlistHandlerTestSuite) TestAddProductSuccess() {
-	req := &dto.AddToWishlistReq{ProductID: "p1"}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/wishlist", req)
-	ctx.Set("userId", "u1")
+func (suite *WishlistHandlerTestSuite) TestAddProduct() {
+	tests := []struct {
+		name      string
+		body      any
+		userId    string
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "Success",
+			body:   &dto.AddToWishlistReq{ProductID: "p1"},
+			userId: "u1",
+			setup: func() {
+				suite.mockService.On("AddProduct", mock.Anything, "u1", &dto.AddToWishlistReq{ProductID: "p1"}).
+					Return(nil).Times(1)
+			},
+			expected: http.StatusOK,
+		},
+		{
+			name:     "Unauthorized",
+			body:     &dto.AddToWishlistReq{ProductID: "p1"},
+			userId:   "",
+			setup:    func() {},
+			expected: http.StatusUnauthorized,
+		},
+		{
+			name:     "InvalidBody",
+			body:     map[string]any{"product_id": 123},
+			userId:   "u1",
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name:   "Fail",
+			body:   &dto.AddToWishlistReq{ProductID: "p1"},
+			userId: "u1",
+			setup: func() {
+				suite.mockService.On("AddProduct", mock.Anything, "u1", &dto.AddToWishlistReq{ProductID: "p1"}).
+					Return(errors.New("already exists")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
+	}
 
-	suite.mockService.On("AddProduct", mock.Anything, "u1", req).Return(nil).Times(1)
-
-	suite.handler.AddProduct(ctx)
-
-	suite.Equal(http.StatusOK, writer.Code)
-}
-
-func (suite *WishlistHandlerTestSuite) TestAddProductUnauthorized() {
-	req := &dto.AddToWishlistReq{ProductID: "p1"}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/wishlist", req)
-
-	suite.handler.AddProduct(ctx)
-
-	suite.Equal(http.StatusUnauthorized, writer.Code)
-}
-
-func (suite *WishlistHandlerTestSuite) TestAddProductInvalidBody() {
-	req := map[string]any{"product_id": 123}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/wishlist", req)
-	ctx.Set("userId", "u1")
-
-	suite.handler.AddProduct(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *WishlistHandlerTestSuite) TestAddProductFail() {
-	req := &dto.AddToWishlistReq{ProductID: "p1"}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/wishlist", req)
-	ctx.Set("userId", "u1")
-
-	suite.mockService.On("AddProduct", mock.Anything, "u1", req).
-		Return(errors.New("already exists")).Times(1)
-
-	suite.handler.AddProduct(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("POST", "/api/v1/wishlist", tc.body)
+			if tc.userId != "" {
+				ctx.Set("userId", tc.userId)
+			}
+			tc.setup()
+			suite.handler.AddProduct(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
 // RemoveProduct
 // =================================================================================================
 
-func (suite *WishlistHandlerTestSuite) TestRemoveProductSuccess() {
-	ctx, writer := suite.prepareContext("DELETE", "/api/v1/wishlist/p1", nil)
-	ctx.Set("userId", "u1")
-	ctx.Params = gin.Params{{Key: "productId", Value: "p1"}}
+func (suite *WishlistHandlerTestSuite) TestRemoveProduct() {
+	tests := []struct {
+		name      string
+		body      any
+		params    gin.Params
+		userId    string
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "Success",
+			userId: "u1",
+			params: gin.Params{{Key: "productId", Value: "p1"}},
+			setup: func() {
+				suite.mockService.On("RemoveProduct", mock.Anything, "u1", "p1").
+					Return(nil).Times(1)
+			},
+			expected: http.StatusOK,
+		},
+		{
+			name:     "Unauthorized",
+			userId:   "",
+			setup:    func() {},
+			expected: http.StatusUnauthorized,
+		},
+		{
+			name:     "MissingID",
+			userId:   "u1",
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name:   "Fail",
+			userId: "u1",
+			params: gin.Params{{Key: "productId", Value: "p1"}},
+			setup: func() {
+				suite.mockService.On("RemoveProduct", mock.Anything, "u1", "p1").
+					Return(errors.New("not found")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
+	}
 
-	suite.mockService.On("RemoveProduct", mock.Anything, "u1", "p1").Return(nil).Times(1)
-
-	suite.handler.RemoveProduct(ctx)
-
-	suite.Equal(http.StatusOK, writer.Code)
-}
-
-func (suite *WishlistHandlerTestSuite) TestRemoveProductUnauthorized() {
-	ctx, writer := suite.prepareContext("DELETE", "/api/v1/wishlist/p1", nil)
-
-	suite.handler.RemoveProduct(ctx)
-
-	suite.Equal(http.StatusUnauthorized, writer.Code)
-}
-
-func (suite *WishlistHandlerTestSuite) TestRemoveProductMissingID() {
-	ctx, writer := suite.prepareContext("DELETE", "/api/v1/wishlist/", nil)
-	ctx.Set("userId", "u1")
-	// productId param is empty
-
-	suite.handler.RemoveProduct(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *WishlistHandlerTestSuite) TestRemoveProductFail() {
-	ctx, writer := suite.prepareContext("DELETE", "/api/v1/wishlist/p1", nil)
-	ctx.Set("userId", "u1")
-	ctx.Params = gin.Params{{Key: "productId", Value: "p1"}}
-
-	suite.mockService.On("RemoveProduct", mock.Anything, "u1", "p1").
-		Return(errors.New("not found")).Times(1)
-
-	suite.handler.RemoveProduct(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("DELETE", "/api/v1/wishlist/p1", tc.body)
+			if tc.userId != "" {
+				ctx.Set("userId", tc.userId)
+			}
+			if tc.params != nil {
+				ctx.Params = tc.params
+			}
+			tc.setup()
+			suite.handler.RemoveProduct(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
