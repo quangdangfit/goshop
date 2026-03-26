@@ -59,144 +59,189 @@ func (suite *CouponHandlerTestSuite) prepareContextWithQuery(path string, query 
 	return c, w
 }
 
-// CreateCoupon
-// =================================================================================================
-
-func (suite *CouponHandlerTestSuite) TestCreateCouponSuccess() {
-	req := &dto.CreateCouponReq{
-		Code:          "SAVE10",
-		DiscountType:  "fixed",
-		DiscountValue: 10,
+func (suite *CouponHandlerTestSuite) TestCreateCoupon() {
+	tests := []struct {
+		name      string
+		body      any
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			body: &dto.CreateCouponReq{
+				Code:          "SAVE10",
+				DiscountType:  "fixed",
+				DiscountValue: 10,
+			},
+			setup: func() {
+				suite.mockCouponService.On("Create", mock.Anything, &dto.CreateCouponReq{
+					Code:          "SAVE10",
+					DiscountType:  "fixed",
+					DiscountValue: 10,
+				}).Return(&model.Coupon{
+					ID:            "c1",
+					Code:          "SAVE10",
+					DiscountType:  model.DiscountTypeFixed,
+					DiscountValue: 10,
+				}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var coupon dto.Coupon
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&coupon, &res.Result)
+				suite.Equal("SAVE10", coupon.Code)
+			},
+		},
+		{
+			name:     "InvalidBody",
+			body:     map[string]any{"code": 123},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name: "Fail",
+			body: &dto.CreateCouponReq{
+				Code:          "SAVE10",
+				DiscountType:  "fixed",
+				DiscountValue: 10,
+			},
+			setup: func() {
+				suite.mockCouponService.On("Create", mock.Anything, &dto.CreateCouponReq{
+					Code:          "SAVE10",
+					DiscountType:  "fixed",
+					DiscountValue: 10,
+				}).Return(nil, errors.New("duplicate code")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
 	}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/coupons", req)
 
-	suite.mockCouponService.On("Create", mock.Anything, req).
-		Return(&model.Coupon{
-			ID:            "c1",
-			Code:          "SAVE10",
-			DiscountType:  model.DiscountTypeFixed,
-			DiscountValue: 10,
-		}, nil).Times(1)
-
-	suite.couponHandler.CreateCoupon(ctx)
-
-	var res response.Response
-	var coupon dto.Coupon
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&coupon, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("SAVE10", coupon.Code)
-}
-
-func (suite *CouponHandlerTestSuite) TestCreateCouponInvalidBody() {
-	req := map[string]any{"code": 123}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/coupons", req)
-
-	suite.couponHandler.CreateCoupon(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *CouponHandlerTestSuite) TestCreateCouponFail() {
-	req := &dto.CreateCouponReq{
-		Code:          "SAVE10",
-		DiscountType:  "fixed",
-		DiscountValue: 10,
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("POST", "/api/v1/coupons", tc.body)
+			tc.setup()
+			suite.couponHandler.CreateCoupon(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
 	}
-	ctx, writer := suite.prepareContext("POST", "/api/v1/coupons", req)
-
-	suite.mockCouponService.On("Create", mock.Anything, req).
-		Return(nil, errors.New("duplicate code")).Times(1)
-
-	suite.couponHandler.CreateCoupon(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
 }
 
-// GetCouponByCode
-// =================================================================================================
+func (suite *CouponHandlerTestSuite) TestGetCouponByCode() {
+	tests := []struct {
+		name      string
+		params    gin.Params
+		setup     func()
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "Success",
+			params: gin.Params{{Key: "code", Value: "SAVE10"}},
+			setup: func() {
+				suite.mockCouponService.On("GetByCode", mock.Anything, "SAVE10").
+					Return(&model.Coupon{
+						ID:            "c1",
+						Code:          "SAVE10",
+						DiscountType:  model.DiscountTypeFixed,
+						DiscountValue: 10,
+					}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var coupon dto.Coupon
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&coupon, &res.Result)
+				suite.Equal("SAVE10", coupon.Code)
+			},
+		},
+		{
+			name:   "NotFound",
+			params: gin.Params{{Key: "code", Value: "INVALID"}},
+			setup: func() {
+				suite.mockCouponService.On("GetByCode", mock.Anything, "INVALID").
+					Return(nil, errors.New("not found")).Times(1)
+			},
+			expected: http.StatusNotFound,
+		},
+	}
 
-func (suite *CouponHandlerTestSuite) TestGetCouponByCodeSuccess() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/coupons/SAVE10", nil)
-	ctx.Params = gin.Params{{Key: "code", Value: "SAVE10"}}
-
-	suite.mockCouponService.On("GetByCode", mock.Anything, "SAVE10").
-		Return(&model.Coupon{
-			ID:            "c1",
-			Code:          "SAVE10",
-			DiscountType:  model.DiscountTypeFixed,
-			DiscountValue: 10,
-		}, nil).Times(1)
-
-	suite.couponHandler.GetCouponByCode(ctx)
-
-	var res response.Response
-	var coupon dto.Coupon
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&coupon, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("SAVE10", coupon.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext("GET", "/api/v1/coupons/"+tc.params[0].Value, nil)
+			ctx.Params = tc.params
+			tc.setup()
+			suite.couponHandler.GetCouponByCode(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
-func (suite *CouponHandlerTestSuite) TestGetCouponByCodeNotFound() {
-	ctx, writer := suite.prepareContext("GET", "/api/v1/coupons/INVALID", nil)
-	ctx.Params = gin.Params{{Key: "code", Value: "INVALID"}}
+func (suite *CouponHandlerTestSuite) TestUpdateOrderStatus() {
+	tests := []struct {
+		name     string
+		params   gin.Params
+		query    url.Values
+		setup    func()
+		expected int
+	}{
+		{
+			name:   "Success",
+			params: gin.Params{{Key: "id", Value: "o1"}},
+			query:  url.Values{"status": []string{"done"}},
+			setup: func() {
+				suite.mockOrderService.On("UpdateOrderStatus", mock.Anything, "o1", model.OrderStatus("done")).
+					Return(&model.Order{ID: "o1", Status: model.OrderStatusDone}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+		},
+		{
+			name:     "MissingOrderID",
+			params:   nil,
+			query:    url.Values{"status": []string{"done"}},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name:     "MissingStatus",
+			params:   gin.Params{{Key: "id", Value: "o1"}},
+			query:    url.Values{},
+			setup:    func() {},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name:   "Fail",
+			params: gin.Params{{Key: "id", Value: "o1"}},
+			query:  url.Values{"status": []string{"done"}},
+			setup: func() {
+				suite.mockOrderService.On("UpdateOrderStatus", mock.Anything, "o1", model.OrderStatus("done")).
+					Return(nil, errors.New("not found")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
+	}
 
-	suite.mockCouponService.On("GetByCode", mock.Anything, "INVALID").
-		Return(nil, errors.New("not found")).Times(1)
-
-	suite.couponHandler.GetCouponByCode(ctx)
-
-	suite.Equal(http.StatusNotFound, writer.Code)
-}
-
-// UpdateOrderStatus
-// =================================================================================================
-
-func (suite *CouponHandlerTestSuite) TestUpdateOrderStatusSuccess() {
-	q := url.Values{}
-	q.Set("status", "done")
-	ctx, writer := suite.prepareContextWithQuery("/api/v1/orders/o1/status", q)
-	ctx.Params = gin.Params{{Key: "id", Value: "o1"}}
-
-	suite.mockOrderService.On("UpdateOrderStatus", mock.Anything, "o1", model.OrderStatus("done")).
-		Return(&model.Order{ID: "o1", Status: model.OrderStatusDone}, nil).Times(1)
-
-	suite.orderHandler.UpdateOrderStatus(ctx)
-
-	suite.Equal(http.StatusOK, writer.Code)
-}
-
-func (suite *CouponHandlerTestSuite) TestUpdateOrderStatusMissingOrderID() {
-	q := url.Values{}
-	q.Set("status", "done")
-	ctx, writer := suite.prepareContextWithQuery("/api/v1/orders//status", q)
-	// id param is empty
-
-	suite.orderHandler.UpdateOrderStatus(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *CouponHandlerTestSuite) TestUpdateOrderStatusMissingStatus() {
-	ctx, writer := suite.prepareContextWithQuery("/api/v1/orders/o1/status", url.Values{})
-	ctx.Params = gin.Params{{Key: "id", Value: "o1"}}
-
-	suite.orderHandler.UpdateOrderStatus(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *CouponHandlerTestSuite) TestUpdateOrderStatusFail() {
-	q := url.Values{}
-	q.Set("status", "done")
-	ctx, writer := suite.prepareContextWithQuery("/api/v1/orders/o1/status", q)
-	ctx.Params = gin.Params{{Key: "id", Value: "o1"}}
-
-	suite.mockOrderService.On("UpdateOrderStatus", mock.Anything, "o1", model.OrderStatus("done")).
-		Return(nil, errors.New("not found")).Times(1)
-
-	suite.orderHandler.UpdateOrderStatus(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContextWithQuery("/api/v1/orders/o1/status", tc.query)
+			if tc.params != nil {
+				ctx.Params = tc.params
+			}
+			tc.setup()
+			suite.orderHandler.UpdateOrderStatus(ctx)
+			suite.Equal(tc.expected, writer.Code)
+		})
+	}
 }

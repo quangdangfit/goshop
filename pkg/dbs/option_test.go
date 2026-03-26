@@ -6,49 +6,93 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWithQuery(t *testing.T) {
-	q := NewQuery("id = ?", "123")
-	opt := getOption(WithQuery(q))
-	assert.Equal(t, []Query{q}, opt.query)
-}
+func TestWithOptions(t *testing.T) {
+	tests := []struct {
+		name     string
+		opts     []FindOption
+		assertFn func(t *testing.T, opt Option)
+	}{
+		{
+			name: "WithQuery",
+			opts: []FindOption{WithQuery(NewQuery("id = ?", "123"))},
+			assertFn: func(t *testing.T, opt Option) {
+				assert.Equal(t, []Query{NewQuery("id = ?", "123")}, opt.query)
+			},
+		},
+		{
+			name: "WithOffset",
+			opts: []FindOption{WithOffset(10)},
+			assertFn: func(t *testing.T, opt Option) {
+				assert.Equal(t, 10, opt.offset)
+			},
+		},
+		{
+			name: "WithLimit",
+			opts: []FindOption{WithLimit(50)},
+			assertFn: func(t *testing.T, opt Option) {
+				assert.Equal(t, 50, opt.limit)
+			},
+		},
+		{
+			name: "WithOrder",
+			opts: []FindOption{WithOrder("created_at DESC")},
+			assertFn: func(t *testing.T, opt Option) {
+				assert.Equal(t, "created_at DESC", opt.order)
+			},
+		},
+		{
+			name: "WithPreload",
+			opts: []FindOption{WithPreload([]string{"Lines", "Lines.Product"})},
+			assertFn: func(t *testing.T, opt Option) {
+				assert.Equal(t, []string{"Lines", "Lines.Product"}, opt.preloads)
+			},
+		},
+		{
+			name: "defaults when no options",
+			opts: nil,
+			assertFn: func(t *testing.T, opt Option) {
+				assert.Equal(t, 0, opt.offset)
+				assert.Equal(t, 1000, opt.limit)
+				assert.Equal(t, "id", opt.order)
+				assert.Empty(t, opt.preloads)
+			},
+		},
+	}
 
-func TestWithOffset(t *testing.T) {
-	opt := getOption(WithOffset(10))
-	assert.Equal(t, 10, opt.offset)
-}
-
-func TestWithLimit(t *testing.T) {
-	opt := getOption(WithLimit(50))
-	assert.Equal(t, 50, opt.limit)
-}
-
-func TestWithOrder(t *testing.T) {
-	opt := getOption(WithOrder("created_at DESC"))
-	assert.Equal(t, "created_at DESC", opt.order)
-}
-
-func TestWithPreload(t *testing.T) {
-	preloads := []string{"Lines", "Lines.Product"}
-	opt := getOption(WithPreload(preloads))
-	assert.Equal(t, preloads, opt.preloads)
-}
-
-func TestGetOption_Defaults(t *testing.T) {
-	opt := getOption()
-	assert.Equal(t, 0, opt.offset)
-	assert.Equal(t, 1000, opt.limit)
-	assert.Equal(t, "id", opt.order)
-	assert.Empty(t, opt.preloads)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			opt := getOption(tc.opts...)
+			tc.assertFn(t, opt)
+		})
+	}
 }
 
 func TestNewQuery(t *testing.T) {
-	q := NewQuery("name = ?", "test")
-	assert.Equal(t, "name = ?", q.Query)
-	assert.Equal(t, []any{"test"}, q.Args)
-}
+	tests := []struct {
+		name     string
+		query    string
+		args     []any
+		wantArgs []any
+	}{
+		{
+			name:     "with args",
+			query:    "name = ?",
+			args:     []any{"test"},
+			wantArgs: []any{"test"},
+		},
+		{
+			name:     "no args",
+			query:    "deleted_at IS NULL",
+			args:     nil,
+			wantArgs: nil,
+		},
+	}
 
-func TestNewQuery_NoArgs(t *testing.T) {
-	q := NewQuery("deleted_at IS NULL")
-	assert.Equal(t, "deleted_at IS NULL", q.Query)
-	assert.Nil(t, q.Args)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			q := NewQuery(tc.query, tc.args...)
+			assert.Equal(t, tc.query, q.Query)
+			assert.Equal(t, tc.wantArgs, q.Args)
+		})
+	}
 }

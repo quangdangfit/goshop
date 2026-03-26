@@ -34,436 +34,310 @@ func TestCartServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CartServiceTestSuite))
 }
 
-// GetCartByUserID
-// =================================================================
+func (suite *CartServiceTestSuite) TestGetCartByUserID() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+		wantLen int
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(&model.Cart{
+						ID: "cartId1", UserID: "userID",
+						Lines: []*model.CartLine{
+							{ProductID: "productID1", Quantity: 4},
+							{ProductID: "productID2", Quantity: 3},
+						},
+					}, nil).Times(1)
+			},
+			wantLen: 2,
+		},
+		{
+			name: "Not found, creates new",
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(nil, errors.New("error")).Times(1)
+				suite.mockRepo.On("Create", mock.Anything, &model.Cart{UserID: "userID"}).Return(nil).Times(1)
+			},
+			wantLen: 0,
+		},
+		{
+			name: "Not found, create fails",
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(nil, errors.New("error")).Times(1)
+				suite.mockRepo.On("Create", mock.Anything, &model.Cart{UserID: "userID"}).Return(errors.New("error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			cart, err := suite.service.GetCartByUserID(context.Background(), "userID")
+			if tc.wantErr {
+				suite.Nil(cart)
+				suite.NotNil(err)
+			} else {
+				suite.NotNil(cart)
+				suite.Equal("userID", cart.UserID)
+				suite.Equal(tc.wantLen, len(cart.Lines))
+				suite.Nil(err)
+			}
+		})
+	}
+}
 
-func (suite *CartServiceTestSuite) TestGetCartByUserIDSuccessfully() {
-	userID := "userID"
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, userID).
-		Return(
-			&model.Cart{
-				ID:     "cartId1",
+func (suite *CartServiceTestSuite) TestAddProduct() {
+	tests := []struct {
+		name    string
+		req     *dto.AddProductReq
+		setup   func()
+		wantErr bool
+		wantLen int
+		wantQty uint
+	}{
+		{
+			name: "Success - new product",
+			req: &dto.AddProductReq{
 				UserID: "userID",
-				Lines: []*model.CartLine{
-					{
-						ProductID: "productID1",
-						Quantity:  4,
-					},
-					{
-						ProductID: "productID2",
-						Quantity:  3,
-					},
-				},
+				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
 			},
-			nil,
-		).Times(1)
-
-	cart, err := suite.service.GetCartByUserID(context.Background(), userID)
-	suite.NotNil(cart)
-	suite.Equal("userID", cart.UserID)
-	suite.Equal(2, len(cart.Lines))
-	suite.Nil(err)
-}
-
-func (suite *CartServiceTestSuite) TestGetCartByUserIDFail() {
-	userID := "userID"
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, userID).
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.mockRepo.On("Create", mock.Anything, &model.Cart{
-		UserID: "userID",
-	}).Return(nil).Times(1)
-
-	cart, err := suite.service.GetCartByUserID(context.Background(), userID)
-	suite.NotNil(cart)
-	suite.Equal("userID", cart.UserID)
-	suite.Equal(0, len(cart.Lines))
-	suite.Nil(err)
-}
-
-func (suite *CartServiceTestSuite) TestGetCartByUserIDCreateFail() {
-	userID := "userID"
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, userID).
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.mockRepo.On("Create", mock.Anything, &model.Cart{
-		UserID: "userID",
-	}).Return(errors.New("error")).Times(1)
-
-	cart, err := suite.service.GetCartByUserID(context.Background(), userID)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-// AddProduct
-// =================================================================
-
-func (suite *CartServiceTestSuite) TestAddProductSuccessfully() {
-	req := &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productID2",
-			Quantity:  3,
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(&model.Cart{
+						ID: "cartId1", UserID: "userID",
+						Lines: []*model.CartLine{{ProductID: "productID1", Quantity: 4}},
+					}, nil).Times(1)
+				suite.mockRepo.On("Update", mock.Anything, &model.Cart{
+					ID: "cartId1", UserID: "userID",
+					Lines: []*model.CartLine{
+						{ProductID: "productID1", Quantity: 4},
+						{ProductID: "productID2", Quantity: 3},
+					},
+				}).Return(nil).Times(1)
+			},
+			wantLen: 2,
 		},
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(
-			&model.Cart{
-				ID:     "cartId1",
+		{
+			name: "Missing UserID",
+			req: &dto.AddProductReq{
+				Line: &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+			},
+			setup:   func() {},
+			wantErr: true,
+		},
+		{
+			name: "Missing ProductID",
+			req: &dto.AddProductReq{
 				UserID: "userID",
-				Lines: []*model.CartLine{
-					{
-						ProductID: "productID1",
-						Quantity:  4,
-					},
-				},
+				Line:   &dto.CartLineReq{Quantity: 3},
 			},
-			nil,
-		).Times(1)
-
-	suite.mockRepo.On("Update", mock.Anything, &model.Cart{
-		ID:     "cartId1",
-		UserID: "userID",
-		Lines: []*model.CartLine{
-			{
-				ProductID: "productID1",
-				Quantity:  4,
-			},
-			{
-				ProductID: "productID2",
-				Quantity:  3,
-			},
+			setup:   func() {},
+			wantErr: true,
 		},
-	}).Return(nil).Times(1)
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.NotNil(cart)
-	suite.Equal("userID", cart.UserID)
-	suite.Equal(2, len(cart.Lines))
-	suite.Nil(err)
-}
-
-func (suite *CartServiceTestSuite) TestAddProductMissUserID() {
-	req := &dto.AddProductReq{
-		Line: &dto.CartLineReq{
-			ProductID: "productID2",
-			Quantity:  3,
-		},
-	}
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-func (suite *CartServiceTestSuite) TestAddProductMissProductID() {
-	req := &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			Quantity: 3,
-		},
-	}
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-func (suite *CartServiceTestSuite) TestAddProductMissQuantity() {
-	req := &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productID2",
-		},
-	}
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-func (suite *CartServiceTestSuite) TestAddProductCartNotFound() {
-	req := &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productID2",
-			Quantity:  3,
-		},
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.mockRepo.On("Create", mock.Anything, &model.Cart{
-		UserID: "userID",
-		Lines: []*model.CartLine{
-			{
-				ProductID: "productID2",
-				Quantity:  3,
-			},
-		},
-	}).Return(nil).Times(1)
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.NotNil(cart)
-	suite.Equal("userID", cart.UserID)
-	suite.Equal(1, len(cart.Lines))
-	suite.Nil(err)
-}
-
-func (suite *CartServiceTestSuite) TestAddProductCartNotFoundCreateFail() {
-	req := &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productID2",
-			Quantity:  3,
-		},
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.mockRepo.On("Create", mock.Anything, &model.Cart{
-		UserID: "userID",
-		Lines: []*model.CartLine{
-			{
-				ProductID: "productID2",
-				Quantity:  3,
-			},
-		},
-	}).Return(errors.New("error")).Times(1)
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-func (suite *CartServiceTestSuite) TestAddProductAlreadyExistInCart() {
-	req := &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productID2",
-			Quantity:  5,
-		},
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(
-			&model.Cart{
-				ID:     "cartId1",
+		{
+			name: "Missing Quantity",
+			req: &dto.AddProductReq{
 				UserID: "userID",
-				Lines: []*model.CartLine{
-					{
-						ProductID: "productID1",
-						Quantity:  4,
-					},
-					{
-						ProductID: "productID2",
-						Quantity:  3,
-					},
-				},
+				Line:   &dto.CartLineReq{ProductID: "productID2"},
 			},
-			nil,
-		).Times(1)
-
-	suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Times(1)
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.NotNil(cart)
-	suite.Equal("userID", cart.UserID)
-	suite.Equal(2, len(cart.Lines))
-	suite.Equal(uint(5), cart.Lines[1].Quantity)
-	suite.Nil(err)
-}
-
-func (suite *CartServiceTestSuite) TestAddProductAlreadyExistInCartUpdateFail() {
-	req := &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productID2",
-			Quantity:  5,
+			setup:   func() {},
+			wantErr: true,
+		},
+		{
+			name: "Cart not found, creates new",
+			req: &dto.AddProductReq{
+				UserID: "userID",
+				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+			},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(nil, errors.New("error")).Times(1)
+				suite.mockRepo.On("Create", mock.Anything, &model.Cart{
+					UserID: "userID",
+					Lines:  []*model.CartLine{{ProductID: "productID2", Quantity: 3}},
+				}).Return(nil).Times(1)
+			},
+			wantLen: 1,
+		},
+		{
+			name: "Cart not found, create fails",
+			req: &dto.AddProductReq{
+				UserID: "userID",
+				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+			},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(nil, errors.New("error")).Times(1)
+				suite.mockRepo.On("Create", mock.Anything, &model.Cart{
+					UserID: "userID",
+					Lines:  []*model.CartLine{{ProductID: "productID2", Quantity: 3}},
+				}).Return(errors.New("error")).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Product already in cart - updates quantity",
+			req: &dto.AddProductReq{
+				UserID: "userID",
+				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 5},
+			},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(&model.Cart{
+						ID: "cartId1", UserID: "userID",
+						Lines: []*model.CartLine{
+							{ProductID: "productID1", Quantity: 4},
+							{ProductID: "productID2", Quantity: 3},
+						},
+					}, nil).Times(1)
+				suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+			wantLen: 2,
+			wantQty: 5,
+		},
+		{
+			name: "Product already in cart - update fails",
+			req: &dto.AddProductReq{
+				UserID: "userID",
+				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 5},
+			},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(&model.Cart{
+						ID: "cartId1", UserID: "userID",
+						Lines: []*model.CartLine{{ProductID: "productID2", Quantity: 3}},
+					}, nil).Times(1)
+				suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name: "New product - update fails",
+			req: &dto.AddProductReq{
+				UserID: "userID",
+				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+			},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(&model.Cart{
+						ID: "cartId1", UserID: "userID",
+						Lines: []*model.CartLine{{ProductID: "productID1", Quantity: 4}},
+					}, nil).Times(1)
+				suite.mockRepo.On("Update", mock.Anything, &model.Cart{
+					ID: "cartId1", UserID: "userID",
+					Lines: []*model.CartLine{
+						{ProductID: "productID1", Quantity: 4},
+						{ProductID: "productID2", Quantity: 3},
+					},
+				}).Return(errors.New("error")).Times(1)
+			},
+			wantErr: true,
 		},
 	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(
-			&model.Cart{
-				ID:     "cartId1",
-				UserID: "userID",
-				Lines: []*model.CartLine{
-					{
-						ProductID: "productID2",
-						Quantity:  3,
-					},
-				},
-			},
-			nil,
-		).Times(1)
-
-	suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			cart, err := suite.service.AddProduct(context.Background(), tc.req)
+			if tc.wantErr {
+				suite.Nil(cart)
+				suite.NotNil(err)
+			} else {
+				suite.NotNil(cart)
+				suite.Equal("userID", cart.UserID)
+				suite.Equal(tc.wantLen, len(cart.Lines))
+				if tc.wantQty > 0 {
+					suite.Equal(tc.wantQty, cart.Lines[1].Quantity)
+				}
+				suite.Nil(err)
+			}
+		})
+	}
 }
 
-func (suite *CartServiceTestSuite) TestAddProductUpdateFail() {
-	req := &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productID2",
-			Quantity:  3,
-		},
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(
-			&model.Cart{
-				ID:     "cartId1",
-				UserID: "userID",
-				Lines: []*model.CartLine{
-					{
-						ProductID: "productID1",
-						Quantity:  4,
-					},
-				},
-			},
-			nil,
-		).Times(1)
-
-	suite.mockRepo.On("Update", mock.Anything, &model.Cart{
-		ID:     "cartId1",
-		UserID: "userID",
-		Lines: []*model.CartLine{
-			{
-				ProductID: "productID1",
-				Quantity:  4,
-			},
-			{
-				ProductID: "productID2",
-				Quantity:  3,
+func (suite *CartServiceTestSuite) TestRemoveProduct() {
+	tests := []struct {
+		name    string
+		req     *dto.RemoveProductReq
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			req:  &dto.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(&model.Cart{
+						ID: "cartId1", UserID: "userID",
+						Lines: []*model.CartLine{{ProductID: "productID1", Quantity: 4}},
+					}, nil).Times(1)
+				suite.mockRepo.On("DeleteLine", mock.Anything, "cartId1", "productID1").Return(nil).Times(1)
 			},
 		},
-	}).Return(errors.New("error")).Times(1)
-
-	cart, err := suite.service.AddProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-// RemoveProduct
-// =================================================================
-
-func (suite *CartServiceTestSuite) TestRemoveProductSuccessfully() {
-	req := &dto.RemoveProductReq{
-		UserID:    "userID",
-		ProductID: "productID1",
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(
-			&model.Cart{
-				ID:     "cartId1",
-				UserID: "userID",
-				Lines: []*model.CartLine{
-					{
-						ProductID: "productID1",
-						Quantity:  4,
-					},
-				},
+		{
+			name:    "Missing UserID",
+			req:     &dto.RemoveProductReq{ProductID: "productID1"},
+			setup:   func() {},
+			wantErr: true,
+		},
+		{
+			name:    "Missing ProductID",
+			req:     &dto.RemoveProductReq{UserID: "userID"},
+			setup:   func() {},
+			wantErr: true,
+		},
+		{
+			name: "Cart not found, creates new",
+			req:  &dto.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(nil, errors.New("error")).Times(1)
+				suite.mockRepo.On("Create", mock.Anything, &model.Cart{UserID: "userID"}).Return(nil).Times(1)
 			},
-			nil,
-		).Times(1)
-
-	suite.mockRepo.On("DeleteLine", mock.Anything, "cartId1", "productID1").Return(nil).Times(1)
-
-	cart, err := suite.service.RemoveProduct(context.Background(), req)
-	suite.NotNil(cart)
-	suite.Equal("userID", cart.UserID)
-	suite.Equal(0, len(cart.Lines))
-	suite.Nil(err)
-}
-
-func (suite *CartServiceTestSuite) TestRemoveProductMissUserID() {
-	req := &dto.RemoveProductReq{
-		ProductID: "productID1",
-	}
-
-	cart, err := suite.service.RemoveProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-func (suite *CartServiceTestSuite) TestRemoveProductMissProductID() {
-	req := &dto.RemoveProductReq{
-		UserID: "userID",
-	}
-
-	cart, err := suite.service.RemoveProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-func (suite *CartServiceTestSuite) TestRemoveProductCartNotFound() {
-	req := &dto.RemoveProductReq{
-		UserID:    "userID",
-		ProductID: "productID1",
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.mockRepo.On("Create", mock.Anything, &model.Cart{UserID: "userID"}).Return(nil).Times(1)
-
-	cart, err := suite.service.RemoveProduct(context.Background(), req)
-	suite.NotNil(cart)
-	suite.Equal("userID", cart.UserID)
-	suite.Equal(0, len(cart.Lines))
-	suite.Nil(err)
-}
-
-func (suite *CartServiceTestSuite) TestRemoveProductCartNotFoundCreateFail() {
-	req := &dto.RemoveProductReq{
-		UserID:    "userID",
-		ProductID: "productID1",
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.mockRepo.On("Create", mock.Anything, &model.Cart{UserID: "userID"}).Return(errors.New("error")).Times(1)
-
-	cart, err := suite.service.RemoveProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
-}
-
-func (suite *CartServiceTestSuite) TestRemoveProductUpdateFail() {
-	req := &dto.RemoveProductReq{
-		UserID:    "userID",
-		ProductID: "productID1",
-	}
-
-	suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
-		Return(
-			&model.Cart{
-				ID:     "cartId1",
-				UserID: "userID",
-				Lines: []*model.CartLine{
-					{
-						ProductID: "productID1",
-						Quantity:  4,
-					},
-				},
+		},
+		{
+			name: "Cart not found, create fails",
+			req:  &dto.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(nil, errors.New("error")).Times(1)
+				suite.mockRepo.On("Create", mock.Anything, &model.Cart{UserID: "userID"}).Return(errors.New("error")).Times(1)
 			},
-			nil,
-		).Times(1)
-
-	suite.mockRepo.On("DeleteLine", mock.Anything, "cartId1", "productID1").Return(errors.New("error")).Times(1)
-
-	cart, err := suite.service.RemoveProduct(context.Background(), req)
-	suite.Nil(cart)
-	suite.NotNil(err)
+			wantErr: true,
+		},
+		{
+			name: "DeleteLine fails",
+			req:  &dto.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
+			setup: func() {
+				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
+					Return(&model.Cart{
+						ID: "cartId1", UserID: "userID",
+						Lines: []*model.CartLine{{ProductID: "productID1", Quantity: 4}},
+					}, nil).Times(1)
+				suite.mockRepo.On("DeleteLine", mock.Anything, "cartId1", "productID1").Return(errors.New("error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			cart, err := suite.service.RemoveProduct(context.Background(), tc.req)
+			if tc.wantErr {
+				suite.Nil(cart)
+				suite.NotNil(err)
+			} else {
+				suite.NotNil(cart)
+				suite.Equal("userID", cart.UserID)
+				suite.Nil(err)
+			}
+		})
+	}
 }

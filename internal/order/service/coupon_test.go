@@ -34,182 +34,222 @@ func TestCouponServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CouponServiceTestSuite))
 }
 
-// GetByCode
-// =================================================================================================
-
-func (suite *CouponServiceTestSuite) TestGetByCodeSuccess() {
-	suite.mockRepo.On("GetByCode", mock.Anything, "SAVE10").
-		Return(&model.Coupon{ID: "c1", Code: "SAVE10"}, nil).Times(1)
-
-	coupon, err := suite.service.GetByCode(context.Background(), "SAVE10")
-	suite.Nil(err)
-	suite.Equal("SAVE10", coupon.Code)
-}
-
-func (suite *CouponServiceTestSuite) TestGetByCodeFail() {
-	suite.mockRepo.On("GetByCode", mock.Anything, "INVALID").
-		Return(nil, errors.New("not found")).Times(1)
-
-	coupon, err := suite.service.GetByCode(context.Background(), "INVALID")
-	suite.NotNil(err)
-	suite.Nil(coupon)
-}
-
-// Create
-// =================================================================================================
-
-func (suite *CouponServiceTestSuite) TestCreateSuccess() {
-	req := &dto.CreateCouponReq{
-		Code:          "SAVE10",
-		DiscountType:  "fixed",
-		DiscountValue: 10,
+func (suite *CouponServiceTestSuite) TestGetByCode() {
+	tests := []struct {
+		name    string
+		code    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			code: "SAVE10",
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "SAVE10").
+					Return(&model.Coupon{ID: "c1", Code: "SAVE10"}, nil).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			code: "INVALID",
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "INVALID").
+					Return(nil, errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
 	}
-	suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
-
-	coupon, err := suite.service.Create(context.Background(), req)
-	suite.Nil(err)
-	suite.NotNil(coupon)
-	suite.Equal("SAVE10", coupon.Code)
-}
-
-func (suite *CouponServiceTestSuite) TestCreateValidationFail() {
-	req := &dto.CreateCouponReq{} // missing required fields
-
-	coupon, err := suite.service.Create(context.Background(), req)
-	suite.NotNil(err)
-	suite.Nil(coupon)
-}
-
-func (suite *CouponServiceTestSuite) TestCreateDBFail() {
-	req := &dto.CreateCouponReq{
-		Code:          "SAVE10",
-		DiscountType:  "fixed",
-		DiscountValue: 10,
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			coupon, err := suite.service.GetByCode(context.Background(), tc.code)
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(coupon)
+			} else {
+				suite.Nil(err)
+				suite.Equal(tc.code, coupon.Code)
+			}
+		})
 	}
-	suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("duplicate")).Times(1)
-
-	coupon, err := suite.service.Create(context.Background(), req)
-	suite.NotNil(err)
-	suite.Nil(coupon)
 }
 
-// Apply
-// =================================================================================================
-
-func (suite *CouponServiceTestSuite) TestApplyFixedDiscountSuccess() {
-	suite.mockRepo.On("GetByCode", mock.Anything, "SAVE10").
-		Return(&model.Coupon{
-			ID:            "c1",
-			Code:          "SAVE10",
-			DiscountType:  model.DiscountTypeFixed,
-			DiscountValue: 10,
-		}, nil).Times(1)
-
-	discount, coupon, err := suite.service.Apply(context.Background(), "SAVE10", 100)
-	suite.Nil(err)
-	suite.NotNil(coupon)
-	suite.Equal(float64(10), discount)
+func (suite *CouponServiceTestSuite) TestCreate() {
+	tests := []struct {
+		name    string
+		req     *dto.CreateCouponReq
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			req:  &dto.CreateCouponReq{Code: "SAVE10", DiscountType: "fixed", DiscountValue: 10},
+			setup: func() {
+				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name:    "Validation fail",
+			req:     &dto.CreateCouponReq{},
+			setup:   func() {},
+			wantErr: true,
+		},
+		{
+			name: "DB fail",
+			req:  &dto.CreateCouponReq{Code: "SAVE10", DiscountType: "fixed", DiscountValue: 10},
+			setup: func() {
+				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("duplicate")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			coupon, err := suite.service.Create(context.Background(), tc.req)
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(coupon)
+			} else {
+				suite.Nil(err)
+				suite.NotNil(coupon)
+				suite.Equal("SAVE10", coupon.Code)
+			}
+		})
+	}
 }
 
-func (suite *CouponServiceTestSuite) TestApplyPercentageDiscountSuccess() {
-	suite.mockRepo.On("GetByCode", mock.Anything, "SAVE10PCT").
-		Return(&model.Coupon{
-			ID:            "c1",
-			Code:          "SAVE10PCT",
-			DiscountType:  model.DiscountTypePercentage,
-			DiscountValue: 10,
-		}, nil).Times(1)
-
-	discount, coupon, err := suite.service.Apply(context.Background(), "SAVE10PCT", 200)
-	suite.Nil(err)
-	suite.NotNil(coupon)
-	suite.Equal(float64(20), discount)
-}
-
-func (suite *CouponServiceTestSuite) TestApplyFixedDiscountExceedsTotal() {
-	suite.mockRepo.On("GetByCode", mock.Anything, "SAVE100").
-		Return(&model.Coupon{
-			ID:            "c1",
-			Code:          "SAVE100",
-			DiscountType:  model.DiscountTypeFixed,
-			DiscountValue: 200,
-		}, nil).Times(1)
-
-	discount, coupon, err := suite.service.Apply(context.Background(), "SAVE100", 50)
-	suite.Nil(err)
-	suite.NotNil(coupon)
-	suite.Equal(float64(50), discount) // capped at total price
-}
-
-func (suite *CouponServiceTestSuite) TestApplyCouponNotFound() {
-	suite.mockRepo.On("GetByCode", mock.Anything, "INVALID").
-		Return(nil, errors.New("not found")).Times(1)
-
-	discount, coupon, err := suite.service.Apply(context.Background(), "INVALID", 100)
-	suite.NotNil(err)
-	suite.Nil(coupon)
-	suite.Equal(float64(0), discount)
-}
-
-func (suite *CouponServiceTestSuite) TestApplyCouponExpired() {
+func (suite *CouponServiceTestSuite) TestApply() {
 	past := time.Now().Add(-24 * time.Hour)
-	suite.mockRepo.On("GetByCode", mock.Anything, "EXPIRED").
-		Return(&model.Coupon{
-			ID:        "c1",
-			Code:      "EXPIRED",
-			ExpiresAt: &past,
-		}, nil).Times(1)
-
-	discount, coupon, err := suite.service.Apply(context.Background(), "EXPIRED", 100)
-	suite.NotNil(err)
-	suite.Nil(coupon)
-	suite.Equal(float64(0), discount)
+	tests := []struct {
+		name         string
+		code         string
+		totalPrice   float64
+		setup        func()
+		wantErr      bool
+		wantDiscount float64
+	}{
+		{
+			name:       "Fixed discount",
+			code:       "SAVE10",
+			totalPrice: 100,
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "SAVE10").
+					Return(&model.Coupon{ID: "c1", Code: "SAVE10", DiscountType: model.DiscountTypeFixed, DiscountValue: 10}, nil).Times(1)
+			},
+			wantDiscount: 10,
+		},
+		{
+			name:       "Percentage discount",
+			code:       "SAVE10PCT",
+			totalPrice: 200,
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "SAVE10PCT").
+					Return(&model.Coupon{ID: "c1", Code: "SAVE10PCT", DiscountType: model.DiscountTypePercentage, DiscountValue: 10}, nil).Times(1)
+			},
+			wantDiscount: 20,
+		},
+		{
+			name:       "Fixed discount exceeds total",
+			code:       "SAVE100",
+			totalPrice: 50,
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "SAVE100").
+					Return(&model.Coupon{ID: "c1", Code: "SAVE100", DiscountType: model.DiscountTypeFixed, DiscountValue: 200}, nil).Times(1)
+			},
+			wantDiscount: 50,
+		},
+		{
+			name:       "Not found",
+			code:       "INVALID",
+			totalPrice: 100,
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "INVALID").
+					Return(nil, errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name:       "Expired",
+			code:       "EXPIRED",
+			totalPrice: 100,
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "EXPIRED").
+					Return(&model.Coupon{ID: "c1", Code: "EXPIRED", ExpiresAt: &past}, nil).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name:       "Max usage reached",
+			code:       "MAXED",
+			totalPrice: 100,
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "MAXED").
+					Return(&model.Coupon{ID: "c1", Code: "MAXED", MaxUsage: 5, UsedCount: 5}, nil).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name:       "Below min order amount",
+			code:       "MIN50",
+			totalPrice: 30,
+			setup: func() {
+				suite.mockRepo.On("GetByCode", mock.Anything, "MIN50").
+					Return(&model.Coupon{ID: "c1", Code: "MIN50", DiscountType: model.DiscountTypeFixed, DiscountValue: 10, MinOrderAmount: 50}, nil).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			discount, coupon, err := suite.service.Apply(context.Background(), tc.code, tc.totalPrice)
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(coupon)
+				suite.Equal(float64(0), discount)
+			} else {
+				suite.Nil(err)
+				suite.NotNil(coupon)
+				suite.Equal(tc.wantDiscount, discount)
+			}
+		})
+	}
 }
 
-func (suite *CouponServiceTestSuite) TestApplyCouponMaxUsageReached() {
-	suite.mockRepo.On("GetByCode", mock.Anything, "MAXED").
-		Return(&model.Coupon{
-			ID:        "c1",
-			Code:      "MAXED",
-			MaxUsage:  5,
-			UsedCount: 5,
-		}, nil).Times(1)
-
-	discount, coupon, err := suite.service.Apply(context.Background(), "MAXED", 100)
-	suite.NotNil(err)
-	suite.Nil(coupon)
-	suite.Equal(float64(0), discount)
-}
-
-func (suite *CouponServiceTestSuite) TestApplyBelowMinOrderAmount() {
-	suite.mockRepo.On("GetByCode", mock.Anything, "MIN50").
-		Return(&model.Coupon{
-			ID:             "c1",
-			Code:           "MIN50",
-			DiscountType:   model.DiscountTypeFixed,
-			DiscountValue:  10,
-			MinOrderAmount: 50,
-		}, nil).Times(1)
-
-	discount, coupon, err := suite.service.Apply(context.Background(), "MIN50", 30)
-	suite.NotNil(err)
-	suite.Nil(coupon)
-	suite.Equal(float64(0), discount)
-}
-
-// IncrUsedCount
-// =================================================================================================
-
-func (suite *CouponServiceTestSuite) TestIncrUsedCountSuccess() {
-	suite.mockRepo.On("IncrUsedCount", mock.Anything, "c1").Return(nil).Times(1)
-
-	err := suite.service.IncrUsedCount(context.Background(), "c1")
-	suite.Nil(err)
-}
-
-func (suite *CouponServiceTestSuite) TestIncrUsedCountFail() {
-	suite.mockRepo.On("IncrUsedCount", mock.Anything, "c1").Return(errors.New("db error")).Times(1)
-
-	err := suite.service.IncrUsedCount(context.Background(), "c1")
-	suite.NotNil(err)
+func (suite *CouponServiceTestSuite) TestIncrUsedCount() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockRepo.On("IncrUsedCount", mock.Anything, "c1").Return(nil).Times(1)
+			},
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				suite.mockRepo.On("IncrUsedCount", mock.Anything, "c1").Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.service.IncrUsedCount(context.Background(), "c1")
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }

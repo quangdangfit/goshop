@@ -50,57 +50,90 @@ func TestProductRepositoryTestSuite(t *testing.T) {
 	suite.Run(t, new(ProductRepositoryTestSuite))
 }
 
-// GetProductByID
-// =================================================================
-
-func (suite *ProductRepositoryTestSuite) TestGetProductByIDSuccessfully() {
-	suite.mockDB.On("FindById", mock.Anything, "productId1", &model.Product{}).
-		Return(nil).Times(1)
-
-	product, err := suite.repo.GetProductByID(context.Background(), "productId1")
-	suite.Nil(err)
-	suite.NotNil(product)
+func (suite *ProductRepositoryTestSuite) TestGetProductByID() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockDB.On("FindById", mock.Anything, "productId1", &model.Product{}).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			setup: func() {
+				suite.mockDB.On("FindById", mock.Anything, "productId1", &model.Product{}).Return(errors.New("error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			product, err := suite.repo.GetProductByID(context.Background(), "productId1")
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(product)
+			} else {
+				suite.Nil(err)
+				suite.NotNil(product)
+			}
+		})
+	}
 }
 
-func (suite *ProductRepositoryTestSuite) TestGetProductByIDFail() {
-	suite.mockDB.On("FindById", mock.Anything, "productId1", &model.Product{}).
-		Return(errors.New("error")).Times(1)
-
-	product, err := suite.repo.GetProductByID(context.Background(), "productId1")
-	suite.NotNil(err)
-	suite.Nil(product)
-}
-
-// DecrementStock
-// =================================================================
-
-func (suite *ProductRepositoryTestSuite) TestDecrementStockSuccess() {
-	gormDB, sqlMock := newOrderProductSQLMockGormDB(suite.T())
-	sqlMock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 1))
-
-	suite.mockDB.On("GetDB").Return(gormDB).Times(1)
-
-	err := suite.repo.DecrementStock(context.Background(), "productId1", 2)
-	suite.Nil(err)
-}
-
-func (suite *ProductRepositoryTestSuite) TestDecrementStockInsufficientStock() {
-	gormDB, sqlMock := newOrderProductSQLMockGormDB(suite.T())
-	sqlMock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
-
-	suite.mockDB.On("GetDB").Return(gormDB).Times(1)
-
-	err := suite.repo.DecrementStock(context.Background(), "productId1", 2)
-	suite.NotNil(err)
-	suite.Equal("insufficient stock", err.Error())
-}
-
-func (suite *ProductRepositoryTestSuite) TestDecrementStockFail() {
-	gormDB, sqlMock := newOrderProductSQLMockGormDB(suite.T())
-	sqlMock.ExpectExec(".*").WillReturnError(errors.New("db error"))
-
-	suite.mockDB.On("GetDB").Return(gormDB).Times(1)
-
-	err := suite.repo.DecrementStock(context.Background(), "productId1", 2)
-	suite.NotNil(err)
+func (suite *ProductRepositoryTestSuite) TestDecrementStock() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				gormDB, sqlMock := newOrderProductSQLMockGormDB(suite.T())
+				sqlMock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 1))
+				suite.mockDB.On("GetDB").Return(gormDB).Times(1)
+			},
+		},
+		{
+			name: "Insufficient stock",
+			setup: func() {
+				gormDB, sqlMock := newOrderProductSQLMockGormDB(suite.T())
+				sqlMock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
+				suite.mockDB.On("GetDB").Return(gormDB).Times(1)
+			},
+			wantErr: true,
+			errMsg:  "insufficient stock",
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				gormDB, sqlMock := newOrderProductSQLMockGormDB(suite.T())
+				sqlMock.ExpectExec(".*").WillReturnError(errors.New("db error"))
+				suite.mockDB.On("GetDB").Return(gormDB).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.repo.DecrementStock(context.Background(), "productId1", 2)
+			if tc.wantErr {
+				suite.NotNil(err)
+				if tc.errMsg != "" {
+					suite.Equal(tc.errMsg, err.Error())
+				}
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }

@@ -33,163 +33,252 @@ func TestAddressServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(AddressServiceTestSuite))
 }
 
-// ListAddresses
-// =================================================================================================
-
-func (suite *AddressServiceTestSuite) TestListAddressesSuccess() {
-	suite.mockRepo.On("ListByUser", mock.Anything, "u1").
-		Return([]*model.Address{
-			{ID: "a1", UserID: "u1", Street: "123 Main St"},
-		}, nil).Times(1)
-
-	addresses, err := suite.service.ListAddresses(context.Background(), "u1")
-	suite.Nil(err)
-	suite.Equal(1, len(addresses))
-	suite.Equal("a1", addresses[0].ID)
-}
-
-func (suite *AddressServiceTestSuite) TestListAddressesFail() {
-	suite.mockRepo.On("ListByUser", mock.Anything, "u1").
-		Return(nil, errors.New("db error")).Times(1)
-
-	addresses, err := suite.service.ListAddresses(context.Background(), "u1")
-	suite.NotNil(err)
-	suite.Nil(addresses)
-}
-
-// GetAddressByID
-// =================================================================================================
-
-func (suite *AddressServiceTestSuite) TestGetAddressByIDSuccess() {
-	suite.mockRepo.On("GetByID", mock.Anything, "a1", "u1").
-		Return(&model.Address{ID: "a1", UserID: "u1"}, nil).Times(1)
-
-	addr, err := suite.service.GetAddressByID(context.Background(), "a1", "u1")
-	suite.Nil(err)
-	suite.Equal("a1", addr.ID)
-}
-
-func (suite *AddressServiceTestSuite) TestGetAddressByIDFail() {
-	suite.mockRepo.On("GetByID", mock.Anything, "notfound", "u1").
-		Return(nil, errors.New("not found")).Times(1)
-
-	addr, err := suite.service.GetAddressByID(context.Background(), "notfound", "u1")
-	suite.NotNil(err)
-	suite.Nil(addr)
-}
-
-// Create
-// =================================================================================================
-
-func (suite *AddressServiceTestSuite) TestCreateSuccess() {
-	req := &dto.CreateAddressReq{
-		Name:    "Home",
-		Phone:   "0123456789",
-		Street:  "123 Main St",
-		City:    "Springfield",
-		Country: "US",
+func (suite *AddressServiceTestSuite) TestListAddresses() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+		wantLen int
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockRepo.On("ListByUser", mock.Anything, "u1").
+					Return([]*model.Address{{ID: "a1", UserID: "u1", Street: "123 Main St"}}, nil).Times(1)
+			},
+			wantLen: 1,
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				suite.mockRepo.On("ListByUser", mock.Anything, "u1").
+					Return(nil, errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
 	}
-	suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
-
-	addr, err := suite.service.Create(context.Background(), "u1", req)
-	suite.Nil(err)
-	suite.NotNil(addr)
-	suite.Equal("u1", addr.UserID)
-	suite.Equal("123 Main St", addr.Street)
-}
-
-func (suite *AddressServiceTestSuite) TestCreateValidationFail() {
-	req := &dto.CreateAddressReq{} // missing required fields
-
-	addr, err := suite.service.Create(context.Background(), "u1", req)
-	suite.NotNil(err)
-	suite.Nil(addr)
-}
-
-func (suite *AddressServiceTestSuite) TestCreateDBFail() {
-	req := &dto.CreateAddressReq{
-		Name:    "Home",
-		Phone:   "0123456789",
-		Street:  "123 Main St",
-		City:    "Springfield",
-		Country: "US",
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			addresses, err := suite.service.ListAddresses(context.Background(), "u1")
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(addresses)
+			} else {
+				suite.Nil(err)
+				suite.Equal(tc.wantLen, len(addresses))
+			}
+		})
 	}
-	suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
-
-	addr, err := suite.service.Create(context.Background(), "u1", req)
-	suite.NotNil(err)
-	suite.Nil(addr)
 }
 
-// Update
-// =================================================================================================
-
-func (suite *AddressServiceTestSuite) TestUpdateSuccess() {
-	req := &dto.UpdateAddressReq{Street: "789 Elm St"}
-
-	suite.mockRepo.On("GetByID", mock.Anything, "a1", "u1").
-		Return(&model.Address{ID: "a1", UserID: "u1", Street: "123 Main St"}, nil).Times(1)
-	suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Times(1)
-
-	addr, err := suite.service.Update(context.Background(), "a1", "u1", req)
-	suite.Nil(err)
-	suite.NotNil(addr)
-	suite.Equal("789 Elm St", addr.Street)
+func (suite *AddressServiceTestSuite) TestGetAddressByID() {
+	tests := []struct {
+		name      string
+		addressID string
+		setup     func()
+		wantErr   bool
+	}{
+		{
+			name:      "Success",
+			addressID: "a1",
+			setup: func() {
+				suite.mockRepo.On("GetByID", mock.Anything, "a1", "u1").
+					Return(&model.Address{ID: "a1", UserID: "u1"}, nil).Times(1)
+			},
+		},
+		{
+			name:      "Not found",
+			addressID: "notfound",
+			setup: func() {
+				suite.mockRepo.On("GetByID", mock.Anything, "notfound", "u1").
+					Return(nil, errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			addr, err := suite.service.GetAddressByID(context.Background(), tc.addressID, "u1")
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(addr)
+			} else {
+				suite.Nil(err)
+				suite.Equal(tc.addressID, addr.ID)
+			}
+		})
+	}
 }
 
-func (suite *AddressServiceTestSuite) TestUpdateGetByIDFail() {
-	req := &dto.UpdateAddressReq{Street: "789 Elm St"}
-
-	suite.mockRepo.On("GetByID", mock.Anything, "notfound", "u1").
-		Return(nil, errors.New("not found")).Times(1)
-
-	addr, err := suite.service.Update(context.Background(), "notfound", "u1", req)
-	suite.NotNil(err)
-	suite.Nil(addr)
+func (suite *AddressServiceTestSuite) TestCreate() {
+	tests := []struct {
+		name    string
+		req     *dto.CreateAddressReq
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			req:  &dto.CreateAddressReq{Name: "Home", Phone: "0123456789", Street: "123 Main St", City: "Springfield", Country: "US"},
+			setup: func() {
+				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name:    "Validation fail",
+			req:     &dto.CreateAddressReq{},
+			setup:   func() {},
+			wantErr: true,
+		},
+		{
+			name: "DB fail",
+			req:  &dto.CreateAddressReq{Name: "Home", Phone: "0123456789", Street: "123 Main St", City: "Springfield", Country: "US"},
+			setup: func() {
+				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			addr, err := suite.service.Create(context.Background(), "u1", tc.req)
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(addr)
+			} else {
+				suite.Nil(err)
+				suite.NotNil(addr)
+				suite.Equal("u1", addr.UserID)
+				suite.Equal("123 Main St", addr.Street)
+			}
+		})
+	}
 }
 
-func (suite *AddressServiceTestSuite) TestUpdateDBFail() {
-	req := &dto.UpdateAddressReq{Street: "789 Elm St"}
-
-	suite.mockRepo.On("GetByID", mock.Anything, "a1", "u1").
-		Return(&model.Address{ID: "a1", UserID: "u1"}, nil).Times(1)
-	suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
-
-	addr, err := suite.service.Update(context.Background(), "a1", "u1", req)
-	suite.NotNil(err)
-	suite.Nil(addr)
+func (suite *AddressServiceTestSuite) TestUpdate() {
+	tests := []struct {
+		name      string
+		addressID string
+		setup     func()
+		wantErr   bool
+	}{
+		{
+			name:      "Success",
+			addressID: "a1",
+			setup: func() {
+				suite.mockRepo.On("GetByID", mock.Anything, "a1", "u1").
+					Return(&model.Address{ID: "a1", UserID: "u1", Street: "123 Main St"}, nil).Times(1)
+				suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name:      "GetByID fail",
+			addressID: "notfound",
+			setup: func() {
+				suite.mockRepo.On("GetByID", mock.Anything, "notfound", "u1").
+					Return(nil, errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name:      "DB fail",
+			addressID: "a1",
+			setup: func() {
+				suite.mockRepo.On("GetByID", mock.Anything, "a1", "u1").
+					Return(&model.Address{ID: "a1", UserID: "u1"}, nil).Times(1)
+				suite.mockRepo.On("Update", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			req := &dto.UpdateAddressReq{Street: "789 Elm St"}
+			addr, err := suite.service.Update(context.Background(), tc.addressID, "u1", req)
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(addr)
+			} else {
+				suite.Nil(err)
+				suite.NotNil(addr)
+				suite.Equal("789 Elm St", addr.Street)
+			}
+		})
+	}
 }
 
-// Delete
-// =================================================================================================
-
-func (suite *AddressServiceTestSuite) TestDeleteSuccess() {
-	suite.mockRepo.On("Delete", mock.Anything, "a1", "u1").Return(nil).Times(1)
-
-	err := suite.service.Delete(context.Background(), "a1", "u1")
-	suite.Nil(err)
+func (suite *AddressServiceTestSuite) TestDelete() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockRepo.On("Delete", mock.Anything, "a1", "u1").Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			setup: func() {
+				suite.mockRepo.On("Delete", mock.Anything, "a1", "u1").Return(errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.service.Delete(context.Background(), "a1", "u1")
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }
 
-func (suite *AddressServiceTestSuite) TestDeleteFail() {
-	suite.mockRepo.On("Delete", mock.Anything, "a1", "u1").Return(errors.New("not found")).Times(1)
-
-	err := suite.service.Delete(context.Background(), "a1", "u1")
-	suite.NotNil(err)
-}
-
-// SetDefault
-// =================================================================================================
-
-func (suite *AddressServiceTestSuite) TestSetDefaultSuccess() {
-	suite.mockRepo.On("SetDefault", mock.Anything, "a1", "u1").Return(nil).Times(1)
-
-	err := suite.service.SetDefault(context.Background(), "a1", "u1")
-	suite.Nil(err)
-}
-
-func (suite *AddressServiceTestSuite) TestSetDefaultFail() {
-	suite.mockRepo.On("SetDefault", mock.Anything, "a1", "u1").Return(errors.New("not found")).Times(1)
-
-	err := suite.service.SetDefault(context.Background(), "a1", "u1")
-	suite.NotNil(err)
+func (suite *AddressServiceTestSuite) TestSetDefault() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockRepo.On("SetDefault", mock.Anything, "a1", "u1").Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			setup: func() {
+				suite.mockRepo.On("SetDefault", mock.Anything, "a1", "u1").Return(errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.service.SetDefault(context.Background(), "a1", "u1")
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }

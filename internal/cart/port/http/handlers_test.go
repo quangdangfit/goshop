@@ -47,182 +47,223 @@ func (suite *CartHandlerTestSuite) prepareContext(body any) (*gin.Context, *http
 	return c, w
 }
 
-// GetCart
-// =================================================================================================
-
-func (suite *CartHandlerTestSuite) TestGetCartSuccess() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "userID")
-
-	suite.mockService.On("GetCartByUserID", mock.Anything, "userID").
-		Return(&model.Cart{
-			ID:     "cartId1",
-			UserID: "userID",
-			Lines: []*model.CartLine{
-				{ProductID: "productId1", Quantity: 2},
+func (suite *CartHandlerTestSuite) TestGetCart() {
+	tests := []struct {
+		name      string
+		setup     func(ctx *gin.Context)
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			setup: func(ctx *gin.Context) {
+				ctx.Set("userId", "userID")
+				suite.mockService.On("GetCartByUserID", mock.Anything, "userID").
+					Return(&model.Cart{
+						ID:     "cartId1",
+						UserID: "userID",
+						Lines: []*model.CartLine{
+							{ProductID: "productId1", Quantity: 2},
+						},
+					}, nil).Times(1)
 			},
-		}, nil).Times(1)
-
-	suite.handler.GetCart(ctx)
-
-	var res response.Response
-	var cartRes dto.Cart
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&cartRes, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("cartId1", cartRes.ID)
-}
-
-func (suite *CartHandlerTestSuite) TestGetCartUnauthorized() {
-	ctx, writer := suite.prepareContext(nil)
-
-	suite.handler.GetCart(ctx)
-
-	suite.Equal(http.StatusUnauthorized, writer.Code)
-}
-
-func (suite *CartHandlerTestSuite) TestGetCartFail() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "userID")
-
-	suite.mockService.On("GetCartByUserID", mock.Anything, "userID").
-		Return(nil, errors.New("error")).Times(1)
-
-	suite.handler.GetCart(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
-}
-
-// AddProduct
-// =================================================================================================
-
-func (suite *CartHandlerTestSuite) TestAddProductSuccess() {
-	req := &dto.CartLineReq{
-		ProductID: "productId1",
-		Quantity:  2,
-	}
-
-	ctx, writer := suite.prepareContext(req)
-	ctx.Set("userId", "userID")
-
-	suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
-		UserID: "userID",
-		Line:   req,
-	}).Return(&model.Cart{
-		ID:     "cartId1",
-		UserID: "userID",
-		Lines: []*model.CartLine{
-			{ProductID: "productId1", Quantity: 2},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var cartRes dto.Cart
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&cartRes, &res.Result)
+				suite.Equal("cartId1", cartRes.ID)
+			},
 		},
-	}, nil).Times(1)
-
-	suite.handler.AddProduct(ctx)
-
-	var res response.Response
-	var cartRes dto.Cart
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&cartRes, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("cartId1", cartRes.ID)
-}
-
-func (suite *CartHandlerTestSuite) TestAddProductUnauthorized() {
-	ctx, writer := suite.prepareContext(nil)
-
-	suite.handler.AddProduct(ctx)
-
-	suite.Equal(http.StatusUnauthorized, writer.Code)
-}
-
-func (suite *CartHandlerTestSuite) TestAddProductInvalidBody() {
-	req := map[string]any{
-		"product_id": 123,
-		"quantity":   "invalid",
+		{
+			name:     "Unauthorized",
+			setup:    func(ctx *gin.Context) {},
+			expected: http.StatusUnauthorized,
+		},
+		{
+			name: "Fail",
+			setup: func(ctx *gin.Context) {
+				ctx.Set("userId", "userID")
+				suite.mockService.On("GetCartByUserID", mock.Anything, "userID").
+					Return(nil, errors.New("error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
 	}
 
-	ctx, writer := suite.prepareContext(req)
-	ctx.Set("userId", "userID")
-
-	suite.handler.AddProduct(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext(nil)
+			tc.setup(ctx)
+			suite.handler.GetCart(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
-func (suite *CartHandlerTestSuite) TestAddProductFail() {
-	req := &dto.CartLineReq{
-		ProductID: "productId1",
-		Quantity:  2,
+func (suite *CartHandlerTestSuite) TestAddProduct() {
+	tests := []struct {
+		name      string
+		body      any
+		setup     func(ctx *gin.Context)
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			body: &dto.CartLineReq{
+				ProductID: "productId1",
+				Quantity:  2,
+			},
+			setup: func(ctx *gin.Context) {
+				ctx.Set("userId", "userID")
+				suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
+					UserID: "userID",
+					Line: &dto.CartLineReq{
+						ProductID: "productId1",
+						Quantity:  2,
+					},
+				}).Return(&model.Cart{
+					ID:     "cartId1",
+					UserID: "userID",
+					Lines: []*model.CartLine{
+						{ProductID: "productId1", Quantity: 2},
+					},
+				}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var cartRes dto.Cart
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&cartRes, &res.Result)
+				suite.Equal("cartId1", cartRes.ID)
+			},
+		},
+		{
+			name:     "Unauthorized",
+			body:     nil,
+			setup:    func(ctx *gin.Context) {},
+			expected: http.StatusUnauthorized,
+		},
+		{
+			name: "InvalidBody",
+			body: map[string]any{
+				"product_id": 123,
+				"quantity":   "invalid",
+			},
+			setup: func(ctx *gin.Context) {
+				ctx.Set("userId", "userID")
+			},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name: "Fail",
+			body: &dto.CartLineReq{
+				ProductID: "productId1",
+				Quantity:  2,
+			},
+			setup: func(ctx *gin.Context) {
+				ctx.Set("userId", "userID")
+				suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
+					UserID: "userID",
+					Line: &dto.CartLineReq{
+						ProductID: "productId1",
+						Quantity:  2,
+					},
+				}).Return(nil, errors.New("error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
 	}
 
-	ctx, writer := suite.prepareContext(req)
-	ctx.Set("userId", "userID")
-
-	suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
-		UserID: "userID",
-		Line:   req,
-	}).Return(nil, errors.New("error")).Times(1)
-
-	suite.handler.AddProduct(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext(tc.body)
+			tc.setup(ctx)
+			suite.handler.AddProduct(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }
 
-// RemoveProduct
-// =================================================================================================
+func (suite *CartHandlerTestSuite) TestRemoveProduct() {
+	tests := []struct {
+		name      string
+		setup     func(ctx *gin.Context)
+		expected  int
+		checkBody func(writer *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Success",
+			setup: func(ctx *gin.Context) {
+				ctx.Set("userId", "userID")
+				ctx.AddParam("productId", "productId1")
+				suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
+					UserID:    "userID",
+					ProductID: "productId1",
+				}).Return(&model.Cart{
+					ID:     "cartId1",
+					UserID: "userID",
+					Lines:  []*model.CartLine{},
+				}, nil).Times(1)
+			},
+			expected: http.StatusOK,
+			checkBody: func(writer *httptest.ResponseRecorder) {
+				var res response.Response
+				var cartRes dto.Cart
+				_ = json.Unmarshal(writer.Body.Bytes(), &res)
+				utils.Copy(&cartRes, &res.Result)
+				suite.Equal("cartId1", cartRes.ID)
+			},
+		},
+		{
+			name: "Unauthorized",
+			setup: func(ctx *gin.Context) {
+				ctx.AddParam("productId", "productId1")
+			},
+			expected: http.StatusUnauthorized,
+		},
+		{
+			name: "MissProductID",
+			setup: func(ctx *gin.Context) {
+				ctx.Set("userId", "userID")
+			},
+			expected: http.StatusBadRequest,
+		},
+		{
+			name: "Fail",
+			setup: func(ctx *gin.Context) {
+				ctx.Set("userId", "userID")
+				ctx.AddParam("productId", "productId1")
+				suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
+					UserID:    "userID",
+					ProductID: "productId1",
+				}).Return(nil, errors.New("error")).Times(1)
+			},
+			expected: http.StatusInternalServerError,
+		},
+	}
 
-func (suite *CartHandlerTestSuite) TestRemoveProductSuccess() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "userID")
-	ctx.AddParam("productId", "productId1")
-
-	suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
-		UserID:    "userID",
-		ProductID: "productId1",
-	}).Return(&model.Cart{
-		ID:     "cartId1",
-		UserID: "userID",
-		Lines:  []*model.CartLine{},
-	}, nil).Times(1)
-
-	suite.handler.RemoveProduct(ctx)
-
-	var res response.Response
-	var cartRes dto.Cart
-	_ = json.Unmarshal(writer.Body.Bytes(), &res)
-	utils.Copy(&cartRes, &res.Result)
-	suite.Equal(http.StatusOK, writer.Code)
-	suite.Equal("cartId1", cartRes.ID)
-}
-
-func (suite *CartHandlerTestSuite) TestRemoveProductUnauthorized() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.AddParam("productId", "productId1")
-
-	suite.handler.RemoveProduct(ctx)
-
-	suite.Equal(http.StatusUnauthorized, writer.Code)
-}
-
-func (suite *CartHandlerTestSuite) TestRemoveProductMissProductID() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "userID")
-
-	suite.handler.RemoveProduct(ctx)
-
-	suite.Equal(http.StatusBadRequest, writer.Code)
-}
-
-func (suite *CartHandlerTestSuite) TestRemoveProductFail() {
-	ctx, writer := suite.prepareContext(nil)
-	ctx.Set("userId", "userID")
-	ctx.AddParam("productId", "productId1")
-
-	suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
-		UserID:    "userID",
-		ProductID: "productId1",
-	}).Return(nil, errors.New("error")).Times(1)
-
-	suite.handler.RemoveProduct(ctx)
-
-	suite.Equal(http.StatusInternalServerError, writer.Code)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			ctx, writer := suite.prepareContext(nil)
+			tc.setup(ctx)
+			suite.handler.RemoveProduct(ctx)
+			suite.Equal(tc.expected, writer.Code)
+			if tc.checkBody != nil {
+				tc.checkBody(writer)
+			}
+		})
+	}
 }

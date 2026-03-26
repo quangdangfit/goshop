@@ -31,62 +31,114 @@ func TestWishlistServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(WishlistServiceTestSuite))
 }
 
-// GetWishlist
-// =================================================================================================
-
-func (suite *WishlistServiceTestSuite) TestGetWishlistSuccess() {
-	suite.mockRepo.On("GetWishlist", mock.Anything, "u1").
-		Return([]*model.Wishlist{
-			{UserID: "u1", ProductID: "p1"},
-			{UserID: "u1", ProductID: "p2"},
-		}, nil).Times(1)
-
-	items, err := suite.service.GetWishlist(context.Background(), "u1")
-	suite.Nil(err)
-	suite.Equal(2, len(items))
+func (suite *WishlistServiceTestSuite) TestGetWishlist() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+		wantLen int
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockRepo.On("GetWishlist", mock.Anything, "u1").
+					Return([]*model.Wishlist{
+						{UserID: "u1", ProductID: "p1"},
+						{UserID: "u1", ProductID: "p2"},
+					}, nil).Times(1)
+			},
+			wantLen: 2,
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				suite.mockRepo.On("GetWishlist", mock.Anything, "u1").
+					Return(nil, errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			items, err := suite.service.GetWishlist(context.Background(), "u1")
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(items)
+			} else {
+				suite.Nil(err)
+				suite.Equal(tc.wantLen, len(items))
+			}
+		})
+	}
 }
 
-func (suite *WishlistServiceTestSuite) TestGetWishlistFail() {
-	suite.mockRepo.On("GetWishlist", mock.Anything, "u1").
-		Return(nil, errors.New("db error")).Times(1)
-
-	items, err := suite.service.GetWishlist(context.Background(), "u1")
-	suite.NotNil(err)
-	suite.Nil(items)
+func (suite *WishlistServiceTestSuite) TestAddProduct() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockRepo.On("Add", mock.Anything, "u1", "p1").Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Already exists",
+			setup: func() {
+				suite.mockRepo.On("Add", mock.Anything, "u1", "p1").Return(errors.New("already exists")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			req := &dto.AddToWishlistReq{ProductID: "p1"}
+			err := suite.service.AddProduct(context.Background(), "u1", req)
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }
 
-// AddProduct
-// =================================================================================================
-
-func (suite *WishlistServiceTestSuite) TestAddProductSuccess() {
-	req := &dto.AddToWishlistReq{ProductID: "p1"}
-	suite.mockRepo.On("Add", mock.Anything, "u1", "p1").Return(nil).Times(1)
-
-	err := suite.service.AddProduct(context.Background(), "u1", req)
-	suite.Nil(err)
-}
-
-func (suite *WishlistServiceTestSuite) TestAddProductFail() {
-	req := &dto.AddToWishlistReq{ProductID: "p1"}
-	suite.mockRepo.On("Add", mock.Anything, "u1", "p1").Return(errors.New("already exists")).Times(1)
-
-	err := suite.service.AddProduct(context.Background(), "u1", req)
-	suite.NotNil(err)
-}
-
-// RemoveProduct
-// =================================================================================================
-
-func (suite *WishlistServiceTestSuite) TestRemoveProductSuccess() {
-	suite.mockRepo.On("Remove", mock.Anything, "u1", "p1").Return(nil).Times(1)
-
-	err := suite.service.RemoveProduct(context.Background(), "u1", "p1")
-	suite.Nil(err)
-}
-
-func (suite *WishlistServiceTestSuite) TestRemoveProductFail() {
-	suite.mockRepo.On("Remove", mock.Anything, "u1", "p1").Return(errors.New("not found")).Times(1)
-
-	err := suite.service.RemoveProduct(context.Background(), "u1", "p1")
-	suite.NotNil(err)
+func (suite *WishlistServiceTestSuite) TestRemoveProduct() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockRepo.On("Remove", mock.Anything, "u1", "p1").Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			setup: func() {
+				suite.mockRepo.On("Remove", mock.Anything, "u1", "p1").Return(errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.service.RemoveProduct(context.Background(), "u1", "p1")
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }

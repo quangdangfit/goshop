@@ -12,89 +12,127 @@ func init() {
 	config.LoadConfig()
 }
 
-func TestGenerateAccessToken(t *testing.T) {
-	payload := map[string]interface{}{
-		"id":    "user-1",
-		"email": "test@example.com",
-		"role":  "customer",
+func TestGenerateToken(t *testing.T) {
+	tests := []struct {
+		name     string
+		generate func(payload map[string]interface{}) string
+		wantType string
+	}{
+		{
+			name:     "access token",
+			generate: GenerateAccessToken,
+			wantType: AccessTokenType,
+		},
+		{
+			name:     "refresh token",
+			generate: GenerateRefreshToken,
+			wantType: RefreshTokenType,
+		},
 	}
-	token := GenerateAccessToken(payload)
-	assert.NotEmpty(t, token)
-	assert.Equal(t, AccessTokenType, payload["type"])
-}
 
-func TestGenerateRefreshToken(t *testing.T) {
-	payload := map[string]interface{}{
-		"id":    "user-1",
-		"email": "test@example.com",
-		"role":  "customer",
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			payload := map[string]interface{}{
+				"id":    "user-1",
+				"email": "test@example.com",
+				"role":  "customer",
+			}
+			token := tc.generate(payload)
+			assert.NotEmpty(t, token)
+			assert.Equal(t, tc.wantType, payload["type"])
+		})
 	}
-	token := GenerateRefreshToken(payload)
-	assert.NotEmpty(t, token)
-	assert.Equal(t, RefreshTokenType, payload["type"])
 }
 
-func TestValidateToken_Success(t *testing.T) {
-	payload := map[string]interface{}{
-		"id":    "user-1",
-		"email": "test@example.com",
-		"role":  "customer",
+func TestValidateToken(t *testing.T) {
+	tests := []struct {
+		name    string
+		token   func() string
+		wantErr bool
+		wantID  string
+	}{
+		{
+			name: "valid access token",
+			token: func() string {
+				return GenerateAccessToken(map[string]interface{}{
+					"id":    "user-1",
+					"email": "test@example.com",
+					"role":  "customer",
+				})
+			},
+			wantErr: false,
+			wantID:  "user-1",
+		},
+		{
+			name: "with Bearer prefix",
+			token: func() string {
+				return "Bearer " + GenerateAccessToken(map[string]interface{}{
+					"id":   "user-2",
+					"role": "admin",
+				})
+			},
+			wantErr: false,
+			wantID:  "user-2",
+		},
+		{
+			name: "invalid token",
+			token: func() string {
+				return "invalid.token.string"
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty token",
+			token: func() string {
+				return ""
+			},
+			wantErr: true,
+		},
 	}
-	token := GenerateAccessToken(payload)
 
-	data, err := ValidateToken(token)
-	assert.NoError(t, err)
-	assert.NotNil(t, data)
-	assert.Equal(t, "user-1", data["id"])
-}
-
-func TestValidateToken_WithBearerPrefix(t *testing.T) {
-	payload := map[string]interface{}{
-		"id":   "user-2",
-		"role": "admin",
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := ValidateToken(tc.token())
+			if tc.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, data)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, data)
+				if tc.wantID != "" {
+					assert.Equal(t, tc.wantID, data["id"])
+				}
+			}
+		})
 	}
-	token := "Bearer " + GenerateAccessToken(payload)
-
-	data, err := ValidateToken(token)
-	assert.NoError(t, err)
-	assert.NotNil(t, data)
 }
 
-func TestValidateToken_InvalidToken(t *testing.T) {
-	data, err := ValidateToken("invalid.token.string")
-	assert.Error(t, err)
-	assert.Nil(t, data)
-}
+func TestGenerateToken_Returns(t *testing.T) {
+	tests := []struct {
+		name     string
+		generate func(payload map[string]interface{}) string
+	}{
+		{
+			name:     "access token returns string",
+			generate: GenerateAccessToken,
+		},
+		{
+			name:     "refresh token returns string",
+			generate: GenerateRefreshToken,
+		},
+	}
 
-func TestValidateToken_EmptyToken(t *testing.T) {
-	data, err := ValidateToken("")
-	assert.Error(t, err)
-	assert.Nil(t, data)
-}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.GetConfig()
+			orig := cfg.AuthSecret
+			defer func() { cfg.AuthSecret = orig }()
 
-func TestGenerateAccessToken_EmptySecret(t *testing.T) {
-	// Save and restore the original secret
-	cfg := config.GetConfig()
-	orig := cfg.AuthSecret
-	// Set empty secret which causes signing to fail for some algorithms
-	// (HS256 with empty key is allowed but returns a token, so test with valid config)
-	cfg.AuthSecret = orig
-	token := GenerateAccessToken(map[string]interface{}{
-		"id":   "user-1",
-		"role": "customer",
-	})
-	// Should still work with any secret (including empty)
-	assert.IsType(t, "", token)
-}
-
-func TestGenerateRefreshToken_Returns(t *testing.T) {
-	cfg := config.GetConfig()
-	orig := cfg.AuthSecret
-	defer func() { cfg.AuthSecret = orig }()
-
-	token := GenerateRefreshToken(map[string]interface{}{
-		"id":   "user-1",
-		"role": "customer",
-	})
-	assert.IsType(t, "", token)
+			token := tc.generate(map[string]interface{}{
+				"id":   "user-1",
+				"role": "customer",
+			})
+			assert.IsType(t, "", token)
+		})
+	}
 }

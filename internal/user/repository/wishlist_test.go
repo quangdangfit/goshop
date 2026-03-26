@@ -30,55 +30,106 @@ func TestWishlistRepositoryTestSuite(t *testing.T) {
 	suite.Run(t, new(WishlistRepositoryTestSuite))
 }
 
-// GetWishlist
-// =================================================================
-
-func (suite *WishlistRepositoryTestSuite) TestGetWishlistSuccess() {
-	suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
-
-	items, err := suite.repo.GetWishlist(context.Background(), "u1")
-	suite.Nil(err)
-	suite.Equal(0, len(items))
+func (suite *WishlistRepositoryTestSuite) TestGetWishlist() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			items, err := suite.repo.GetWishlist(context.Background(), "u1")
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(items)
+			} else {
+				suite.Nil(err)
+				suite.Equal(0, len(items))
+			}
+		})
+	}
 }
 
-func (suite *WishlistRepositoryTestSuite) TestGetWishlistFail() {
-	suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
-
-	items, err := suite.repo.GetWishlist(context.Background(), "u1")
-	suite.NotNil(err)
-	suite.Nil(items)
+func (suite *WishlistRepositoryTestSuite) TestAdd() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockDB.On("Create", mock.Anything, &model.Wishlist{UserID: "u1", ProductID: "p1"}).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Duplicate",
+			setup: func() {
+				suite.mockDB.On("Create", mock.Anything, &model.Wishlist{UserID: "u1", ProductID: "p1"}).Return(errors.New("duplicate")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.repo.Add(context.Background(), "u1", "p1")
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }
 
-// Add
-// =================================================================
-
-func (suite *WishlistRepositoryTestSuite) TestAddSuccess() {
-	suite.mockDB.On("Create", mock.Anything, &model.Wishlist{UserID: "u1", ProductID: "p1"}).Return(nil).Times(1)
-
-	err := suite.repo.Add(context.Background(), "u1", "p1")
-	suite.Nil(err)
-}
-
-func (suite *WishlistRepositoryTestSuite) TestAddFail() {
-	suite.mockDB.On("Create", mock.Anything, &model.Wishlist{UserID: "u1", ProductID: "p1"}).Return(errors.New("duplicate")).Times(1)
-
-	err := suite.repo.Add(context.Background(), "u1", "p1")
-	suite.NotNil(err)
-}
-
-// Remove
-// =================================================================
-
-func (suite *WishlistRepositoryTestSuite) TestRemoveSuccess() {
-	suite.mockDB.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
-
-	err := suite.repo.Remove(context.Background(), "u1", "p1")
-	suite.Nil(err)
-}
-
-func (suite *WishlistRepositoryTestSuite) TestRemoveFail() {
-	suite.mockDB.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found")).Times(1)
-
-	err := suite.repo.Remove(context.Background(), "u1", "p1")
-	suite.NotNil(err)
+func (suite *WishlistRepositoryTestSuite) TestRemove() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockDB.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			setup: func() {
+				suite.mockDB.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.repo.Remove(context.Background(), "u1", "p1")
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }

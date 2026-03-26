@@ -36,179 +36,259 @@ func TestCartHandlerTestSuite(t *testing.T) {
 // AddProduct
 // =================================================================================================
 
-func (suite *CartHandlerTestSuite) TestCartAPI_AddProductSuccess() {
-	req := &pb.AddProductReq{
-		ProductId: "productId",
-		Quantity:  2,
-	}
-
-	suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productId",
-			Quantity:  2,
-		},
-	}).Return(
-		&model.Cart{
-			UserID: "userID",
-			User: &model.User{
-				ID: "userID",
+func (suite *CartHandlerTestSuite) TestAddProduct() {
+	tests := []struct {
+		name      string
+		setup     func()
+		req       *pb.AddProductReq
+		ctx       context.Context
+		expectNil bool
+		expectErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
+					UserID: "userID",
+					Line: &dto.CartLineReq{
+						ProductID: "productId",
+						Quantity:  2,
+					},
+				}).Return(
+					&model.Cart{
+						UserID: "userID",
+						User: &model.User{
+							ID: "userID",
+						},
+						Lines: []*model.CartLine{
+							{
+								ProductID: "productId",
+								Quantity:  2,
+							},
+						},
+					},
+					nil,
+				).Times(1)
 			},
-			Lines: []*model.CartLine{
-				{
-					ProductID: "productId",
-					Quantity:  2,
-				},
+			req: &pb.AddProductReq{
+				ProductId: "productId",
+				Quantity:  2,
 			},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: false,
+			expectErr: false,
 		},
-		nil,
-	).Times(1)
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.AddProduct(ctx, req)
-
-	suite.Nil(err)
-	suite.Equal("userID", res.Cart.User.Id)
-	suite.Equal(1, len(res.Cart.Lines))
-}
-
-func (suite *CartHandlerTestSuite) TestCartAPI_AddProductFail() {
-	req := &pb.AddProductReq{
-		ProductId: "productId",
-		Quantity:  2,
+		{
+			name: "Fail",
+			setup: func() {
+				suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
+					UserID: "userID",
+					Line: &dto.CartLineReq{
+						ProductID: "productId",
+						Quantity:  2,
+					},
+				}).Return(nil, errors.New("error")).Times(1)
+			},
+			req: &pb.AddProductReq{
+				ProductId: "productId",
+				Quantity:  2,
+			},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name:  "Unauthorized",
+			setup: func() {},
+			req: &pb.AddProductReq{
+				ProductId: "productId",
+				Quantity:  2,
+			},
+			ctx:       context.Background(),
+			expectNil: true,
+			expectErr: true,
+		},
 	}
 
-	suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
-		UserID: "userID",
-		Line: &dto.CartLineReq{
-			ProductID: "productId",
-			Quantity:  2,
-		},
-	}).Return(nil, errors.New("error")).Times(1)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
 
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.AddProduct(ctx, req)
-	suite.Nil(res)
-	suite.NotNil(err)
-}
+			res, err := suite.handler.AddProduct(tc.ctx, tc.req)
 
-func (suite *CartHandlerTestSuite) TestCartAPI_AddProductUnauthorized() {
-	req := &pb.AddProductReq{
-		ProductId: "productId",
-		Quantity:  2,
+			if tc.expectErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+			if tc.expectNil {
+				suite.Nil(res)
+			} else {
+				suite.NotNil(res)
+				suite.Equal("userID", res.Cart.User.Id)
+				suite.Equal(1, len(res.Cart.Lines))
+			}
+		})
 	}
-
-	res, err := suite.handler.AddProduct(context.Background(), req)
-	suite.Nil(res)
-	suite.NotNil(err)
 }
 
 // RemoveProduct
 // =================================================================================================
 
-func (suite *CartHandlerTestSuite) TestCartAPI_RemoveProductSuccess() {
-	req := &pb.RemoveProductReq{
-		ProductId: "productId",
-	}
-
-	suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
-		UserID:    "userID",
-		ProductID: "productId",
-	}).Return(
-		&model.Cart{
-			UserID: "userID",
-			User: &model.User{
-				ID: "userID",
+func (suite *CartHandlerTestSuite) TestRemoveProduct() {
+	tests := []struct {
+		name      string
+		setup     func()
+		req       *pb.RemoveProductReq
+		ctx       context.Context
+		expectNil bool
+		expectErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
+					UserID:    "userID",
+					ProductID: "productId",
+				}).Return(
+					&model.Cart{
+						UserID: "userID",
+						User: &model.User{
+							ID: "userID",
+						},
+						Lines: []*model.CartLine{
+							{
+								ProductID: "productId1",
+								Quantity:  2,
+							},
+						},
+					},
+					nil,
+				).Times(1)
 			},
-			Lines: []*model.CartLine{
-				{
-					ProductID: "productId1",
-					Quantity:  2,
-				},
-			},
+			req:       &pb.RemoveProductReq{ProductId: "productId"},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: false,
+			expectErr: false,
 		},
-		nil,
-	).Times(1)
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.RemoveProduct(ctx, req)
-
-	suite.Nil(err)
-	suite.Equal("userID", res.Cart.User.Id)
-	suite.Equal(1, len(res.Cart.Lines))
-}
-
-func (suite *CartHandlerTestSuite) TestCartAPI_RemoveProductFail() {
-	req := &pb.RemoveProductReq{
-		ProductId: "productId",
+		{
+			name: "Fail",
+			setup: func() {
+				suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
+					UserID:    "userID",
+					ProductID: "productId",
+				}).Return(nil, errors.New("error")).Times(1)
+			},
+			req:       &pb.RemoveProductReq{ProductId: "productId"},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name:      "Unauthorized",
+			setup:     func() {},
+			req:       &pb.RemoveProductReq{ProductId: "productId"},
+			ctx:       context.Background(),
+			expectNil: true,
+			expectErr: true,
+		},
 	}
 
-	suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
-		UserID:    "userID",
-		ProductID: "productId",
-	}).Return(nil, errors.New("error")).Times(1)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
 
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.RemoveProduct(ctx, req)
-	suite.Nil(res)
-	suite.NotNil(err)
-}
+			res, err := suite.handler.RemoveProduct(tc.ctx, tc.req)
 
-func (suite *CartHandlerTestSuite) TestCartAPI_RemoveProductUnauthorized() {
-	req := &pb.RemoveProductReq{
-		ProductId: "productId",
+			if tc.expectErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+			if tc.expectNil {
+				suite.Nil(res)
+			} else {
+				suite.NotNil(res)
+				suite.Equal("userID", res.Cart.User.Id)
+				suite.Equal(1, len(res.Cart.Lines))
+			}
+		})
 	}
-
-	res, err := suite.handler.RemoveProduct(context.Background(), req)
-	suite.Nil(res)
-	suite.NotNil(err)
 }
 
 // GetCart
 // =================================================================================================
 
-func (suite *CartHandlerTestSuite) TestCartAPI_GetCartSuccess() {
-	req := &pb.GetCartReq{}
-
-	suite.mockService.On("GetCartByUserID", mock.Anything, "userID").Return(
-		&model.Cart{
-			UserID: "userID",
-			User: &model.User{
-				ID: "userID",
+func (suite *CartHandlerTestSuite) TestGetCart() {
+	tests := []struct {
+		name      string
+		setup     func()
+		ctx       context.Context
+		expectNil bool
+		expectErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockService.On("GetCartByUserID", mock.Anything, "userID").Return(
+					&model.Cart{
+						UserID: "userID",
+						User: &model.User{
+							ID: "userID",
+						},
+						Lines: []*model.CartLine{
+							{
+								ProductID: "productId1",
+								Quantity:  2,
+							},
+						},
+					},
+					nil,
+				).Times(1)
 			},
-			Lines: []*model.CartLine{
-				{
-					ProductID: "productId1",
-					Quantity:  2,
-				},
-			},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: false,
+			expectErr: false,
 		},
-		nil,
-	).Times(1)
+		{
+			name: "Fail",
+			setup: func() {
+				suite.mockService.On("GetCartByUserID", mock.Anything, "userID").Return(nil, errors.New("error")).Times(1)
+			},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name:      "Unauthorized",
+			setup:     func() {},
+			ctx:       context.Background(),
+			expectNil: true,
+			expectErr: true,
+		},
+	}
 
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.GetCart(ctx, req)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
 
-	suite.Nil(err)
-	suite.Equal("userID", res.Cart.User.Id)
-	suite.Equal(1, len(res.Cart.Lines))
-}
+			res, err := suite.handler.GetCart(tc.ctx, &pb.GetCartReq{})
 
-func (suite *CartHandlerTestSuite) TestCartAPI_GetCartFail() {
-	req := &pb.GetCartReq{}
-
-	suite.mockService.On("GetCartByUserID", mock.Anything, "userID").Return(nil, errors.New("error")).Times(1)
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.GetCart(ctx, req)
-	suite.Nil(res)
-	suite.NotNil(err)
-}
-
-func (suite *CartHandlerTestSuite) TestCartAPI_GetCartUnauthorized() {
-	req := &pb.GetCartReq{}
-
-	res, err := suite.handler.GetCart(context.Background(), req)
-	suite.Nil(res)
-	suite.NotNil(err)
+			if tc.expectErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+			if tc.expectNil {
+				suite.Nil(res)
+			} else {
+				suite.NotNil(res)
+				suite.Equal("userID", res.Cart.User.Id)
+				suite.Equal(1, len(res.Cart.Lines))
+			}
+		})
+	}
 }

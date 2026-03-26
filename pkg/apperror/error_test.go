@@ -11,45 +11,93 @@ import (
 )
 
 func TestAppError_Error(t *testing.T) {
-	err := ErrNotFound
-	assert.Equal(t, "Resource not found", err.Error())
-}
+	tests := []struct {
+		name    string
+		err     *AppError
+		wantMsg string
+	}{
+		{
+			name:    "simple error message",
+			err:     ErrNotFound,
+			wantMsg: "Resource not found",
+		},
+		{
+			name:    "error with wrapped inner error",
+			err:     Wrap(ErrNotFound, fmt.Errorf("record not found")),
+			wantMsg: "Resource not found: record not found",
+		},
+	}
 
-func TestAppError_ErrorWithWrapped(t *testing.T) {
-	inner := fmt.Errorf("record not found")
-	err := Wrap(ErrNotFound, inner)
-	assert.Equal(t, "Resource not found: record not found", err.Error())
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.wantMsg, tc.err.Error())
+		})
+	}
 }
 
 func TestAppError_Unwrap(t *testing.T) {
-	inner := fmt.Errorf("db error")
-	err := Wrap(ErrInternal, inner)
-	assert.Equal(t, inner, errors.Unwrap(err))
-}
+	tests := []struct {
+		name      string
+		err       *AppError
+		wantInner error
+	}{
+		{
+			name:      "with inner error",
+			err:       Wrap(ErrInternal, fmt.Errorf("db error")),
+			wantInner: fmt.Errorf("db error"),
+		},
+		{
+			name:      "without inner error",
+			err:       ErrNotFound,
+			wantInner: nil,
+		},
+	}
 
-func TestAppError_UnwrapNil(t *testing.T) {
-	err := ErrNotFound
-	assert.Nil(t, errors.Unwrap(err))
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			inner := errors.Unwrap(tc.err)
+			if tc.wantInner == nil {
+				assert.Nil(t, inner)
+			} else {
+				assert.Equal(t, tc.wantInner.Error(), inner.Error())
+			}
+		})
+	}
 }
 
 func TestErrorsAs(t *testing.T) {
-	inner := fmt.Errorf("db error")
-	err := Wrap(ErrNotFound, inner)
+	tests := []struct {
+		name     string
+		err      error
+		wantCode string
+		wantHTTP int
+		wantGRPC codes.Code
+	}{
+		{
+			name:     "wrapped AppError",
+			err:      Wrap(ErrNotFound, fmt.Errorf("db error")),
+			wantCode: "NOT_FOUND",
+			wantHTTP: http.StatusNotFound,
+			wantGRPC: codes.NotFound,
+		},
+		{
+			name:     "AppError wrapped in fmt.Errorf",
+			err:      fmt.Errorf("operation failed: %w", Wrap(ErrForbidden, fmt.Errorf("not owner"))),
+			wantCode: "FORBIDDEN",
+			wantHTTP: http.StatusForbidden,
+			wantGRPC: codes.PermissionDenied,
+		},
+	}
 
-	var appErr *AppError
-	assert.True(t, errors.As(err, &appErr))
-	assert.Equal(t, "NOT_FOUND", appErr.Code)
-	assert.Equal(t, http.StatusNotFound, appErr.HTTPStatus)
-	assert.Equal(t, codes.NotFound, appErr.GRPCCode)
-}
-
-func TestErrorsAs_WrappedInFmtErrorf(t *testing.T) {
-	appErr := Wrap(ErrForbidden, fmt.Errorf("not owner"))
-	wrapped := fmt.Errorf("operation failed: %w", appErr)
-
-	var target *AppError
-	assert.True(t, errors.As(wrapped, &target))
-	assert.Equal(t, "FORBIDDEN", target.Code)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var appErr *AppError
+			assert.True(t, errors.As(tc.err, &appErr))
+			assert.Equal(t, tc.wantCode, appErr.Code)
+			assert.Equal(t, tc.wantHTTP, appErr.HTTPStatus)
+			assert.Equal(t, tc.wantGRPC, appErr.GRPCCode)
+		})
+	}
 }
 
 func TestNew(t *testing.T) {

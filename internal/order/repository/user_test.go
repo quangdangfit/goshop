@@ -30,21 +30,41 @@ func TestUserRepositoryOrderTestSuite(t *testing.T) {
 	suite.Run(t, new(UserRepositoryOrderTestSuite))
 }
 
-// GetUserByID
-// =================================================================
-
-func (suite *UserRepositoryOrderTestSuite) TestGetUserByIDSuccess() {
-	suite.mockDB.On("FindById", mock.Anything, "u1", &model.User{}).Return(nil).Times(1)
-
-	user, err := suite.repo.GetUserByID(context.Background(), "u1")
-	suite.Nil(err)
-	suite.NotNil(user)
-}
-
-func (suite *UserRepositoryOrderTestSuite) TestGetUserByIDFail() {
-	suite.mockDB.On("FindById", mock.Anything, "notfound", &model.User{}).Return(errors.New("not found")).Times(1)
-
-	user, err := suite.repo.GetUserByID(context.Background(), "notfound")
-	suite.NotNil(err)
-	suite.Nil(user)
+func (suite *UserRepositoryOrderTestSuite) TestGetUserByID() {
+	tests := []struct {
+		name    string
+		id      string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			id:   "u1",
+			setup: func() {
+				suite.mockDB.On("FindById", mock.Anything, "u1", &model.User{}).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			id:   "notfound",
+			setup: func() {
+				suite.mockDB.On("FindById", mock.Anything, "notfound", &model.User{}).Return(errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			user, err := suite.repo.GetUserByID(context.Background(), tc.id)
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(user)
+			} else {
+				suite.Nil(err)
+				suite.NotNil(user)
+			}
+		})
+	}
 }

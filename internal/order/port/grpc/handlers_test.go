@@ -36,236 +36,364 @@ func TestOrderHandlerTestSuite(t *testing.T) {
 // PlaceOrder
 // =================================================================================================
 
-func (suite *OrderHandlerTestSuite) TestPlaceOrderSuccess() {
-	req := &pb.PlaceOrderReq{
-		Lines: []*pb.PlaceOrderLineReq{
-			{ProductId: "productId1", Quantity: 2},
-		},
-	}
-
-	suite.mockService.On("PlaceOrder", mock.Anything, mock.Anything).
-		Return(&model.Order{
-			ID:         "orderId1",
-			Code:       "SO-001",
-			UserID:     "userID",
-			TotalPrice: 20.0,
-			Status:     model.OrderStatusNew,
-			Lines: []*model.OrderLine{
-				{ProductID: "productId1", Quantity: 2, Price: 20.0},
+func (suite *OrderHandlerTestSuite) TestPlaceOrder() {
+	tests := []struct {
+		name      string
+		setup     func()
+		req       *pb.PlaceOrderReq
+		ctx       context.Context
+		expectNil bool
+		expectErr bool
+		validate  func(res *pb.PlaceOrderRes)
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockService.On("PlaceOrder", mock.Anything, mock.Anything).
+					Return(&model.Order{
+						ID:         "orderId1",
+						Code:       "SO-001",
+						UserID:     "userID",
+						TotalPrice: 20.0,
+						Status:     model.OrderStatusNew,
+						Lines: []*model.OrderLine{
+							{ProductID: "productId1", Quantity: 2, Price: 20.0},
+						},
+					}, nil).Times(1)
 			},
-		}, nil).Times(1)
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.PlaceOrder(ctx, req)
-
-	suite.Nil(err)
-	suite.NotNil(res)
-	suite.Equal("orderId1", res.Order.Id)
-	suite.Equal("userID", res.Order.UserId)
-	suite.Equal(1, len(res.Order.Lines))
-}
-
-func (suite *OrderHandlerTestSuite) TestPlaceOrderUnauthorized() {
-	req := &pb.PlaceOrderReq{
-		Lines: []*pb.PlaceOrderLineReq{
-			{ProductId: "productId1", Quantity: 2},
+			req: &pb.PlaceOrderReq{
+				Lines: []*pb.PlaceOrderLineReq{
+					{ProductId: "productId1", Quantity: 2},
+				},
+			},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: false,
+			expectErr: false,
+			validate: func(res *pb.PlaceOrderRes) {
+				suite.Equal("orderId1", res.Order.Id)
+				suite.Equal("userID", res.Order.UserId)
+				suite.Equal(1, len(res.Order.Lines))
+			},
+		},
+		{
+			name:  "Unauthorized",
+			setup: func() {},
+			req: &pb.PlaceOrderReq{
+				Lines: []*pb.PlaceOrderLineReq{
+					{ProductId: "productId1", Quantity: 2},
+				},
+			},
+			ctx:       context.Background(),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name: "Fail",
+			setup: func() {
+				suite.mockService.On("PlaceOrder", mock.Anything, mock.Anything).
+					Return(nil, errors.New("error")).Times(1)
+			},
+			req: &pb.PlaceOrderReq{
+				Lines: []*pb.PlaceOrderLineReq{
+					{ProductId: "productId1", Quantity: 2},
+				},
+			},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
 		},
 	}
 
-	res, err := suite.handler.PlaceOrder(context.Background(), req)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
 
-	suite.Nil(res)
-	suite.NotNil(err)
-}
+			res, err := suite.handler.PlaceOrder(tc.ctx, tc.req)
 
-func (suite *OrderHandlerTestSuite) TestPlaceOrderFail() {
-	req := &pb.PlaceOrderReq{
-		Lines: []*pb.PlaceOrderLineReq{
-			{ProductId: "productId1", Quantity: 2},
-		},
+			if tc.expectErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+			if tc.expectNil {
+				suite.Nil(res)
+			} else {
+				suite.NotNil(res)
+				if tc.validate != nil {
+					tc.validate(res)
+				}
+			}
+		})
 	}
-
-	suite.mockService.On("PlaceOrder", mock.Anything, mock.Anything).
-		Return(nil, errors.New("error")).Times(1)
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.PlaceOrder(ctx, req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
 }
 
 // GetOrderByID
 // =================================================================================================
 
-func (suite *OrderHandlerTestSuite) TestGetOrderByIDSuccess() {
-	req := &pb.GetOrderByIDReq{Id: "orderId1"}
+func (suite *OrderHandlerTestSuite) TestGetOrderByID() {
+	tests := []struct {
+		name      string
+		setup     func()
+		req       *pb.GetOrderByIDReq
+		ctx       context.Context
+		expectNil bool
+		expectErr bool
+		validate  func(res *pb.GetOrderByIDRes)
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockService.On("GetOrderByID", mock.Anything, "orderId1").
+					Return(&model.Order{
+						ID:         "orderId1",
+						Code:       "SO-001",
+						UserID:     "userID",
+						TotalPrice: 20.0,
+						Status:     model.OrderStatusNew,
+					}, nil).Times(1)
+			},
+			req:       &pb.GetOrderByIDReq{Id: "orderId1"},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: false,
+			expectErr: false,
+			validate: func(res *pb.GetOrderByIDRes) {
+				suite.Equal("orderId1", res.Order.Id)
+				suite.Equal("SO-001", res.Order.Code)
+			},
+		},
+		{
+			name:      "Unauthorized",
+			setup:     func() {},
+			req:       &pb.GetOrderByIDReq{Id: "orderId1"},
+			ctx:       context.Background(),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name:      "MissID",
+			setup:     func() {},
+			req:       &pb.GetOrderByIDReq{},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name: "Fail",
+			setup: func() {
+				suite.mockService.On("GetOrderByID", mock.Anything, "orderId1").
+					Return(nil, errors.New("error")).Times(1)
+			},
+			req:       &pb.GetOrderByIDReq{Id: "orderId1"},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
+		},
+	}
 
-	suite.mockService.On("GetOrderByID", mock.Anything, "orderId1").
-		Return(&model.Order{
-			ID:         "orderId1",
-			Code:       "SO-001",
-			UserID:     "userID",
-			TotalPrice: 20.0,
-			Status:     model.OrderStatusNew,
-		}, nil).Times(1)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
 
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.GetOrderByID(ctx, req)
+			res, err := suite.handler.GetOrderByID(tc.ctx, tc.req)
 
-	suite.Nil(err)
-	suite.NotNil(res)
-	suite.Equal("orderId1", res.Order.Id)
-	suite.Equal("SO-001", res.Order.Code)
-}
-
-func (suite *OrderHandlerTestSuite) TestGetOrderByIDUnauthorized() {
-	req := &pb.GetOrderByIDReq{Id: "orderId1"}
-
-	res, err := suite.handler.GetOrderByID(context.Background(), req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
-}
-
-func (suite *OrderHandlerTestSuite) TestGetOrderByIDMissID() {
-	req := &pb.GetOrderByIDReq{}
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.GetOrderByID(ctx, req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
-}
-
-func (suite *OrderHandlerTestSuite) TestGetOrderByIDFail() {
-	req := &pb.GetOrderByIDReq{Id: "orderId1"}
-
-	suite.mockService.On("GetOrderByID", mock.Anything, "orderId1").
-		Return(nil, errors.New("error")).Times(1)
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.GetOrderByID(ctx, req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
+			if tc.expectErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+			if tc.expectNil {
+				suite.Nil(res)
+			} else {
+				suite.NotNil(res)
+				if tc.validate != nil {
+					tc.validate(res)
+				}
+			}
+		})
+	}
 }
 
 // GetMyOrders
 // =================================================================================================
 
-func (suite *OrderHandlerTestSuite) TestGetMyOrdersSuccess() {
-	req := &pb.GetMyOrdersReq{
-		Status: "new",
-		Page:   1,
-		Limit:  10,
+func (suite *OrderHandlerTestSuite) TestGetMyOrders() {
+	tests := []struct {
+		name      string
+		setup     func()
+		req       *pb.GetMyOrdersReq
+		ctx       context.Context
+		expectNil bool
+		expectErr bool
+		validate  func(res *pb.GetMyOrdersRes)
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockService.On("GetMyOrders", mock.Anything, mock.Anything).
+					Return(
+						[]*model.Order{
+							{
+								ID:         "orderId1",
+								Code:       "SO-001",
+								UserID:     "userID",
+								TotalPrice: 20.0,
+								Status:     model.OrderStatusNew,
+							},
+						},
+						&paging.Pagination{
+							Total:       1,
+							CurrentPage: 1,
+							Limit:       10,
+						},
+						nil,
+					).Times(1)
+			},
+			req: &pb.GetMyOrdersReq{
+				Status: "new",
+				Page:   1,
+				Limit:  10,
+			},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: false,
+			expectErr: false,
+			validate: func(res *pb.GetMyOrdersRes) {
+				suite.Equal(1, len(res.Orders))
+				suite.Equal("orderId1", res.Orders[0].Id)
+				suite.Equal(int64(1), res.Total)
+				suite.Equal(int64(1), res.CurrentPage)
+				suite.Equal(int64(10), res.Limit)
+			},
+		},
+		{
+			name:      "Unauthorized",
+			setup:     func() {},
+			req:       &pb.GetMyOrdersReq{},
+			ctx:       context.Background(),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name: "Fail",
+			setup: func() {
+				suite.mockService.On("GetMyOrders", mock.Anything, mock.Anything).
+					Return(nil, nil, errors.New("error")).Times(1)
+			},
+			req:       &pb.GetMyOrdersReq{},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
+		},
 	}
 
-	suite.mockService.On("GetMyOrders", mock.Anything, mock.Anything).
-		Return(
-			[]*model.Order{
-				{
-					ID:         "orderId1",
-					Code:       "SO-001",
-					UserID:     "userID",
-					TotalPrice: 20.0,
-					Status:     model.OrderStatusNew,
-				},
-			},
-			&paging.Pagination{
-				Total:       1,
-				CurrentPage: 1,
-				Limit:       10,
-			},
-			nil,
-		).Times(1)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
 
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.GetMyOrders(ctx, req)
+			res, err := suite.handler.GetMyOrders(tc.ctx, tc.req)
 
-	suite.Nil(err)
-	suite.NotNil(res)
-	suite.Equal(1, len(res.Orders))
-	suite.Equal("orderId1", res.Orders[0].Id)
-	suite.Equal(int64(1), res.Total)
-	suite.Equal(int64(1), res.CurrentPage)
-	suite.Equal(int64(10), res.Limit)
-}
-
-func (suite *OrderHandlerTestSuite) TestGetMyOrdersUnauthorized() {
-	req := &pb.GetMyOrdersReq{}
-
-	res, err := suite.handler.GetMyOrders(context.Background(), req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
-}
-
-func (suite *OrderHandlerTestSuite) TestGetMyOrdersFail() {
-	req := &pb.GetMyOrdersReq{}
-
-	suite.mockService.On("GetMyOrders", mock.Anything, mock.Anything).
-		Return(nil, nil, errors.New("error")).Times(1)
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.GetMyOrders(ctx, req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
+			if tc.expectErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+			if tc.expectNil {
+				suite.Nil(res)
+			} else {
+				suite.NotNil(res)
+				if tc.validate != nil {
+					tc.validate(res)
+				}
+			}
+		})
+	}
 }
 
 // CancelOrder
 // =================================================================================================
 
-func (suite *OrderHandlerTestSuite) TestCancelOrderSuccess() {
-	req := &pb.CancelOrderReq{Id: "orderId1"}
+func (suite *OrderHandlerTestSuite) TestCancelOrder() {
+	tests := []struct {
+		name      string
+		setup     func()
+		req       *pb.CancelOrderReq
+		ctx       context.Context
+		expectNil bool
+		expectErr bool
+		validate  func(res *pb.CancelOrderRes)
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockService.On("CancelOrder", mock.Anything, "orderId1", "userID").
+					Return(&model.Order{
+						ID:         "orderId1",
+						Code:       "SO-001",
+						UserID:     "userID",
+						TotalPrice: 20.0,
+						Status:     model.OrderStatusCancelled,
+					}, nil).Times(1)
+			},
+			req:       &pb.CancelOrderReq{Id: "orderId1"},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: false,
+			expectErr: false,
+			validate: func(res *pb.CancelOrderRes) {
+				suite.Equal("orderId1", res.Order.Id)
+				suite.Equal(string(model.OrderStatusCancelled), res.Order.Status)
+			},
+		},
+		{
+			name:      "Unauthorized",
+			setup:     func() {},
+			req:       &pb.CancelOrderReq{Id: "orderId1"},
+			ctx:       context.Background(),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name:      "MissID",
+			setup:     func() {},
+			req:       &pb.CancelOrderReq{},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
+		},
+		{
+			name: "Fail",
+			setup: func() {
+				suite.mockService.On("CancelOrder", mock.Anything, "orderId1", "userID").
+					Return(nil, errors.New("error")).Times(1)
+			},
+			req:       &pb.CancelOrderReq{Id: "orderId1"},
+			ctx:       context.WithValue(context.Background(), "userId", "userID"),
+			expectNil: true,
+			expectErr: true,
+		},
+	}
 
-	suite.mockService.On("CancelOrder", mock.Anything, "orderId1", "userID").
-		Return(&model.Order{
-			ID:         "orderId1",
-			Code:       "SO-001",
-			UserID:     "userID",
-			TotalPrice: 20.0,
-			Status:     model.OrderStatusCancelled,
-		}, nil).Times(1)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
 
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.CancelOrder(ctx, req)
+			res, err := suite.handler.CancelOrder(tc.ctx, tc.req)
 
-	suite.Nil(err)
-	suite.NotNil(res)
-	suite.Equal("orderId1", res.Order.Id)
-	suite.Equal(string(model.OrderStatusCancelled), res.Order.Status)
-}
-
-func (suite *OrderHandlerTestSuite) TestCancelOrderUnauthorized() {
-	req := &pb.CancelOrderReq{Id: "orderId1"}
-
-	res, err := suite.handler.CancelOrder(context.Background(), req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
-}
-
-func (suite *OrderHandlerTestSuite) TestCancelOrderMissID() {
-	req := &pb.CancelOrderReq{}
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.CancelOrder(ctx, req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
-}
-
-func (suite *OrderHandlerTestSuite) TestCancelOrderFail() {
-	req := &pb.CancelOrderReq{Id: "orderId1"}
-
-	suite.mockService.On("CancelOrder", mock.Anything, "orderId1", "userID").
-		Return(nil, errors.New("error")).Times(1)
-
-	ctx := context.WithValue(context.Background(), "userId", "userID")
-	res, err := suite.handler.CancelOrder(ctx, req)
-
-	suite.Nil(res)
-	suite.NotNil(err)
+			if tc.expectErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+			if tc.expectNil {
+				suite.Nil(res)
+			} else {
+				suite.NotNil(res)
+				if tc.validate != nil {
+					tc.validate(res)
+				}
+			}
+		})
+	}
 }

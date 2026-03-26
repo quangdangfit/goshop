@@ -14,59 +14,83 @@ import (
 )
 
 func TestJSON(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
+	tests := []struct {
+		name   string
+		status int
+		data   interface{}
+	}{
+		{
+			name:   "with data",
+			status: http.StatusOK,
+			data:   map[string]string{"key": "value"},
+		},
+		{
+			name:   "nil data",
+			status: http.StatusNotFound,
+			data:   nil,
+		},
+	}
 
-	JSON(c, http.StatusOK, map[string]string{"key": "value"})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gin.SetMode(gin.TestMode)
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+			JSON(c, tc.status, tc.data)
 
-	var resp Response
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.NoError(t, err)
+			assert.Equal(t, tc.status, w.Code)
+
+			var resp Response
+			err := json.Unmarshal(w.Body.Bytes(), &resp)
+			assert.NoError(t, err)
+		})
+	}
 }
 
-func TestJSON_NilData(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
+func TestError(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     int
+		err        error
+		message    string
+		production bool
+	}{
+		{
+			name:       "non-production includes debug info",
+			status:     http.StatusBadRequest,
+			err:        fmt.Errorf("something went wrong"),
+			message:    "Bad Request",
+			production: false,
+		},
+		{
+			name:       "production hides debug info",
+			status:     http.StatusInternalServerError,
+			err:        fmt.Errorf("internal error"),
+			message:    "Internal Server Error",
+			production: true,
+		},
+	}
 
-	JSON(c, http.StatusNotFound, nil)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gin.SetMode(gin.TestMode)
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
 
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
+			if tc.production {
+				origEnv := config.GetConfig().Environment
+				config.GetConfig().Environment = config.ProductionEnv
+				defer func() { config.GetConfig().Environment = origEnv }()
+			}
 
-func TestError_NonProduction(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
+			Error(c, tc.status, tc.err, tc.message)
 
-	// Non-production env includes debug info
-	Error(c, http.StatusBadRequest, fmt.Errorf("something went wrong"), "Bad Request")
+			assert.Equal(t, tc.status, w.Code)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-
-	var resp Response
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.NoError(t, err)
-}
-
-func TestError_Production(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-
-	// Set production env
-	origEnv := config.GetConfig().Environment
-	config.GetConfig().Environment = config.ProductionEnv
-	defer func() { config.GetConfig().Environment = origEnv }()
-
-	Error(c, http.StatusInternalServerError, fmt.Errorf("internal error"), "Internal Server Error")
-
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-	var resp Response
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.NoError(t, err)
+			var resp Response
+			err := json.Unmarshal(w.Body.Bytes(), &resp)
+			assert.NoError(t, err)
+		})
+	}
 }

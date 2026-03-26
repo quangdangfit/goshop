@@ -9,45 +9,72 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestGRPCStatus_Method(t *testing.T) {
-	err := ErrNotFound.GRPCStatus()
-	st, ok := status.FromError(err)
-	assert.True(t, ok)
-	assert.Equal(t, codes.NotFound, st.Code())
-	assert.Equal(t, "Resource not found", st.Message())
+func TestGRPCStatus(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      *AppError
+		wantCode codes.Code
+		wantMsg  string
+	}{
+		{
+			name:     "simple AppError",
+			err:      ErrNotFound,
+			wantCode: codes.NotFound,
+			wantMsg:  "Resource not found",
+		},
+		{
+			name:     "wrapped AppError",
+			err:      Wrap(ErrNotFound, fmt.Errorf("record not found")),
+			wantCode: codes.NotFound,
+			wantMsg:  "Resource not found",
+		},
+		{
+			name:     "custom message",
+			err:      WrapMessage(ErrBadRequest, nil, "ID is required"),
+			wantCode: codes.InvalidArgument,
+			wantMsg:  "ID is required",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.err.GRPCStatus()
+			st, ok := status.FromError(err)
+			assert.True(t, ok)
+			assert.Equal(t, tc.wantCode, st.Code())
+			assert.Equal(t, tc.wantMsg, st.Message())
+		})
+	}
 }
 
-func TestGRPCStatus_MethodOnWrapped(t *testing.T) {
-	inner := fmt.Errorf("record not found")
-	appErr := Wrap(ErrNotFound, inner)
-	err := appErr.GRPCStatus()
+func TestToGRPCStatus(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		wantCode codes.Code
+		wantMsg  string
+	}{
+		{
+			name:     "with AppError",
+			err:      ErrNotFound,
+			wantCode: codes.NotFound,
+			wantMsg:  "Resource not found",
+		},
+		{
+			name:     "with plain error",
+			err:      fmt.Errorf("something broke"),
+			wantCode: codes.Internal,
+			wantMsg:  "something broke",
+		},
+	}
 
-	st, ok := status.FromError(err)
-	assert.True(t, ok)
-	assert.Equal(t, codes.NotFound, st.Code())
-	assert.Equal(t, "Resource not found", st.Message())
-}
-
-func TestToGRPCStatus_WithAppError(t *testing.T) {
-	err := ToGRPCStatus(ErrNotFound)
-	st, ok := status.FromError(err)
-	assert.True(t, ok)
-	assert.Equal(t, codes.NotFound, st.Code())
-	assert.Equal(t, "Resource not found", st.Message())
-}
-
-func TestToGRPCStatus_WithPlainError(t *testing.T) {
-	err := ToGRPCStatus(fmt.Errorf("something broke"))
-	st, ok := status.FromError(err)
-	assert.True(t, ok)
-	assert.Equal(t, codes.Internal, st.Code())
-	assert.Equal(t, "something broke", st.Message())
-}
-
-func TestGRPCStatus_WithCustomMessage(t *testing.T) {
-	err := WrapMessage(ErrBadRequest, nil, "ID is required").GRPCStatus()
-	st, ok := status.FromError(err)
-	assert.True(t, ok)
-	assert.Equal(t, codes.InvalidArgument, st.Code())
-	assert.Equal(t, "ID is required", st.Message())
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ToGRPCStatus(tc.err)
+			st, ok := status.FromError(err)
+			assert.True(t, ok)
+			assert.Equal(t, tc.wantCode, st.Code())
+			assert.Equal(t, tc.wantMsg, st.Message())
+		})
+	}
 }

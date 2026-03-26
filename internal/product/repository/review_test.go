@@ -49,136 +49,239 @@ func TestReviewRepositoryTestSuite(t *testing.T) {
 	suite.Run(t, new(ReviewRepositoryTestSuite))
 }
 
-// ListByProduct
-// =================================================================
-
-func (suite *ReviewRepositoryTestSuite) TestListByProductSuccess() {
-	suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
-	suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
-
-	reviews, pg, err := suite.repo.ListByProduct(context.Background(), "p1", 1, 10)
-	suite.Nil(err)
-	suite.Equal(0, len(reviews))
-	suite.NotNil(pg)
+func (suite *ReviewRepositoryTestSuite) TestListByProduct() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
+				suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Count fail",
+			setup: func() {
+				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Find fail",
+			setup: func() {
+				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
+				suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			reviews, pg, err := suite.repo.ListByProduct(context.Background(), "p1", 1, 10)
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(reviews)
+				suite.Nil(pg)
+			} else {
+				suite.Nil(err)
+				suite.Equal(0, len(reviews))
+				suite.NotNil(pg)
+			}
+		})
+	}
 }
 
-func (suite *ReviewRepositoryTestSuite) TestListByProductCountFail() {
-	suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
-
-	reviews, pg, err := suite.repo.ListByProduct(context.Background(), "p1", 1, 10)
-	suite.NotNil(err)
-	suite.Nil(reviews)
-	suite.Nil(pg)
+func (suite *ReviewRepositoryTestSuite) TestGetByID() {
+	tests := []struct {
+		name    string
+		id      string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			id:   "r1",
+			setup: func() {
+				suite.mockDB.On("FindById", mock.Anything, "r1", &model.Review{}).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			id:   "notfound",
+			setup: func() {
+				suite.mockDB.On("FindById", mock.Anything, "notfound", &model.Review{}).Return(errors.New("not found")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			review, err := suite.repo.GetByID(context.Background(), tc.id)
+			if tc.wantErr {
+				suite.NotNil(err)
+				suite.Nil(review)
+			} else {
+				suite.Nil(err)
+				suite.NotNil(review)
+			}
+		})
+	}
 }
 
-func (suite *ReviewRepositoryTestSuite) TestListByProductFindFail() {
-	suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
-	suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
-
-	reviews, pg, err := suite.repo.ListByProduct(context.Background(), "p1", 1, 10)
-	suite.NotNil(err)
-	suite.Nil(reviews)
-	suite.Nil(pg)
+func (suite *ReviewRepositoryTestSuite) TestCreate() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockDB.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				suite.mockDB.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			review := &model.Review{ProductID: "p1", UserID: "u1", Rating: 5}
+			err := suite.repo.Create(context.Background(), review)
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }
 
-// GetByID
-// =================================================================
-
-func (suite *ReviewRepositoryTestSuite) TestGetByIDSuccess() {
-	suite.mockDB.On("FindById", mock.Anything, "r1", &model.Review{}).Return(nil).Times(1)
-
-	review, err := suite.repo.GetByID(context.Background(), "r1")
-	suite.Nil(err)
-	suite.NotNil(review)
+func (suite *ReviewRepositoryTestSuite) TestUpdate() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockDB.On("Update", mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				suite.mockDB.On("Update", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			review := &model.Review{ID: "r1", Rating: 4, Comment: "Updated"}
+			err := suite.repo.Update(context.Background(), review)
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }
 
-func (suite *ReviewRepositoryTestSuite) TestGetByIDFail() {
-	suite.mockDB.On("FindById", mock.Anything, "notfound", &model.Review{}).Return(errors.New("not found")).Times(1)
-
-	review, err := suite.repo.GetByID(context.Background(), "notfound")
-	suite.NotNil(err)
-	suite.Nil(review)
+func (suite *ReviewRepositoryTestSuite) TestDelete() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				suite.mockDB.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
+			},
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				suite.mockDB.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.repo.Delete(context.Background(), "r1", "u1")
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
 }
 
-// Create
-// =================================================================
-
-func (suite *ReviewRepositoryTestSuite) TestCreateSuccess() {
-	review := &model.Review{ProductID: "p1", UserID: "u1", Rating: 5}
-	suite.mockDB.On("Create", mock.Anything, review).Return(nil).Times(1)
-
-	err := suite.repo.Create(context.Background(), review)
-	suite.Nil(err)
-}
-
-func (suite *ReviewRepositoryTestSuite) TestCreateFail() {
-	review := &model.Review{ProductID: "p1", UserID: "u1", Rating: 5}
-	suite.mockDB.On("Create", mock.Anything, review).Return(errors.New("db error")).Times(1)
-
-	err := suite.repo.Create(context.Background(), review)
-	suite.NotNil(err)
-}
-
-// Update
-// =================================================================
-
-func (suite *ReviewRepositoryTestSuite) TestUpdateSuccess() {
-	review := &model.Review{ID: "r1", Rating: 4, Comment: "Updated"}
-	suite.mockDB.On("Update", mock.Anything, review).Return(nil).Times(1)
-
-	err := suite.repo.Update(context.Background(), review)
-	suite.Nil(err)
-}
-
-func (suite *ReviewRepositoryTestSuite) TestUpdateFail() {
-	review := &model.Review{ID: "r1", Rating: 4, Comment: "Updated"}
-	suite.mockDB.On("Update", mock.Anything, review).Return(errors.New("db error")).Times(1)
-
-	err := suite.repo.Update(context.Background(), review)
-	suite.NotNil(err)
-}
-
-// Delete
-// =================================================================
-
-func (suite *ReviewRepositoryTestSuite) TestDeleteSuccess() {
-	suite.mockDB.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
-
-	err := suite.repo.Delete(context.Background(), "r1", "u1")
-	suite.Nil(err)
-}
-
-func (suite *ReviewRepositoryTestSuite) TestDeleteFail() {
-	suite.mockDB.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
-
-	err := suite.repo.Delete(context.Background(), "r1", "u1")
-	suite.NotNil(err)
-}
-
-// GetAggregates
-// =================================================================
-
-func (suite *ReviewRepositoryTestSuite) TestGetAggregatesSuccess() {
-	gormDB, sqlMock := newReviewSQLMockGormDB(suite.T())
-	sqlMock.ExpectQuery(".*").
-		WillReturnRows(sqlmock.NewRows([]string{"avg", "count"}).AddRow(4.5, 10))
-
-	suite.mockDB.On("GetDB").Return(gormDB).Times(1)
-
-	avg, count, err := suite.repo.GetAggregates(context.Background(), "p1")
-	suite.Nil(err)
-	suite.Equal(float64(4.5), avg)
-	suite.Equal(10, count)
-}
-
-func (suite *ReviewRepositoryTestSuite) TestGetAggregatesFail() {
-	gormDB, sqlMock := newReviewSQLMockGormDB(suite.T())
-	sqlMock.ExpectQuery(".*").WillReturnError(errors.New("db error"))
-
-	suite.mockDB.On("GetDB").Return(gormDB).Times(1)
-
-	avg, count, err := suite.repo.GetAggregates(context.Background(), "p1")
-	suite.NotNil(err)
-	suite.Equal(float64(0), avg)
-	suite.Equal(0, count)
+func (suite *ReviewRepositoryTestSuite) TestGetAggregates() {
+	tests := []struct {
+		name      string
+		setup     func()
+		wantErr   bool
+		wantAvg   float64
+		wantCount int
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				gormDB, sqlMock := newReviewSQLMockGormDB(suite.T())
+				sqlMock.ExpectQuery(".*").
+					WillReturnRows(sqlmock.NewRows([]string{"avg", "count"}).AddRow(4.5, 10))
+				suite.mockDB.On("GetDB").Return(gormDB).Times(1)
+			},
+			wantAvg:   4.5,
+			wantCount: 10,
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				gormDB, sqlMock := newReviewSQLMockGormDB(suite.T())
+				sqlMock.ExpectQuery(".*").WillReturnError(errors.New("db error"))
+				suite.mockDB.On("GetDB").Return(gormDB).Times(1)
+			},
+			wantErr:   true,
+			wantAvg:   0,
+			wantCount: 0,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			avg, count, err := suite.repo.GetAggregates(context.Background(), "p1")
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+			suite.Equal(tc.wantAvg, avg)
+			suite.Equal(tc.wantCount, count)
+		})
+	}
 }
