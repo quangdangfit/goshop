@@ -1,6 +1,12 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
@@ -59,15 +65,35 @@ func main() {
 		Database: cfg.RedisDB,
 	})
 
+	httpSvr := httpServer.NewServer(validator, db, cache)
+	grpcSvr := grpcServer.NewServer(validator, db, cache)
+
 	go func() {
-		httpSvr := httpServer.NewServer(validator, db, cache)
-		if err = httpSvr.Run(); err != nil {
+		if err := httpSvr.Run(); err != nil {
 			logger.Fatal(err)
 		}
 	}()
 
-	grpcSvr := grpcServer.NewServer(validator, db, cache)
-	if err = grpcSvr.Run(); err != nil {
-		logger.Fatal(err)
+	go func() {
+		if err := grpcSvr.Run(); err != nil {
+			logger.Fatal(err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	logger.Info("Shutting down servers...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	grpcSvr.Shutdown()
+
+	if err := httpSvr.Shutdown(ctx); err != nil {
+		logger.Error("HTTP server forced to shutdown: ", err)
 	}
+
+	logger.Info("Servers exited gracefully")
 }

@@ -45,7 +45,7 @@ func NewServer(validator validation.Validation, db dbs.Database, cache redis.Red
 	}
 }
 
-func (s Server) Run() error {
+func (s *Server) Run() error {
 	userGRPC.RegisterHandlers(s.engine, s.db, s.validator)
 	cartGRPC.RegisterHandlers(s.engine, s.db, s.validator)
 	productGRPC.RegisterHandlers(s.engine, s.db, s.validator)
@@ -68,4 +68,9 @@ func (s Server) Run() error {
 	}
 
 	return nil
+}
+
+func (s *Server) Shutdown() {
+	logger.Info("Shutting down gRPC server...")
+	s.engine.GracefulStop()
 }

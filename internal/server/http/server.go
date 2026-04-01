@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,6 +26,7 @@ import (
 
 type Server struct {
 	engine    *gin.Engine
+	httpSvr   *http.Server
 	cfg       *config.Schema
 	validator validation.Validation
 	db        dbs.Database
@@ -41,7 +43,7 @@ func NewServer(validator validation.Validation, db dbs.Database, cache redis.Red
 	}
 }
 
-func (s Server) Run() error {
+func (s *Server) Run() error {
 	_ = s.engine.SetTrustedProxies(nil)
 	if s.cfg.Environment == config.ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
@@ -59,20 +61,30 @@ func (s Server) Run() error {
 		return
 	})
 
+	s.httpSvr = &http.Server{
+		Addr:    fmt.Sprintf(":%d", s.cfg.HttpPort),
+		Handler: s.engine,
+	}
+
 	// Start http server
 	logger.Info("HTTP server is listening on PORT: ", s.cfg.HttpPort)
-	if err := s.engine.Run(fmt.Sprintf(":%d", s.cfg.HttpPort)); err != nil {
+	if err := s.httpSvr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Running HTTP server: %v", err)
 	}
 
 	return nil
 }
 
-func (s Server) GetEngine() *gin.Engine {
+func (s *Server) Shutdown(ctx context.Context) error {
+	logger.Info("Shutting down HTTP server...")
+	return s.httpSvr.Shutdown(ctx)
+}
+
+func (s *Server) GetEngine() *gin.Engine {
 	return s.engine
 }
 
-func (s Server) MapRoutes() error {
+func (s *Server) MapRoutes() error {
 	v1 := s.engine.Group("/api/v1")
 	userHttp.Routes(v1, s.db, s.validator)
 	productHttp.Routes(v1, s.db, s.validator, s.cache)
