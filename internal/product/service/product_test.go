@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository/mocks"
 	"goshop/pkg/config"
@@ -103,7 +103,7 @@ func (suite *ProductServiceTestSuite) TestListProducts() {
 		suite.Run(tc.name, func() {
 			suite.SetupTest()
 			tc.setup()
-			req := &dto.ListProductReq{Name: "product"}
+			req := &domain.ListProductReq{Name: "product"}
 			products, pagination, err := suite.service.ListProducts(context.Background(), req)
 			if tc.wantErr {
 				suite.Nil(products)
@@ -123,20 +123,20 @@ func (suite *ProductServiceTestSuite) TestListProducts() {
 func (suite *ProductServiceTestSuite) TestCreate() {
 	tests := []struct {
 		name    string
-		req     *dto.CreateProductReq
+		req     *domain.CreateProductReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.CreateProductReq{Name: "product", Description: "product description", Price: 1.1},
+			req:  &domain.CreateProductReq{Name: "product", Description: "product description", Price: 1.1},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
 			},
 		},
 		{
 			name: "DB fail",
-			req:  &dto.CreateProductReq{Name: "product", Description: "product description", Price: 1.1},
+			req:  &domain.CreateProductReq{Name: "product", Description: "product description", Price: 1.1},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)
 			},
@@ -144,7 +144,7 @@ func (suite *ProductServiceTestSuite) TestCreate() {
 		},
 		{
 			name:    "Missing product name",
-			req:     &dto.CreateProductReq{Description: "product description", Price: 1.1},
+			req:     &domain.CreateProductReq{Description: "product description", Price: 1.1},
 			setup:   func() {},
 			wantErr: true,
 		},
@@ -171,13 +171,13 @@ func (suite *ProductServiceTestSuite) TestCreate() {
 func (suite *ProductServiceTestSuite) TestUpdate() {
 	tests := []struct {
 		name    string
-		req     *dto.UpdateProductReq
+		req     *domain.UpdateProductReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.UpdateProductReq{Name: "product", Description: "product description", Price: 1.1},
+			req:  &domain.UpdateProductReq{Name: "product", Description: "product description", Price: 1.1},
 			setup: func() {
 				suite.mockRepo.On("GetProductByID", mock.Anything, "productID").
 					Return(&model.Product{Name: "product", Description: "product description", Price: 1.1}, nil).Times(1)
@@ -186,7 +186,7 @@ func (suite *ProductServiceTestSuite) TestUpdate() {
 		},
 		{
 			name: "Update DB fail",
-			req:  &dto.UpdateProductReq{Name: "product", Description: "product description", Price: 1.1},
+			req:  &domain.UpdateProductReq{Name: "product", Description: "product description", Price: 1.1},
 			setup: func() {
 				suite.mockRepo.On("GetProductByID", mock.Anything, "productID").
 					Return(&model.Product{Name: "product", Description: "product description", Price: 1.1}, nil).Times(1)
@@ -196,13 +196,13 @@ func (suite *ProductServiceTestSuite) TestUpdate() {
 		},
 		{
 			name:    "Invalid price",
-			req:     &dto.UpdateProductReq{Name: "product", Description: "product description", Price: -1.1},
+			req:     &domain.UpdateProductReq{Name: "product", Description: "product description", Price: -1.1},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "GetProductByID fail",
-			req:  &dto.UpdateProductReq{Name: "product", Description: "product description", Price: 1.1},
+			req:  &domain.UpdateProductReq{Name: "product", Description: "product description", Price: 1.1},
 			setup: func() {
 				suite.mockRepo.On("GetProductByID", mock.Anything, "productID").
 					Return(nil, errors.New("error")).Times(1)

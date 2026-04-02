@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	"goshop/pkg/paging"
 
@@ -127,7 +127,7 @@ func (_c *OrderRepository_CreateOrder_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // GetMyOrders provides a mock function for the type OrderRepository
-func (_mock *OrderRepository) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
+func (_mock *OrderRepository) GetMyOrders(ctx context.Context, req *domain.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -137,24 +137,24 @@ func (_mock *OrderRepository) GetMyOrders(ctx context.Context, req *dto.ListOrde
 	var r0 []*model.Order
 	var r1 *paging.Pagination
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.ListOrderReq) ([]*model.Order, *paging.Pagination, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.ListOrderReq) []*model.Order); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.ListOrderReq) []*model.Order); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*model.Order)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.ListOrderReq) *paging.Pagination); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.ListOrderReq) *paging.Pagination); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*paging.Pagination)
 		}
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, *dto.ListOrderReq) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, *domain.ListOrderReq) error); ok {
 		r2 = returnFunc(ctx, req)
 	} else {
 		r2 = ret.Error(2)
@@ -169,20 +169,20 @@ type OrderRepository_GetMyOrders_Call struct {
 
 // GetMyOrders is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *dto.ListOrderReq
+//   - req *domain.ListOrderReq
 func (_e *OrderRepository_Expecter) GetMyOrders(ctx interface{}, req interface{}) *OrderRepository_GetMyOrders_Call {
 	return &OrderRepository_GetMyOrders_Call{Call: _e.mock.On("GetMyOrders", ctx, req)}
 }
 
-func (_c *OrderRepository_GetMyOrders_Call) Run(run func(ctx context.Context, req *dto.ListOrderReq)) *OrderRepository_GetMyOrders_Call {
+func (_c *OrderRepository_GetMyOrders_Call) Run(run func(ctx context.Context, req *domain.ListOrderReq)) *OrderRepository_GetMyOrders_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.ListOrderReq
+		var arg1 *domain.ListOrderReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.ListOrderReq)
+			arg1 = args[1].(*domain.ListOrderReq)
 		}
 		run(
 			arg0,
@@ -197,7 +197,7 @@ func (_c *OrderRepository_GetMyOrders_Call) Return(orders []*model.Order, pagina
 	return _c
 }
 
-func (_c *OrderRepository_GetMyOrders_Call) RunAndReturn(run func(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error)) *OrderRepository_GetMyOrders_Call {
+func (_c *OrderRepository_GetMyOrders_Call) RunAndReturn(run func(ctx context.Context, req *domain.ListOrderReq) ([]*model.Order, *paging.Pagination, error)) *OrderRepository_GetMyOrders_Call {
 	_c.Call.Return(run)
 	return _c
 }

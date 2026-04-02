@@ -5,7 +5,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/user/dto"
+	"goshop/internal/user/domain"
 	"goshop/internal/user/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
@@ -25,7 +25,7 @@ func NewUserHandler(service service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes, error) {
-	user, accessToken, refreshToken, err := h.service.Login(ctx, &dto.LoginReq{
+	user, accessToken, refreshToken, err := h.service.Login(ctx, &domain.LoginReq{
 		Email:    req.Email,
 		Password: req.Password,
 	})
@@ -42,7 +42,7 @@ func (h *UserHandler) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes
 }
 
 func (h *UserHandler) Register(ctx context.Context, req *pb.RegisterReq) (*pb.RegisterRes, error) {
-	user, err := h.service.Register(ctx, &dto.RegisterReq{
+	user, err := h.service.Register(ctx, &domain.RegisterReq{
 		Email:    req.Email,
 		Password: req.Password,
 	})
@@ -97,7 +97,7 @@ func (h *UserHandler) ChangePassword(ctx context.Context, req *pb.ChangePassword
 		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
-	err := h.service.ChangePassword(ctx, userID, &dto.ChangePasswordReq{
+	err := h.service.ChangePassword(ctx, userID, &domain.ChangePasswordReq{
 		Password:    req.Password,
 		NewPassword: req.NewPassword,
 	})

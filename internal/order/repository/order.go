@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	"goshop/pkg/dbs"
 	"goshop/pkg/paging"
@@ -14,7 +14,7 @@ import (
 type OrderRepository interface {
 	CreateOrder(ctx context.Context, userID string, lines []*model.OrderLine, couponCode string, discountAmount float64) (*model.Order, error)
 	GetOrderByID(ctx context.Context, id string, preload bool) (*model.Order, error)
-	GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error)
+	GetMyOrders(ctx context.Context, req *domain.ListOrderReq) ([]*model.Order, *paging.Pagination, error)
 	UpdateOrder(ctx context.Context, order *model.Order) error
 }
 
@@ -85,7 +85,7 @@ func (r *orderRepo) GetOrderByID(ctx context.Context, id string, preload bool) (
 	return &order, nil
 }
 
-func (r *orderRepo) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
+func (r *orderRepo) GetMyOrders(ctx context.Context, req *domain.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
 	query := []dbs.Query{
 		dbs.NewQuery("user_id = ?", req.UserID),
 	}

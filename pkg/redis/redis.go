@@ -70,10 +70,7 @@ func (r *redis) IsConnected() bool {
 	}
 
 	_, err := r.cmd.Ping(ctx).Result()
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func (r *redis) Get(key string, value interface{}) error {

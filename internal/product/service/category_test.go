@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository/mocks"
 	"goshop/pkg/config"
@@ -117,26 +117,26 @@ func (suite *CategoryServiceTestSuite) TestGetCategoryByID() {
 func (suite *CategoryServiceTestSuite) TestCreate() {
 	tests := []struct {
 		name    string
-		req     *dto.CreateCategoryReq
+		req     *domain.CreateCategoryReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.CreateCategoryReq{Name: "Electronics", Slug: "electronics"},
+			req:  &domain.CreateCategoryReq{Name: "Electronics", Slug: "electronics"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
 			},
 		},
 		{
 			name:    "Validation fail",
-			req:     &dto.CreateCategoryReq{},
+			req:     &domain.CreateCategoryReq{},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "DB fail",
-			req:  &dto.CreateCategoryReq{Name: "Electronics", Slug: "electronics"},
+			req:  &domain.CreateCategoryReq{Name: "Electronics", Slug: "electronics"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
 			},
@@ -164,14 +164,14 @@ func (suite *CategoryServiceTestSuite) TestUpdate() {
 	tests := []struct {
 		name    string
 		id      string
-		req     *dto.UpdateCategoryReq
+		req     *domain.UpdateCategoryReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
 			id:   "cat1",
-			req:  &dto.UpdateCategoryReq{Name: "Updated Electronics"},
+			req:  &domain.UpdateCategoryReq{Name: "Updated Electronics"},
 			setup: func() {
 				suite.mockRepo.On("GetByID", mock.Anything, "cat1").
 					Return(&model.Category{ID: "cat1", Name: "Electronics"}, nil).Times(1)
@@ -181,7 +181,7 @@ func (suite *CategoryServiceTestSuite) TestUpdate() {
 		{
 			name: "GetByID fail",
 			id:   "notfound",
-			req:  &dto.UpdateCategoryReq{Name: "Updated"},
+			req:  &domain.UpdateCategoryReq{Name: "Updated"},
 			setup: func() {
 				suite.mockRepo.On("GetByID", mock.Anything, "notfound").
 					Return(nil, errors.New("not found")).Times(1)
@@ -191,7 +191,7 @@ func (suite *CategoryServiceTestSuite) TestUpdate() {
 		{
 			name: "DB fail",
 			id:   "cat1",
-			req:  &dto.UpdateCategoryReq{Name: "Updated Electronics"},
+			req:  &domain.UpdateCategoryReq{Name: "Updated Electronics"},
 			setup: func() {
 				suite.mockRepo.On("GetByID", mock.Anything, "cat1").
 					Return(&model.Category{ID: "cat1", Name: "Electronics"}, nil).Times(1)

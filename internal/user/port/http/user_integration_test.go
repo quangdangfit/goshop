@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/pkg/jtoken"
 
@@ -18,12 +18,12 @@ import (
 
 func TestUserAPI_LoginSuccess(t *testing.T) {
 	requireIntegration(t)
-	dbTest.Create(context.Background(), &model.User{
+	_ = dbTest.Create(context.Background(), &model.User{
 		Email:    "login@test.com",
 		Password: "test123456",
 	})
 
-	user := &dto.LoginReq{
+	user := &domain.LoginReq{
 		Email:    "login@test.com",
 		Password: "test123456",
 	}
@@ -46,7 +46,7 @@ func TestUserAPI_LoginInvalidFieldType(t *testing.T) {
 
 func TestUserAPI_LoginInvalidEmailFormat(t *testing.T) {
 	requireIntegration(t)
-	user := &dto.LoginReq{
+	user := &domain.LoginReq{
 		Email:    "invalid",
 		Password: "test123456",
 	}
@@ -59,7 +59,7 @@ func TestUserAPI_LoginInvalidEmailFormat(t *testing.T) {
 
 func TestUserAPI_LoginInvalidPassword(t *testing.T) {
 	requireIntegration(t)
-	user := &dto.LoginReq{
+	user := &domain.LoginReq{
 		Email:    "test@test.com",
 		Password: "test",
 	}
@@ -72,7 +72,7 @@ func TestUserAPI_LoginInvalidPassword(t *testing.T) {
 
 func TestUserAPI_LoginUserNotFound(t *testing.T) {
 	requireIntegration(t)
-	user := &dto.LoginReq{
+	user := &domain.LoginReq{
 		Email:    "notfound@test.com",
 		Password: "test123456",
 	}
@@ -85,7 +85,7 @@ func TestUserAPI_LoginUserNotFound(t *testing.T) {
 
 func TestUserAPI_LoginUserWrongPassword(t *testing.T) {
 	requireIntegration(t)
-	user := &dto.LoginReq{
+	user := &domain.LoginReq{
 		Email:    "test@test.com",
 		Password: "test1234567",
 	}
@@ -103,7 +103,7 @@ func TestUserAPI_RegisterSuccess(t *testing.T) {
 	requireIntegration(t)
 	defer cleanData()
 
-	user := &dto.RegisterReq{
+	user := &domain.RegisterReq{
 		Email:    "register@test.com",
 		Password: "test123456",
 	}
@@ -154,7 +154,7 @@ func TestUserAPI_RegisterEmailExist(t *testing.T) {
 	requireIntegration(t)
 	defer cleanData()
 
-	dbTest.Create(context.Background(), &model.User{
+	_ = dbTest.Create(context.Background(), &model.User{
 		Email:    "emailexist@test.com",
 		Password: "password",
 	})
@@ -259,13 +259,13 @@ func TestUserAPI_ChangePasswordSuccess(t *testing.T) {
 	defer cleanData()
 
 	user := model.User{Email: "changepassword1@gmail.com", Password: "123456"}
-	dbTest.Create(context.Background(), &user)
+	_ = dbTest.Create(context.Background(), &user)
 
 	token := jtoken.GenerateAccessToken(map[string]interface{}{
 		"id": user.ID,
 	})
 
-	req := &dto.ChangePasswordReq{
+	req := &domain.ChangePasswordReq{
 		Password:    "123456",
 		NewPassword: "new123456",
 	}
@@ -276,7 +276,7 @@ func TestUserAPI_ChangePasswordSuccess(t *testing.T) {
 
 func TestUserAPI_ChangePasswordUnauthorized(t *testing.T) {
 	requireIntegration(t)
-	req := &dto.ChangePasswordReq{
+	req := &domain.ChangePasswordReq{
 		Password:    "123456",
 		NewPassword: "new123456",
 	}
@@ -287,7 +287,7 @@ func TestUserAPI_ChangePasswordUnauthorized(t *testing.T) {
 
 func TestUserAPI_ChangePasswordIsWrong(t *testing.T) {
 	requireIntegration(t)
-	req := &dto.ChangePasswordReq{
+	req := &domain.ChangePasswordReq{
 		Password:    "wrong123456",
 		NewPassword: "new123456",
 	}
@@ -301,7 +301,7 @@ func TestUserAPI_ChangePasswordIsWrong(t *testing.T) {
 
 func TestUserAPI_ChangePasswordInvalidNewPassword(t *testing.T) {
 	requireIntegration(t)
-	req := &dto.ChangePasswordReq{
+	req := &domain.ChangePasswordReq{
 		Password:    "test123456",
 		NewPassword: "new",
 	}

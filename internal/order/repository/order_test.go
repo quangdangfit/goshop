@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs/mocks"
@@ -201,13 +201,13 @@ func (suite *OrderRepositoryTestSuite) TestGetOrderByID() {
 func (suite *OrderRepositoryTestSuite) TestGetMyOrders() {
 	tests := []struct {
 		name    string
-		req     *dto.ListOrderReq
+		req     *domain.ListOrderReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req: &dto.ListOrderReq{
+			req: &domain.ListOrderReq{
 				UserID: "userId", Code: "code", Status: "new",
 				Page: 2, Limit: 10, OrderBy: "name", OrderDesc: true,
 			},
@@ -218,7 +218,7 @@ func (suite *OrderRepositoryTestSuite) TestGetMyOrders() {
 		},
 		{
 			name: "Count fail",
-			req:  &dto.ListOrderReq{},
+			req:  &domain.ListOrderReq{},
 			setup: func() {
 				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)
 			},
@@ -226,7 +226,7 @@ func (suite *OrderRepositoryTestSuite) TestGetMyOrders() {
 		},
 		{
 			name: "Find fail",
-			req:  &dto.ListOrderReq{},
+			req:  &domain.ListOrderReq{},
 			setup: func() {
 				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
 				suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)

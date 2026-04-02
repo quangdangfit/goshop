@@ -23,7 +23,7 @@ func newOrderProductSQLMockGormDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		t.Fatalf("failed to create sql mock: %v", err)
 	}
-	t.Cleanup(func() { sqlDB.Close() })
+	t.Cleanup(func() { _ = sqlDB.Close() })
 	gormDB, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{
 		SkipDefaultTransaction: true,
 	})

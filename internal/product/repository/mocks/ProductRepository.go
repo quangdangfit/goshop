@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/pkg/paging"
 
@@ -229,7 +229,7 @@ func (_c *ProductRepository_GetProductByID_Call) RunAndReturn(run func(ctx conte
 }
 
 // ListProducts provides a mock function for the type ProductRepository
-func (_mock *ProductRepository) ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
+func (_mock *ProductRepository) ListProducts(ctx context.Context, req *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -239,24 +239,24 @@ func (_mock *ProductRepository) ListProducts(ctx context.Context, req *dto.ListP
 	var r0 []*model.Product
 	var r1 *paging.Pagination
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.ListProductReq) []*model.Product); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.ListProductReq) []*model.Product); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*model.Product)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.ListProductReq) *paging.Pagination); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.ListProductReq) *paging.Pagination); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*paging.Pagination)
 		}
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, *dto.ListProductReq) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, *domain.ListProductReq) error); ok {
 		r2 = returnFunc(ctx, req)
 	} else {
 		r2 = ret.Error(2)
@@ -276,15 +276,15 @@ func (_e *ProductRepository_Expecter) ListProducts(ctx interface{}, req interfac
 	return &ProductRepository_ListProducts_Call{Call: _e.mock.On("ListProducts", ctx, req)}
 }
 
-func (_c *ProductRepository_ListProducts_Call) Run(run func(ctx context.Context, req *dto.ListProductReq)) *ProductRepository_ListProducts_Call {
+func (_c *ProductRepository_ListProducts_Call) Run(run func(ctx context.Context, req *domain.ListProductReq)) *ProductRepository_ListProducts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.ListProductReq
+		var arg1 *domain.ListProductReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.ListProductReq)
+			arg1 = args[1].(*domain.ListProductReq)
 		}
 		run(
 			arg0,
@@ -299,7 +299,7 @@ func (_c *ProductRepository_ListProducts_Call) Return(products []*model.Product,
 	return _c
 }
 
-func (_c *ProductRepository_ListProducts_Call) RunAndReturn(run func(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)) *ProductRepository_ListProducts_Call {
+func (_c *ProductRepository_ListProducts_Call) RunAndReturn(run func(ctx context.Context, req *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error)) *ProductRepository_ListProducts_Call {
 	_c.Call.Return(run)
 	return _c
 }

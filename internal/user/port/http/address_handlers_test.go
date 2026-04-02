@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	srvMocks "goshop/internal/user/service/mocks"
 	"goshop/pkg/config"
@@ -70,7 +70,7 @@ func (suite *AddressHandlerTestSuite) TestListAddresses() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var addresses []*dto.Address
+				var addresses []*domain.Address
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&addresses, &res.Result)
 				suite.Equal(2, len(addresses))
@@ -133,7 +133,7 @@ func (suite *AddressHandlerTestSuite) TestGetAddressByID() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var address dto.Address
+				var address domain.Address
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&address, &res.Result)
 				suite.Equal("a1", address.ID)
@@ -197,16 +197,16 @@ func (suite *AddressHandlerTestSuite) TestCreateAddress() {
 	}{
 		{
 			name:   "Success",
-			body:   &dto.CreateAddressReq{Street: "123 Main St", City: "Springfield"},
+			body:   &domain.CreateAddressReq{Street: "123 Main St", City: "Springfield"},
 			userId: "u1",
 			setup: func() {
-				suite.mockService.On("Create", mock.Anything, "u1", &dto.CreateAddressReq{Street: "123 Main St", City: "Springfield"}).
+				suite.mockService.On("Create", mock.Anything, "u1", &domain.CreateAddressReq{Street: "123 Main St", City: "Springfield"}).
 					Return(&model.Address{ID: "a1", UserID: "u1", Street: "123 Main St"}, nil).Times(1)
 			},
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var address dto.Address
+				var address domain.Address
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&address, &res.Result)
 				suite.Equal("a1", address.ID)
@@ -214,7 +214,7 @@ func (suite *AddressHandlerTestSuite) TestCreateAddress() {
 		},
 		{
 			name:     "Unauthorized",
-			body:     &dto.CreateAddressReq{Street: "123 Main St"},
+			body:     &domain.CreateAddressReq{Street: "123 Main St"},
 			userId:   "",
 			setup:    func() {},
 			expected: http.StatusUnauthorized,
@@ -228,10 +228,10 @@ func (suite *AddressHandlerTestSuite) TestCreateAddress() {
 		},
 		{
 			name:   "Fail",
-			body:   &dto.CreateAddressReq{Street: "123 Main St", City: "Springfield"},
+			body:   &domain.CreateAddressReq{Street: "123 Main St", City: "Springfield"},
 			userId: "u1",
 			setup: func() {
-				suite.mockService.On("Create", mock.Anything, "u1", &dto.CreateAddressReq{Street: "123 Main St", City: "Springfield"}).
+				suite.mockService.On("Create", mock.Anything, "u1", &domain.CreateAddressReq{Street: "123 Main St", City: "Springfield"}).
 					Return(nil, errors.New("db error")).Times(1)
 			},
 			expected: http.StatusInternalServerError,
@@ -270,17 +270,17 @@ func (suite *AddressHandlerTestSuite) TestUpdateAddress() {
 	}{
 		{
 			name:   "Success",
-			body:   &dto.UpdateAddressReq{Street: "789 Elm St"},
+			body:   &domain.UpdateAddressReq{Street: "789 Elm St"},
 			userId: "u1",
 			params: gin.Params{{Key: "id", Value: "a1"}},
 			setup: func() {
-				suite.mockService.On("Update", mock.Anything, "a1", "u1", &dto.UpdateAddressReq{Street: "789 Elm St"}).
+				suite.mockService.On("Update", mock.Anything, "a1", "u1", &domain.UpdateAddressReq{Street: "789 Elm St"}).
 					Return(&model.Address{ID: "a1", UserID: "u1", Street: "789 Elm St"}, nil).Times(1)
 			},
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var address dto.Address
+				var address domain.Address
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&address, &res.Result)
 				suite.Equal("a1", address.ID)
@@ -288,7 +288,7 @@ func (suite *AddressHandlerTestSuite) TestUpdateAddress() {
 		},
 		{
 			name:     "Unauthorized",
-			body:     &dto.UpdateAddressReq{Street: "789 Elm St"},
+			body:     &domain.UpdateAddressReq{Street: "789 Elm St"},
 			userId:   "",
 			setup:    func() {},
 			expected: http.StatusUnauthorized,
@@ -303,11 +303,11 @@ func (suite *AddressHandlerTestSuite) TestUpdateAddress() {
 		},
 		{
 			name:   "Fail",
-			body:   &dto.UpdateAddressReq{Street: "789 Elm St"},
+			body:   &domain.UpdateAddressReq{Street: "789 Elm St"},
 			userId: "u1",
 			params: gin.Params{{Key: "id", Value: "a1"}},
 			setup: func() {
-				suite.mockService.On("Update", mock.Anything, "a1", "u1", &dto.UpdateAddressReq{Street: "789 Elm St"}).
+				suite.mockService.On("Update", mock.Anything, "a1", "u1", &domain.UpdateAddressReq{Street: "789 Elm St"}).
 					Return(nil, errors.New("not found")).Times(1)
 			},
 			expected: http.StatusInternalServerError,

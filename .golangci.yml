@@ -1,0 +1,46 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - goshop
+  exclusions:
+    paths:
+      - docs
+      - proto/gen
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - unconvert
+    - unparam
+    - gosec
+  settings:
+    gosec:
+      excludes:
+        - G101
+    staticcheck:
+      checks:
+        - "all"
+        - "-SA1029"
+        - "-ST1000"
+        - "-ST1003"
+        - "-ST1021"
+  exclusions:
+    generated: strict
+    paths:
+      - docs
+      - proto/gen

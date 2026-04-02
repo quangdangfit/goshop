@@ -7,7 +7,7 @@ import (
 	"github.com/quangdangfit/gocommon/validation"
 
 	"goshop/internal/cart/repository"
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	orderRepo "goshop/internal/order/repository"
 	"goshop/pkg/apperror"
@@ -18,9 +18,9 @@ import (
 
 //go:generate mockery --name=OrderService
 type OrderService interface {
-	PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (*model.Order, error)
+	PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq) (*model.Order, error)
 	GetOrderByID(ctx context.Context, id string) (*model.Order, error)
-	GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error)
+	GetMyOrders(ctx context.Context, req *domain.ListOrderReq) ([]*model.Order, *paging.Pagination, error)
 	CancelOrder(ctx context.Context, orderID, userID string) (*model.Order, error)
 	UpdateOrderStatus(ctx context.Context, orderID string, status model.OrderStatus) (*model.Order, error)
 }
@@ -55,7 +55,7 @@ func NewOrderService(
 	}
 }
 
-func (s *orderService) PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (*model.Order, error) {
+func (s *orderService) PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq) (*model.Order, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *dto.PlaceOrderReq) (
 
 	// Decrement stock (best effort — non-blocking)
 	for _, line := range lines {
-		if err := s.productRepo.DecrementStock(ctx, line.ProductID, int(line.Quantity)); err != nil {
+		if err := s.productRepo.DecrementStock(ctx, line.ProductID, int(line.Quantity)); err != nil { //nolint:gosec // quantity is bounded by business logic
 			logger.Errorf("Failed to decrement stock for product %s: %s", line.ProductID, err)
 		}
 	}
@@ -139,7 +139,7 @@ func (s *orderService) GetOrderByID(ctx context.Context, id string) (*model.Orde
 	return order, nil
 }
 
-func (s *orderService) GetMyOrders(ctx context.Context, req *dto.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
+func (s *orderService) GetMyOrders(ctx context.Context, req *domain.ListOrderReq) ([]*model.Order, *paging.Pagination, error) {
 	orders, pagination, err := s.repo.GetMyOrders(ctx, req)
 	if err != nil {
 		return nil, nil, err

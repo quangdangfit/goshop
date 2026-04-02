@@ -5,7 +5,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
@@ -41,7 +41,7 @@ func (h *ProductHandler) GetProductByID(ctx context.Context, req *pb.GetProductB
 }
 
 func (h *ProductHandler) ListProducts(ctx context.Context, req *pb.ListProductsReq) (*pb.ListProductsRes, error) {
-	products, pagination, err := h.service.ListProducts(ctx, &dto.ListProductReq{
+	products, pagination, err := h.service.ListProducts(ctx, &domain.ListProductReq{
 		Name:      req.Name,
 		Code:      req.Code,
 		Page:      req.Page,
@@ -65,7 +65,7 @@ func (h *ProductHandler) ListProducts(ctx context.Context, req *pb.ListProductsR
 }
 
 func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProductReq) (*pb.CreateProductRes, error) {
-	product, err := h.service.Create(ctx, &dto.CreateProductReq{
+	product, err := h.service.Create(ctx, &domain.CreateProductReq{
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       float64(req.Price),
@@ -85,7 +85,7 @@ func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProduc
 		return nil, apperror.WrapMessage(apperror.ErrBadRequest, nil, "ID is required").GRPCStatus()
 	}
 
-	product, err := h.service.Update(ctx, req.Id, &dto.UpdateProductReq{
+	product, err := h.service.Update(ctx, req.Id, &domain.UpdateProductReq{
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       float64(req.Price),

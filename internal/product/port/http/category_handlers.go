@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
@@ -28,7 +28,7 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res []*dto.Category
+	var res []*domain.Category
 	utils.Copy(&res, &categories)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -44,13 +44,13 @@ func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 		apperror.Wrap(apperror.ErrNotFound, err).HTTPError(c)
 		return
 	}
-	var res dto.Category
+	var res domain.Category
 	utils.Copy(&res, category)
 	response.JSON(c, http.StatusOK, res)
 }
 
 func (h *CategoryHandler) CreateCategory(c *gin.Context) {
-	var req dto.CreateCategoryReq
+	var req domain.CreateCategoryReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
@@ -61,14 +61,14 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res dto.Category
+	var res domain.Category
 	utils.Copy(&res, category)
 	response.JSON(c, http.StatusOK, res)
 }
 
 func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 	id := c.Param("id")
-	var req dto.UpdateCategoryReq
+	var req domain.UpdateCategoryReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
@@ -78,7 +78,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res dto.Category
+	var res domain.Category
 	utils.Copy(&res, category)
 	response.JSON(c, http.StatusOK, res)
 }

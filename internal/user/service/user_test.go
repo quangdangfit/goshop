@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/internal/user/repository/mocks"
 	"goshop/pkg/config"
@@ -37,7 +37,7 @@ func TestUserServiceTestSuite(t *testing.T) {
 func (suite *UserServiceTestSuite) TestLogin() {
 	tests := []struct {
 		name      string
-		req       *dto.LoginReq
+		req       *domain.LoginReq
 		setup     func()
 		wantUser  bool
 		wantToken bool
@@ -45,7 +45,7 @@ func (suite *UserServiceTestSuite) TestLogin() {
 	}{
 		{
 			name: "Success",
-			req:  &dto.LoginReq{Email: "test@test.com", Password: "test123456"},
+			req:  &domain.LoginReq{Email: "test@test.com", Password: "test123456"},
 			setup: func() {
 				suite.mockRepo.On("GetUserByEmail", mock.Anything, "test@test.com").
 					Return(&model.User{
@@ -58,7 +58,7 @@ func (suite *UserServiceTestSuite) TestLogin() {
 		},
 		{
 			name: "GetUserByEmail fail",
-			req:  &dto.LoginReq{Email: "test@test.com", Password: "test123456"},
+			req:  &domain.LoginReq{Email: "test@test.com", Password: "test123456"},
 			setup: func() {
 				suite.mockRepo.On("GetUserByEmail", mock.Anything, "test@test.com").
 					Return(nil, errors.New("error")).Times(1)
@@ -67,13 +67,13 @@ func (suite *UserServiceTestSuite) TestLogin() {
 		},
 		{
 			name:    "Invalid email format",
-			req:     &dto.LoginReq{Email: "email", Password: "test123456"},
+			req:     &domain.LoginReq{Email: "email", Password: "test123456"},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "Wrong password",
-			req:  &dto.LoginReq{Email: "test@test.com", Password: "test123456"},
+			req:  &domain.LoginReq{Email: "test@test.com", Password: "test123456"},
 			setup: func() {
 				suite.mockRepo.On("GetUserByEmail", mock.Anything, "test@test.com").
 					Return(&model.User{Email: "test@test.com", Password: "password"}, nil).Times(1)
@@ -107,20 +107,20 @@ func (suite *UserServiceTestSuite) TestLogin() {
 func (suite *UserServiceTestSuite) TestRegister() {
 	tests := []struct {
 		name    string
-		req     *dto.RegisterReq
+		req     *domain.RegisterReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.RegisterReq{Email: "test@test.com", Password: "test123456"},
+			req:  &domain.RegisterReq{Email: "test@test.com", Password: "test123456"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
 			},
 		},
 		{
 			name: "Create fail",
-			req:  &dto.RegisterReq{Email: "test@test.com", Password: "test123456"},
+			req:  &domain.RegisterReq{Email: "test@test.com", Password: "test123456"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)
 			},
@@ -128,7 +128,7 @@ func (suite *UserServiceTestSuite) TestRegister() {
 		},
 		{
 			name:    "Invalid email format",
-			req:     &dto.RegisterReq{Email: "email", Password: "test123456"},
+			req:     &domain.RegisterReq{Email: "email", Password: "test123456"},
 			setup:   func() {},
 			wantErr: true,
 		},
@@ -230,13 +230,13 @@ func (suite *UserServiceTestSuite) TestRefreshToken() {
 func (suite *UserServiceTestSuite) TestChangePassword() {
 	tests := []struct {
 		name    string
-		req     *dto.ChangePasswordReq
+		req     *domain.ChangePasswordReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.ChangePasswordReq{Password: "password", NewPassword: "newPassword"},
+			req:  &domain.ChangePasswordReq{Password: "password", NewPassword: "newPassword"},
 			setup: func() {
 				suite.mockRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(&model.User{
@@ -248,7 +248,7 @@ func (suite *UserServiceTestSuite) TestChangePassword() {
 		},
 		{
 			name: "GetUserByID fail",
-			req:  &dto.ChangePasswordReq{Password: "password", NewPassword: "newPassword"},
+			req:  &domain.ChangePasswordReq{Password: "password", NewPassword: "newPassword"},
 			setup: func() {
 				suite.mockRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(nil, errors.New("error")).Times(1)
@@ -257,13 +257,13 @@ func (suite *UserServiceTestSuite) TestChangePassword() {
 		},
 		{
 			name:    "Missing required field",
-			req:     &dto.ChangePasswordReq{Password: "password", NewPassword: ""},
+			req:     &domain.ChangePasswordReq{Password: "password", NewPassword: ""},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "Wrong current password",
-			req:  &dto.ChangePasswordReq{Password: "password1", NewPassword: "newPassword"},
+			req:  &domain.ChangePasswordReq{Password: "password1", NewPassword: "newPassword"},
 			setup: func() {
 				suite.mockRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(&model.User{
@@ -275,7 +275,7 @@ func (suite *UserServiceTestSuite) TestChangePassword() {
 		},
 		{
 			name: "Update fail",
-			req:  &dto.ChangePasswordReq{Password: "password", NewPassword: "newPassword"},
+			req:  &domain.ChangePasswordReq{Password: "password", NewPassword: "newPassword"},
 			setup: func() {
 				suite.mockRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(&model.User{

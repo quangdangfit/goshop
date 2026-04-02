@@ -1,4 +1,4 @@
-package dto
+package domain
 
 import "time"
 

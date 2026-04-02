@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	orderMocks "goshop/internal/order/repository/mocks"
 	"goshop/pkg/config"
@@ -78,26 +78,26 @@ func (suite *CouponServiceTestSuite) TestGetByCode() {
 func (suite *CouponServiceTestSuite) TestCreate() {
 	tests := []struct {
 		name    string
-		req     *dto.CreateCouponReq
+		req     *domain.CreateCouponReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.CreateCouponReq{Code: "SAVE10", DiscountType: "fixed", DiscountValue: 10},
+			req:  &domain.CreateCouponReq{Code: "SAVE10", DiscountType: "fixed", DiscountValue: 10},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
 			},
 		},
 		{
 			name:    "Validation fail",
-			req:     &dto.CreateCouponReq{},
+			req:     &domain.CreateCouponReq{},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "DB fail",
-			req:  &dto.CreateCouponReq{Code: "SAVE10", DiscountType: "fixed", DiscountValue: 10},
+			req:  &domain.CreateCouponReq{Code: "SAVE10", DiscountType: "fixed", DiscountValue: 10},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("duplicate")).Times(1)
 			},

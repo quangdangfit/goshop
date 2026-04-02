@@ -6,7 +6,7 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository"
 	"goshop/pkg/paging"
@@ -15,10 +15,10 @@ import (
 
 //go:generate mockery --name=ProductService
 type ProductService interface {
-	ListProducts(c context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)
+	ListProducts(c context.Context, req *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error)
 	GetProductByID(ctx context.Context, id string) (*model.Product, error)
-	Create(ctx context.Context, req *dto.CreateProductReq) (*model.Product, error)
-	Update(ctx context.Context, id string, req *dto.UpdateProductReq) (*model.Product, error)
+	Create(ctx context.Context, req *domain.CreateProductReq) (*model.Product, error)
+	Update(ctx context.Context, id string, req *domain.UpdateProductReq) (*model.Product, error)
 }
 
 type productSvc struct {
@@ -45,7 +45,7 @@ func (p *productSvc) GetProductByID(ctx context.Context, id string) (*model.Prod
 	return product, nil
 }
 
-func (p *productSvc) ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
+func (p *productSvc) ListProducts(ctx context.Context, req *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
 	products, pagination, err := p.repo.ListProducts(ctx, req)
 	if err != nil {
 		return nil, nil, err
@@ -54,7 +54,7 @@ func (p *productSvc) ListProducts(ctx context.Context, req *dto.ListProductReq) 
 	return products, pagination, nil
 }
 
-func (p *productSvc) Create(ctx context.Context, req *dto.CreateProductReq) (*model.Product, error) {
+func (p *productSvc) Create(ctx context.Context, req *domain.CreateProductReq) (*model.Product, error) {
 	if err := p.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (p *productSvc) Create(ctx context.Context, req *dto.CreateProductReq) (*mo
 	return &product, nil
 }
 
-func (p *productSvc) Update(ctx context.Context, id string, req *dto.UpdateProductReq) (*model.Product, error) {
+func (p *productSvc) Update(ctx context.Context, id string, req *domain.UpdateProductReq) (*model.Product, error) {
 	if err := p.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	srvMocks "goshop/internal/product/service/mocks"
 	"goshop/pkg/config"
@@ -70,7 +70,7 @@ func (suite *CategoryHandlerTestSuite) TestListCategories() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var categories []*dto.Category
+				var categories []*domain.Category
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&categories, &res.Result)
 				suite.Equal(2, len(categories))
@@ -127,7 +127,7 @@ func (suite *CategoryHandlerTestSuite) TestGetCategoryByID() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var category dto.Category
+				var category domain.Category
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&category, &res.Result)
 				suite.Equal("c1", category.ID)
@@ -181,13 +181,13 @@ func (suite *CategoryHandlerTestSuite) TestCreateCategory() {
 	}{
 		{
 			name: "Success",
-			body: &dto.CreateCategoryReq{
+			body: &domain.CreateCategoryReq{
 				Name:        "Electronics",
 				Slug:        "electronics",
 				Description: "Electronic devices",
 			},
 			setup: func() {
-				suite.mockService.On("Create", mock.Anything, &dto.CreateCategoryReq{
+				suite.mockService.On("Create", mock.Anything, &domain.CreateCategoryReq{
 					Name:        "Electronics",
 					Slug:        "electronics",
 					Description: "Electronic devices",
@@ -202,7 +202,7 @@ func (suite *CategoryHandlerTestSuite) TestCreateCategory() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var category dto.Category
+				var category domain.Category
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&category, &res.Result)
 				suite.Equal("c1", category.ID)
@@ -221,12 +221,12 @@ func (suite *CategoryHandlerTestSuite) TestCreateCategory() {
 		},
 		{
 			name: "Fail",
-			body: &dto.CreateCategoryReq{
+			body: &domain.CreateCategoryReq{
 				Name: "Electronics",
 				Slug: "electronics",
 			},
 			setup: func() {
-				suite.mockService.On("Create", mock.Anything, &dto.CreateCategoryReq{
+				suite.mockService.On("Create", mock.Anything, &domain.CreateCategoryReq{
 					Name: "Electronics",
 					Slug: "electronics",
 				}).
@@ -267,13 +267,13 @@ func (suite *CategoryHandlerTestSuite) TestUpdateCategory() {
 	}{
 		{
 			name: "Success",
-			body: &dto.UpdateCategoryReq{
+			body: &domain.UpdateCategoryReq{
 				Name:        "Updated Electronics",
 				Description: "Updated description",
 			},
 			params: gin.Params{{Key: "id", Value: "c1"}},
 			setup: func() {
-				suite.mockService.On("Update", mock.Anything, "c1", &dto.UpdateCategoryReq{
+				suite.mockService.On("Update", mock.Anything, "c1", &domain.UpdateCategoryReq{
 					Name:        "Updated Electronics",
 					Description: "Updated description",
 				}).
@@ -287,7 +287,7 @@ func (suite *CategoryHandlerTestSuite) TestUpdateCategory() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var category dto.Category
+				var category domain.Category
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&category, &res.Result)
 				suite.Equal("c1", category.ID)
@@ -305,12 +305,12 @@ func (suite *CategoryHandlerTestSuite) TestUpdateCategory() {
 		},
 		{
 			name: "Fail",
-			body: &dto.UpdateCategoryReq{
+			body: &domain.UpdateCategoryReq{
 				Name: "Updated Electronics",
 			},
 			params: gin.Params{{Key: "id", Value: "c1"}},
 			setup: func() {
-				suite.mockService.On("Update", mock.Anything, "c1", &dto.UpdateCategoryReq{
+				suite.mockService.On("Update", mock.Anything, "c1", &domain.UpdateCategoryReq{
 					Name: "Updated Electronics",
 				}).
 					Return(nil, errors.New("not found")).Times(1)

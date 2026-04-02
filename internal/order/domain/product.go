@@ -1,4 +1,4 @@
-package dto
+package domain
 
 type Product struct {
 	ID    string  `json:"id"`

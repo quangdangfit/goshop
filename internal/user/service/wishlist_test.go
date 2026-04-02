@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/internal/user/repository/mocks"
 	"goshop/pkg/config"
@@ -98,7 +98,7 @@ func (suite *WishlistServiceTestSuite) TestAddProduct() {
 		suite.Run(tc.name, func() {
 			suite.SetupTest()
 			tc.setup()
-			req := &dto.AddToWishlistReq{ProductID: "p1"}
+			req := &domain.AddToWishlistReq{ProductID: "p1"}
 			err := suite.service.AddProduct(context.Background(), "u1", req)
 			if tc.wantErr {
 				suite.NotNil(err)

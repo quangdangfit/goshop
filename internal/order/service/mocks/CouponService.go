@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 
 	mock "github.com/stretchr/testify/mock"
@@ -120,7 +120,7 @@ func (_c *CouponService_Apply_Call) RunAndReturn(run func(ctx context.Context, c
 }
 
 // Create provides a mock function for the type CouponService
-func (_mock *CouponService) Create(ctx context.Context, req *dto.CreateCouponReq) (*model.Coupon, error) {
+func (_mock *CouponService) Create(ctx context.Context, req *domain.CreateCouponReq) (*model.Coupon, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -129,17 +129,17 @@ func (_mock *CouponService) Create(ctx context.Context, req *dto.CreateCouponReq
 
 	var r0 *model.Coupon
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.CreateCouponReq) (*model.Coupon, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.CreateCouponReq) (*model.Coupon, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.CreateCouponReq) *model.Coupon); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.CreateCouponReq) *model.Coupon); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Coupon)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.CreateCouponReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.CreateCouponReq) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -154,20 +154,20 @@ type CouponService_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *dto.CreateCouponReq
+//   - req *domain.CreateCouponReq
 func (_e *CouponService_Expecter) Create(ctx interface{}, req interface{}) *CouponService_Create_Call {
 	return &CouponService_Create_Call{Call: _e.mock.On("Create", ctx, req)}
 }
 
-func (_c *CouponService_Create_Call) Run(run func(ctx context.Context, req *dto.CreateCouponReq)) *CouponService_Create_Call {
+func (_c *CouponService_Create_Call) Run(run func(ctx context.Context, req *domain.CreateCouponReq)) *CouponService_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.CreateCouponReq
+		var arg1 *domain.CreateCouponReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.CreateCouponReq)
+			arg1 = args[1].(*domain.CreateCouponReq)
 		}
 		run(
 			arg0,
@@ -182,7 +182,7 @@ func (_c *CouponService_Create_Call) Return(coupon *model.Coupon, err error) *Co
 	return _c
 }
 
-func (_c *CouponService_Create_Call) RunAndReturn(run func(ctx context.Context, req *dto.CreateCouponReq) (*model.Coupon, error)) *CouponService_Create_Call {
+func (_c *CouponService_Create_Call) RunAndReturn(run func(ctx context.Context, req *domain.CreateCouponReq) (*model.Coupon, error)) *CouponService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }

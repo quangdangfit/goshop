@@ -5,7 +5,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/cart/dto"
+	"goshop/internal/cart/domain"
 	"goshop/internal/cart/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
@@ -30,9 +30,9 @@ func (h *CartHandler) AddProduct(ctx context.Context, req *pb.AddProductReq) (*p
 		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
-	cart, err := h.service.AddProduct(ctx, &dto.AddProductReq{
+	cart, err := h.service.AddProduct(ctx, &domain.AddProductReq{
 		UserID: userID,
-		Line: &dto.CartLineReq{
+		Line: &domain.CartLineReq{
 			ProductID: req.ProductId,
 			Quantity:  uint(req.Quantity),
 		},
@@ -53,7 +53,7 @@ func (h *CartHandler) RemoveProduct(ctx context.Context, req *pb.RemoveProductRe
 		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
-	cart, err := h.service.RemoveProduct(ctx, &dto.RemoveProductReq{
+	cart, err := h.service.RemoveProduct(ctx, &domain.RemoveProductReq{
 		UserID:    userID,
 		ProductID: req.ProductId,
 	})

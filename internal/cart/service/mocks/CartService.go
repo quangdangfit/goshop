@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/cart/dto"
+	"goshop/internal/cart/domain"
 	"goshop/internal/cart/model"
 
 	mock "github.com/stretchr/testify/mock"
@@ -40,7 +40,7 @@ func (_m *CartService) EXPECT() *CartService_Expecter {
 }
 
 // AddProduct provides a mock function for the type CartService
-func (_mock *CartService) AddProduct(ctx context.Context, req *dto.AddProductReq) (*model.Cart, error) {
+func (_mock *CartService) AddProduct(ctx context.Context, req *domain.AddProductReq) (*model.Cart, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -49,17 +49,17 @@ func (_mock *CartService) AddProduct(ctx context.Context, req *dto.AddProductReq
 
 	var r0 *model.Cart
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.AddProductReq) (*model.Cart, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.AddProductReq) (*model.Cart, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.AddProductReq) *model.Cart); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.AddProductReq) *model.Cart); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Cart)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.AddProductReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.AddProductReq) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -74,20 +74,20 @@ type CartService_AddProduct_Call struct {
 
 // AddProduct is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *dto.AddProductReq
+//   - req *domain.AddProductReq
 func (_e *CartService_Expecter) AddProduct(ctx interface{}, req interface{}) *CartService_AddProduct_Call {
 	return &CartService_AddProduct_Call{Call: _e.mock.On("AddProduct", ctx, req)}
 }
 
-func (_c *CartService_AddProduct_Call) Run(run func(ctx context.Context, req *dto.AddProductReq)) *CartService_AddProduct_Call {
+func (_c *CartService_AddProduct_Call) Run(run func(ctx context.Context, req *domain.AddProductReq)) *CartService_AddProduct_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.AddProductReq
+		var arg1 *domain.AddProductReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.AddProductReq)
+			arg1 = args[1].(*domain.AddProductReq)
 		}
 		run(
 			arg0,
@@ -102,7 +102,7 @@ func (_c *CartService_AddProduct_Call) Return(cart *model.Cart, err error) *Cart
 	return _c
 }
 
-func (_c *CartService_AddProduct_Call) RunAndReturn(run func(ctx context.Context, req *dto.AddProductReq) (*model.Cart, error)) *CartService_AddProduct_Call {
+func (_c *CartService_AddProduct_Call) RunAndReturn(run func(ctx context.Context, req *domain.AddProductReq) (*model.Cart, error)) *CartService_AddProduct_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -176,7 +176,7 @@ func (_c *CartService_GetCartByUserID_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // RemoveProduct provides a mock function for the type CartService
-func (_mock *CartService) RemoveProduct(ctx context.Context, req *dto.RemoveProductReq) (*model.Cart, error) {
+func (_mock *CartService) RemoveProduct(ctx context.Context, req *domain.RemoveProductReq) (*model.Cart, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -185,17 +185,17 @@ func (_mock *CartService) RemoveProduct(ctx context.Context, req *dto.RemoveProd
 
 	var r0 *model.Cart
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.RemoveProductReq) (*model.Cart, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.RemoveProductReq) (*model.Cart, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.RemoveProductReq) *model.Cart); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.RemoveProductReq) *model.Cart); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Cart)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.RemoveProductReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.RemoveProductReq) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -210,20 +210,20 @@ type CartService_RemoveProduct_Call struct {
 
 // RemoveProduct is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *dto.RemoveProductReq
+//   - req *domain.RemoveProductReq
 func (_e *CartService_Expecter) RemoveProduct(ctx interface{}, req interface{}) *CartService_RemoveProduct_Call {
 	return &CartService_RemoveProduct_Call{Call: _e.mock.On("RemoveProduct", ctx, req)}
 }
 
-func (_c *CartService_RemoveProduct_Call) Run(run func(ctx context.Context, req *dto.RemoveProductReq)) *CartService_RemoveProduct_Call {
+func (_c *CartService_RemoveProduct_Call) Run(run func(ctx context.Context, req *domain.RemoveProductReq)) *CartService_RemoveProduct_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.RemoveProductReq
+		var arg1 *domain.RemoveProductReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.RemoveProductReq)
+			arg1 = args[1].(*domain.RemoveProductReq)
 		}
 		run(
 			arg0,
@@ -238,7 +238,7 @@ func (_c *CartService_RemoveProduct_Call) Return(cart *model.Cart, err error) *C
 	return _c
 }
 
-func (_c *CartService_RemoveProduct_Call) RunAndReturn(run func(ctx context.Context, req *dto.RemoveProductReq) (*model.Cart, error)) *CartService_RemoveProduct_Call {
+func (_c *CartService_RemoveProduct_Call) RunAndReturn(run func(ctx context.Context, req *domain.RemoveProductReq) (*model.Cart, error)) *CartService_RemoveProduct_Call {
 	_c.Call.Return(run)
 	return _c
 }

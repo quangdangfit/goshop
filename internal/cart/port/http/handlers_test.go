@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/cart/dto"
+	"goshop/internal/cart/domain"
 	"goshop/internal/cart/model"
 	"goshop/internal/cart/service/mocks"
 	"goshop/pkg/config"
@@ -70,7 +70,7 @@ func (suite *CartHandlerTestSuite) TestGetCart() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var cartRes dto.Cart
+				var cartRes domain.Cart
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&cartRes, &res.Result)
 				suite.Equal("cartId1", cartRes.ID)
@@ -116,15 +116,15 @@ func (suite *CartHandlerTestSuite) TestAddProduct() {
 	}{
 		{
 			name: "Success",
-			body: &dto.CartLineReq{
+			body: &domain.CartLineReq{
 				ProductID: "productId1",
 				Quantity:  2,
 			},
 			setup: func(ctx *gin.Context) {
 				ctx.Set("userId", "userID")
-				suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
+				suite.mockService.On("AddProduct", mock.Anything, &domain.AddProductReq{
 					UserID: "userID",
-					Line: &dto.CartLineReq{
+					Line: &domain.CartLineReq{
 						ProductID: "productId1",
 						Quantity:  2,
 					},
@@ -139,7 +139,7 @@ func (suite *CartHandlerTestSuite) TestAddProduct() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var cartRes dto.Cart
+				var cartRes domain.Cart
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&cartRes, &res.Result)
 				suite.Equal("cartId1", cartRes.ID)
@@ -164,15 +164,15 @@ func (suite *CartHandlerTestSuite) TestAddProduct() {
 		},
 		{
 			name: "Fail",
-			body: &dto.CartLineReq{
+			body: &domain.CartLineReq{
 				ProductID: "productId1",
 				Quantity:  2,
 			},
 			setup: func(ctx *gin.Context) {
 				ctx.Set("userId", "userID")
-				suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
+				suite.mockService.On("AddProduct", mock.Anything, &domain.AddProductReq{
 					UserID: "userID",
-					Line: &dto.CartLineReq{
+					Line: &domain.CartLineReq{
 						ProductID: "productId1",
 						Quantity:  2,
 					},
@@ -208,7 +208,7 @@ func (suite *CartHandlerTestSuite) TestRemoveProduct() {
 			setup: func(ctx *gin.Context) {
 				ctx.Set("userId", "userID")
 				ctx.AddParam("productId", "productId1")
-				suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
+				suite.mockService.On("RemoveProduct", mock.Anything, &domain.RemoveProductReq{
 					UserID:    "userID",
 					ProductID: "productId1",
 				}).Return(&model.Cart{
@@ -220,7 +220,7 @@ func (suite *CartHandlerTestSuite) TestRemoveProduct() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var cartRes dto.Cart
+				var cartRes domain.Cart
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&cartRes, &res.Result)
 				suite.Equal("cartId1", cartRes.ID)
@@ -245,7 +245,7 @@ func (suite *CartHandlerTestSuite) TestRemoveProduct() {
 			setup: func(ctx *gin.Context) {
 				ctx.Set("userId", "userID")
 				ctx.AddParam("productId", "productId1")
-				suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
+				suite.mockService.On("RemoveProduct", mock.Anything, &domain.RemoveProductReq{
 					UserID:    "userID",
 					ProductID: "productId1",
 				}).Return(nil, errors.New("error")).Times(1)

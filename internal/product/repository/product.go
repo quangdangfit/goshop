@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
@@ -17,7 +17,7 @@ import (
 type ProductRepository interface {
 	Create(ctx context.Context, product *model.Product) error
 	Update(ctx context.Context, product *model.Product) error
-	ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)
+	ListProducts(ctx context.Context, req *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error)
 	GetProductByID(ctx context.Context, id string) (*model.Product, error)
 	DecrementStock(ctx context.Context, id string, qty int) error
 	UpdateRating(ctx context.Context, id string, avgRating float64, reviewCount int) error
@@ -31,7 +31,7 @@ func NewProductRepository(db dbs.Database) ProductRepository {
 	return &productRepo{db: db}
 }
 
-func (r *productRepo) ListProducts(ctx context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
+func (r *productRepo) ListProducts(ctx context.Context, req *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.DatabaseTimeout)
 	defer cancel()
 

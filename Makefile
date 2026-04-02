@@ -6,5 +6,8 @@ SOURCE_PKGS := $(shell go list ./... | grep -v '/mocks$$' | grep -v '/proto/gen/
 unittest:
 	go test -timeout 9000s -v -coverprofile=coverage.out -coverpkg=$(SOURCE_PKGS) ./... 2>&1 | tee report.out
 
+lint:
+	golangci-lint run ./...
+
 mock:
 	go generate ./...

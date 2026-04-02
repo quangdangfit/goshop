@@ -5,7 +5,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/utils"
@@ -30,15 +30,15 @@ func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReq) (*
 		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
-	var lines []dto.PlaceOrderLineReq
+	var lines []domain.PlaceOrderLineReq
 	for _, l := range req.Lines {
-		lines = append(lines, dto.PlaceOrderLineReq{
+		lines = append(lines, domain.PlaceOrderLineReq{
 			ProductID: l.ProductId,
 			Quantity:  uint(l.Quantity),
 		})
 	}
 
-	order, err := h.service.PlaceOrder(ctx, &dto.PlaceOrderReq{
+	order, err := h.service.PlaceOrder(ctx, &domain.PlaceOrderReq{
 		UserID: userID,
 		Lines:  lines,
 	})
@@ -79,7 +79,7 @@ func (h *OrderHandler) GetMyOrders(ctx context.Context, req *pb.GetMyOrdersReq) 
 		return nil, apperror.ErrUnauthorized.GRPCStatus()
 	}
 
-	orders, pagination, err := h.service.GetMyOrders(ctx, &dto.ListOrderReq{
+	orders, pagination, err := h.service.GetMyOrders(ctx, &domain.ListOrderReq{
 		UserID:    userID,
 		Status:    req.Status,
 		Page:      req.Page,

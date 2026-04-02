@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/internal/user/repository/mocks"
 	"goshop/pkg/config"
@@ -117,26 +117,26 @@ func (suite *AddressServiceTestSuite) TestGetAddressByID() {
 func (suite *AddressServiceTestSuite) TestCreate() {
 	tests := []struct {
 		name    string
-		req     *dto.CreateAddressReq
+		req     *domain.CreateAddressReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.CreateAddressReq{Name: "Home", Phone: "0123456789", Street: "123 Main St", City: "Springfield", Country: "US"},
+			req:  &domain.CreateAddressReq{Name: "Home", Phone: "0123456789", Street: "123 Main St", City: "Springfield", Country: "US"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
 			},
 		},
 		{
 			name:    "Validation fail",
-			req:     &dto.CreateAddressReq{},
+			req:     &domain.CreateAddressReq{},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "DB fail",
-			req:  &dto.CreateAddressReq{Name: "Home", Phone: "0123456789", Street: "123 Main St", City: "Springfield", Country: "US"},
+			req:  &domain.CreateAddressReq{Name: "Home", Phone: "0123456789", Street: "123 Main St", City: "Springfield", Country: "US"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
 			},
@@ -201,7 +201,7 @@ func (suite *AddressServiceTestSuite) TestUpdate() {
 		suite.Run(tc.name, func() {
 			suite.SetupTest()
 			tc.setup()
-			req := &dto.UpdateAddressReq{Street: "789 Elm St"}
+			req := &domain.UpdateAddressReq{Street: "789 Elm St"}
 			addr, err := suite.service.Update(context.Background(), tc.addressID, "u1", req)
 			if tc.wantErr {
 				suite.NotNil(err)

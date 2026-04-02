@@ -12,7 +12,7 @@ const (
 	RandLength = 5
 )
 
-var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec // used for code generation, not security
 
 func GenerateCode(prefix string) string {
 	return generateCode(prefix, time.Now())

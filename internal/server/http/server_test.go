@@ -56,10 +56,10 @@ func TestServer_Run(t *testing.T) {
 	mockRedis := redisMocks.NewRedis(t)
 
 	// Find a free port
-	ln, err := net.Listen("tcp", ":0")
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
 	port := ln.Addr().(*net.TCPAddr).Port
-	ln.Close()
+	_ = ln.Close()
 
 	server := NewServer(validation.New(), mockDB, mockRedis)
 	server.cfg.HttpPort = port
@@ -73,8 +73,8 @@ func TestServer_Run(t *testing.T) {
 	for time.Now().Before(deadline) {
 		resp, err := http.Get(fmt.Sprintf("http://localhost:%d/health", port))
 		if err == nil {
-			io.ReadAll(resp.Body)
-			resp.Body.Close()
+			_, _ = io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			return
 		}

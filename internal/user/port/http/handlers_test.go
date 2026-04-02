@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/internal/user/service/mocks"
 	"goshop/pkg/config"
@@ -61,12 +61,12 @@ func (suite *UserHandlerTestSuite) TestLogin() {
 	}{
 		{
 			name: "Success",
-			body: &dto.LoginReq{
+			body: &domain.LoginReq{
 				Email:    "login@test.com",
 				Password: "test123456",
 			},
 			setup: func() {
-				suite.mockService.On("Login", mock.Anything, &dto.LoginReq{
+				suite.mockService.On("Login", mock.Anything, &domain.LoginReq{
 					Email:    "login@test.com",
 					Password: "test123456",
 				}).Return(
@@ -82,7 +82,7 @@ func (suite *UserHandlerTestSuite) TestLogin() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var loginRes dto.LoginRes
+				var loginRes domain.LoginRes
 
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&loginRes, &res.Result)
@@ -121,12 +121,12 @@ func (suite *UserHandlerTestSuite) TestLogin() {
 		},
 		{
 			name: "Fail",
-			body: &dto.LoginReq{
+			body: &domain.LoginReq{
 				Email:    "login@test.com",
 				Password: "test123456",
 			},
 			setup: func() {
-				suite.mockService.On("Login", mock.Anything, &dto.LoginReq{
+				suite.mockService.On("Login", mock.Anything, &domain.LoginReq{
 					Email:    "login@test.com",
 					Password: "test123456",
 				}).Return(nil, "", "", errors.New("error")).Times(1)
@@ -167,12 +167,12 @@ func (suite *UserHandlerTestSuite) TestRegister() {
 	}{
 		{
 			name: "Success",
-			body: &dto.RegisterReq{
+			body: &domain.RegisterReq{
 				Email:    "register@test.com",
 				Password: "test123456",
 			},
 			setup: func() {
-				suite.mockService.On("Register", mock.Anything, &dto.RegisterReq{
+				suite.mockService.On("Register", mock.Anything, &domain.RegisterReq{
 					Email:    "register@test.com",
 					Password: "test123456",
 				}).Return(
@@ -186,7 +186,7 @@ func (suite *UserHandlerTestSuite) TestRegister() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var registerRes dto.RegisterRes
+				var registerRes domain.RegisterRes
 
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&registerRes, &res.Result)
@@ -223,12 +223,12 @@ func (suite *UserHandlerTestSuite) TestRegister() {
 		},
 		{
 			name: "Fail",
-			body: &dto.RegisterReq{
+			body: &domain.RegisterReq{
 				Email:    "register@test.com",
 				Password: "test123456",
 			},
 			setup: func() {
-				suite.mockService.On("Register", mock.Anything, &dto.RegisterReq{
+				suite.mockService.On("Register", mock.Anything, &domain.RegisterReq{
 					Email:    "register@test.com",
 					Password: "test123456",
 				}).Return(nil, errors.New("error")).Times(1)
@@ -284,7 +284,7 @@ func (suite *UserHandlerTestSuite) TestGetMe() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var getMeRes dto.User
+				var getMeRes domain.User
 
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&getMeRes, &res.Result)
@@ -357,7 +357,7 @@ func (suite *UserHandlerTestSuite) TestRefreshToken() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var refreshRes dto.RefreshTokenRes
+				var refreshRes domain.RefreshTokenRes
 
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&refreshRes, &res.Result)
@@ -422,13 +422,13 @@ func (suite *UserHandlerTestSuite) TestChangePassword() {
 	}{
 		{
 			name: "Success",
-			body: &dto.ChangePasswordReq{
+			body: &domain.ChangePasswordReq{
 				Password:    "test123456",
 				NewPassword: "new-test123456",
 			},
 			userId: "123456",
 			setup: func() {
-				suite.mockService.On("ChangePassword", mock.Anything, "123456", &dto.ChangePasswordReq{
+				suite.mockService.On("ChangePassword", mock.Anything, "123456", &domain.ChangePasswordReq{
 					Password:    "test123456",
 					NewPassword: "new-test123456",
 				}).Return(nil).Times(1)
@@ -453,13 +453,13 @@ func (suite *UserHandlerTestSuite) TestChangePassword() {
 		},
 		{
 			name: "Fail",
-			body: &dto.ChangePasswordReq{
+			body: &domain.ChangePasswordReq{
 				Password:    "test123456",
 				NewPassword: "new-test123456",
 			},
 			userId: "123456",
 			setup: func() {
-				suite.mockService.On("ChangePassword", mock.Anything, "123456", &dto.ChangePasswordReq{
+				suite.mockService.On("ChangePassword", mock.Anything, "123456", &domain.ChangePasswordReq{
 					Password:    "test123456",
 					NewPassword: "new-test123456",
 				}).Return(errors.New("error")).Times(1)

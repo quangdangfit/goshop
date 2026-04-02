@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"goshop/internal/user/dto"
+	"goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/internal/user/repository"
 )
@@ -11,7 +11,7 @@ import (
 //go:generate mockery --name=WishlistService
 type WishlistService interface {
 	GetWishlist(ctx context.Context, userID string) ([]*model.Wishlist, error)
-	AddProduct(ctx context.Context, userID string, req *dto.AddToWishlistReq) error
+	AddProduct(ctx context.Context, userID string, req *domain.AddToWishlistReq) error
 	RemoveProduct(ctx context.Context, userID, productID string) error
 }
 
@@ -27,7 +27,7 @@ func (s *wishlistSvc) GetWishlist(ctx context.Context, userID string) ([]*model.
 	return s.repo.GetWishlist(ctx, userID)
 }
 
-func (s *wishlistSvc) AddProduct(ctx context.Context, userID string, req *dto.AddToWishlistReq) error {
+func (s *wishlistSvc) AddProduct(ctx context.Context, userID string, req *domain.AddToWishlistReq) error {
 	return s.repo.Add(ctx, userID, req.ProductID)
 }
 

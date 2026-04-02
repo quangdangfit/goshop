@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/cart/dto"
+	"goshop/internal/cart/domain"
 	"goshop/internal/cart/model"
 	"goshop/internal/cart/service/mocks"
 	"goshop/pkg/config"
@@ -48,9 +48,9 @@ func (suite *CartHandlerTestSuite) TestAddProduct() {
 		{
 			name: "Success",
 			setup: func() {
-				suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
+				suite.mockService.On("AddProduct", mock.Anything, &domain.AddProductReq{
 					UserID: "userID",
-					Line: &dto.CartLineReq{
+					Line: &domain.CartLineReq{
 						ProductID: "productId",
 						Quantity:  2,
 					},
@@ -81,9 +81,9 @@ func (suite *CartHandlerTestSuite) TestAddProduct() {
 		{
 			name: "Fail",
 			setup: func() {
-				suite.mockService.On("AddProduct", mock.Anything, &dto.AddProductReq{
+				suite.mockService.On("AddProduct", mock.Anything, &domain.AddProductReq{
 					UserID: "userID",
-					Line: &dto.CartLineReq{
+					Line: &domain.CartLineReq{
 						ProductID: "productId",
 						Quantity:  2,
 					},
@@ -148,7 +148,7 @@ func (suite *CartHandlerTestSuite) TestRemoveProduct() {
 		{
 			name: "Success",
 			setup: func() {
-				suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
+				suite.mockService.On("RemoveProduct", mock.Anything, &domain.RemoveProductReq{
 					UserID:    "userID",
 					ProductID: "productId",
 				}).Return(
@@ -175,7 +175,7 @@ func (suite *CartHandlerTestSuite) TestRemoveProduct() {
 		{
 			name: "Fail",
 			setup: func() {
-				suite.mockService.On("RemoveProduct", mock.Anything, &dto.RemoveProductReq{
+				suite.mockService.On("RemoveProduct", mock.Anything, &domain.RemoveProductReq{
 					UserID:    "userID",
 					ProductID: "productId",
 				}).Return(nil, errors.New("error")).Times(1)

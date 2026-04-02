@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
@@ -27,11 +27,11 @@ func NewCouponHandler(svc service.CouponService) *CouponHandler {
 //	@Tags		coupons
 //	@Produce	json
 //	@Security	ApiKeyAuth
-//	@Param		_	body		dto.CreateCouponReq	true	"Body"
-//	@Success	200	{object}	dto.Coupon
+//	@Param		_	body		domain.CreateCouponReq	true	"Body"
+//	@Success	200	{object}	domain.Coupon
 //	@Router		/api/v1/coupons [post]
 func (h *CouponHandler) CreateCoupon(c *gin.Context) {
-	var req dto.CreateCouponReq
+	var req domain.CreateCouponReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Failed to get body: ", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
@@ -45,7 +45,7 @@ func (h *CouponHandler) CreateCoupon(c *gin.Context) {
 		return
 	}
 
-	var res dto.Coupon
+	var res domain.Coupon
 	utils.Copy(&res, coupon)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -56,7 +56,7 @@ func (h *CouponHandler) CreateCoupon(c *gin.Context) {
 //	@Tags		coupons
 //	@Produce	json
 //	@Param		code	path		string	true	"Coupon code"
-//	@Success	200		{object}	dto.Coupon
+//	@Success	200		{object}	domain.Coupon
 //	@Router		/api/v1/coupons/{code} [get]
 func (h *CouponHandler) GetCouponByCode(c *gin.Context) {
 	code := c.Param("code")
@@ -67,7 +67,7 @@ func (h *CouponHandler) GetCouponByCode(c *gin.Context) {
 		return
 	}
 
-	var res dto.Coupon
+	var res domain.Coupon
 	utils.Copy(&res, coupon)
 	response.JSON(c, http.StatusOK, res)
 }

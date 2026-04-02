@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/cart/dto"
+	"goshop/internal/cart/domain"
 	"goshop/internal/cart/model"
 	"goshop/internal/cart/repository/mocks"
 	"goshop/pkg/config"
@@ -95,7 +95,7 @@ func (suite *CartServiceTestSuite) TestGetCartByUserID() {
 func (suite *CartServiceTestSuite) TestAddProduct() {
 	tests := []struct {
 		name    string
-		req     *dto.AddProductReq
+		req     *domain.AddProductReq
 		setup   func()
 		wantErr bool
 		wantLen int
@@ -103,9 +103,9 @@ func (suite *CartServiceTestSuite) TestAddProduct() {
 	}{
 		{
 			name: "Success - new product",
-			req: &dto.AddProductReq{
+			req: &domain.AddProductReq{
 				UserID: "userID",
-				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+				Line:   &domain.CartLineReq{ProductID: "productID2", Quantity: 3},
 			},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
@@ -125,35 +125,35 @@ func (suite *CartServiceTestSuite) TestAddProduct() {
 		},
 		{
 			name: "Missing UserID",
-			req: &dto.AddProductReq{
-				Line: &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+			req: &domain.AddProductReq{
+				Line: &domain.CartLineReq{ProductID: "productID2", Quantity: 3},
 			},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "Missing ProductID",
-			req: &dto.AddProductReq{
+			req: &domain.AddProductReq{
 				UserID: "userID",
-				Line:   &dto.CartLineReq{Quantity: 3},
+				Line:   &domain.CartLineReq{Quantity: 3},
 			},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "Missing Quantity",
-			req: &dto.AddProductReq{
+			req: &domain.AddProductReq{
 				UserID: "userID",
-				Line:   &dto.CartLineReq{ProductID: "productID2"},
+				Line:   &domain.CartLineReq{ProductID: "productID2"},
 			},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "Cart not found, creates new",
-			req: &dto.AddProductReq{
+			req: &domain.AddProductReq{
 				UserID: "userID",
-				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+				Line:   &domain.CartLineReq{ProductID: "productID2", Quantity: 3},
 			},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
@@ -167,9 +167,9 @@ func (suite *CartServiceTestSuite) TestAddProduct() {
 		},
 		{
 			name: "Cart not found, create fails",
-			req: &dto.AddProductReq{
+			req: &domain.AddProductReq{
 				UserID: "userID",
-				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+				Line:   &domain.CartLineReq{ProductID: "productID2", Quantity: 3},
 			},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
@@ -183,9 +183,9 @@ func (suite *CartServiceTestSuite) TestAddProduct() {
 		},
 		{
 			name: "Product already in cart - updates quantity",
-			req: &dto.AddProductReq{
+			req: &domain.AddProductReq{
 				UserID: "userID",
-				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 5},
+				Line:   &domain.CartLineReq{ProductID: "productID2", Quantity: 5},
 			},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
@@ -203,9 +203,9 @@ func (suite *CartServiceTestSuite) TestAddProduct() {
 		},
 		{
 			name: "Product already in cart - update fails",
-			req: &dto.AddProductReq{
+			req: &domain.AddProductReq{
 				UserID: "userID",
-				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 5},
+				Line:   &domain.CartLineReq{ProductID: "productID2", Quantity: 5},
 			},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
@@ -219,9 +219,9 @@ func (suite *CartServiceTestSuite) TestAddProduct() {
 		},
 		{
 			name: "New product - update fails",
-			req: &dto.AddProductReq{
+			req: &domain.AddProductReq{
 				UserID: "userID",
-				Line:   &dto.CartLineReq{ProductID: "productID2", Quantity: 3},
+				Line:   &domain.CartLineReq{ProductID: "productID2", Quantity: 3},
 			},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
@@ -264,13 +264,13 @@ func (suite *CartServiceTestSuite) TestAddProduct() {
 func (suite *CartServiceTestSuite) TestRemoveProduct() {
 	tests := []struct {
 		name    string
-		req     *dto.RemoveProductReq
+		req     *domain.RemoveProductReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
+			req:  &domain.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
 					Return(&model.Cart{
@@ -282,19 +282,19 @@ func (suite *CartServiceTestSuite) TestRemoveProduct() {
 		},
 		{
 			name:    "Missing UserID",
-			req:     &dto.RemoveProductReq{ProductID: "productID1"},
+			req:     &domain.RemoveProductReq{ProductID: "productID1"},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name:    "Missing ProductID",
-			req:     &dto.RemoveProductReq{UserID: "userID"},
+			req:     &domain.RemoveProductReq{UserID: "userID"},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "Cart not found, creates new",
-			req:  &dto.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
+			req:  &domain.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
 					Return(nil, errors.New("error")).Times(1)
@@ -303,7 +303,7 @@ func (suite *CartServiceTestSuite) TestRemoveProduct() {
 		},
 		{
 			name: "Cart not found, create fails",
-			req:  &dto.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
+			req:  &domain.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
 					Return(nil, errors.New("error")).Times(1)
@@ -313,7 +313,7 @@ func (suite *CartServiceTestSuite) TestRemoveProduct() {
 		},
 		{
 			name: "DeleteLine fails",
-			req:  &dto.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
+			req:  &domain.RemoveProductReq{UserID: "userID", ProductID: "productID1"},
 			setup: func() {
 				suite.mockRepo.On("GetCartByUserID", mock.Anything, "userID").
 					Return(&model.Cart{

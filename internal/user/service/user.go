@@ -7,7 +7,7 @@ import (
 	"github.com/quangdangfit/gocommon/validation"
 	"golang.org/x/crypto/bcrypt"
 
-	"goshop/internal/user/dto"
+	"goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/internal/user/repository"
 	"goshop/pkg/apperror"
@@ -17,11 +17,11 @@ import (
 
 //go:generate mockery --name=UserService
 type UserService interface {
-	Login(ctx context.Context, req *dto.LoginReq) (*model.User, string, string, error)
-	Register(ctx context.Context, req *dto.RegisterReq) (*model.User, error)
+	Login(ctx context.Context, req *domain.LoginReq) (*model.User, string, string, error)
+	Register(ctx context.Context, req *domain.RegisterReq) (*model.User, error)
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
 	RefreshToken(ctx context.Context, userID string) (string, error)
-	ChangePassword(ctx context.Context, id string, req *dto.ChangePasswordReq) error
+	ChangePassword(ctx context.Context, id string, req *domain.ChangePasswordReq) error
 }
 
 type userService struct {
@@ -38,7 +38,7 @@ func NewUserService(
 	}
 }
 
-func (s *userService) Login(ctx context.Context, req *dto.LoginReq) (*model.User, string, string, error) {
+func (s *userService) Login(ctx context.Context, req *domain.LoginReq) (*model.User, string, string, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, "", "", err
 	}
@@ -63,7 +63,7 @@ func (s *userService) Login(ctx context.Context, req *dto.LoginReq) (*model.User
 	return user, accessToken, refreshToken, nil
 }
 
-func (s *userService) Register(ctx context.Context, req *dto.RegisterReq) (*model.User, error) {
+func (s *userService) Register(ctx context.Context, req *domain.RegisterReq) (*model.User, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (s *userService) RefreshToken(ctx context.Context, userID string) (string, 
 	return accessToken, nil
 }
 
-func (s *userService) ChangePassword(ctx context.Context, id string, req *dto.ChangePasswordReq) error {
+func (s *userService) ChangePassword(ctx context.Context, id string, req *domain.ChangePasswordReq) error {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return err
 	}

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	srvMocks "goshop/internal/product/service/mocks"
 	"goshop/pkg/config"
@@ -72,7 +72,7 @@ func (suite *ReviewHandlerTestSuite) TestListReviews() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var reviews dto.ListReviewRes
+				var reviews domain.ListReviewRes
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&reviews, &res.Result)
 				suite.Equal(2, len(reviews.Reviews))
@@ -130,10 +130,10 @@ func (suite *ReviewHandlerTestSuite) TestCreateReview() {
 	}{
 		{
 			name:   "Success",
-			body:   &dto.CreateReviewReq{Rating: 5, Comment: "Excellent product!"},
+			body:   &domain.CreateReviewReq{Rating: 5, Comment: "Excellent product!"},
 			userId: "u1",
 			setup: func() {
-				suite.mockService.On("CreateReview", mock.Anything, "p1", "u1", &dto.CreateReviewReq{
+				suite.mockService.On("CreateReview", mock.Anything, "p1", "u1", &domain.CreateReviewReq{
 					Rating: 5, Comment: "Excellent product!",
 				}).Return(&model.Review{
 					ID: "r1", ProductID: "p1", UserID: "u1", Rating: 5, Comment: "Excellent product!",
@@ -142,7 +142,7 @@ func (suite *ReviewHandlerTestSuite) TestCreateReview() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var review dto.Review
+				var review domain.Review
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&review, &res.Result)
 				suite.Equal("r1", review.ID)
@@ -152,7 +152,7 @@ func (suite *ReviewHandlerTestSuite) TestCreateReview() {
 		},
 		{
 			name:     "Unauthorized",
-			body:     &dto.CreateReviewReq{Rating: 5},
+			body:     &domain.CreateReviewReq{Rating: 5},
 			userId:   "",
 			setup:    func() {},
 			expected: http.StatusUnauthorized,
@@ -166,10 +166,10 @@ func (suite *ReviewHandlerTestSuite) TestCreateReview() {
 		},
 		{
 			name:   "Fail",
-			body:   &dto.CreateReviewReq{Rating: 5, Comment: "Great"},
+			body:   &domain.CreateReviewReq{Rating: 5, Comment: "Great"},
 			userId: "u1",
 			setup: func() {
-				suite.mockService.On("CreateReview", mock.Anything, "p1", "u1", &dto.CreateReviewReq{
+				suite.mockService.On("CreateReview", mock.Anything, "p1", "u1", &domain.CreateReviewReq{
 					Rating: 5, Comment: "Great",
 				}).Return(nil, errors.New("already reviewed")).Times(1)
 			},
@@ -206,10 +206,10 @@ func (suite *ReviewHandlerTestSuite) TestUpdateReview() {
 	}{
 		{
 			name:   "Success",
-			body:   &dto.UpdateReviewReq{Rating: 4, Comment: "Updated comment"},
+			body:   &domain.UpdateReviewReq{Rating: 4, Comment: "Updated comment"},
 			userId: "u1",
 			setup: func() {
-				suite.mockService.On("UpdateReview", mock.Anything, "r1", "u1", &dto.UpdateReviewReq{
+				suite.mockService.On("UpdateReview", mock.Anything, "r1", "u1", &domain.UpdateReviewReq{
 					Rating: 4, Comment: "Updated comment",
 				}).Return(&model.Review{
 					ID: "r1", ProductID: "p1", UserID: "u1", Rating: 4, Comment: "Updated comment",
@@ -218,7 +218,7 @@ func (suite *ReviewHandlerTestSuite) TestUpdateReview() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var review dto.Review
+				var review domain.Review
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&review, &res.Result)
 				suite.Equal("r1", review.ID)
@@ -228,7 +228,7 @@ func (suite *ReviewHandlerTestSuite) TestUpdateReview() {
 		},
 		{
 			name:     "Unauthorized",
-			body:     &dto.UpdateReviewReq{Rating: 4},
+			body:     &domain.UpdateReviewReq{Rating: 4},
 			userId:   "",
 			setup:    func() {},
 			expected: http.StatusUnauthorized,
@@ -242,10 +242,10 @@ func (suite *ReviewHandlerTestSuite) TestUpdateReview() {
 		},
 		{
 			name:   "Fail",
-			body:   &dto.UpdateReviewReq{Comment: "Updated"},
+			body:   &domain.UpdateReviewReq{Comment: "Updated"},
 			userId: "u1",
 			setup: func() {
-				suite.mockService.On("UpdateReview", mock.Anything, "r1", "u1", &dto.UpdateReviewReq{
+				suite.mockService.On("UpdateReview", mock.Anything, "r1", "u1", &domain.UpdateReviewReq{
 					Comment: "Updated",
 				}).Return(nil, errors.New("not found")).Times(1)
 			},

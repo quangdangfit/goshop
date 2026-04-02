@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/user/dto"
+	"goshop/internal/user/domain"
 	"goshop/internal/user/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
@@ -33,7 +33,7 @@ func (h *AddressHandler) ListAddresses(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res []*dto.Address
+	var res []*domain.Address
 	utils.Copy(&res, &addresses)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -54,7 +54,7 @@ func (h *AddressHandler) GetAddressByID(c *gin.Context) {
 		apperror.Wrap(apperror.ErrNotFound, err).HTTPError(c)
 		return
 	}
-	var res dto.Address
+	var res domain.Address
 	utils.Copy(&res, address)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -65,7 +65,7 @@ func (h *AddressHandler) CreateAddress(c *gin.Context) {
 		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
-	var req dto.CreateAddressReq
+	var req domain.CreateAddressReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
@@ -76,7 +76,7 @@ func (h *AddressHandler) CreateAddress(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res dto.Address
+	var res domain.Address
 	utils.Copy(&res, address)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -88,7 +88,7 @@ func (h *AddressHandler) UpdateAddress(c *gin.Context) {
 		return
 	}
 	id := c.Param("id")
-	var req dto.UpdateAddressReq
+	var req domain.UpdateAddressReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
@@ -98,7 +98,7 @@ func (h *AddressHandler) UpdateAddress(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res dto.Address
+	var res domain.Address
 	utils.Copy(&res, address)
 	response.JSON(c, http.StatusOK, res)
 }

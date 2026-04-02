@@ -5,7 +5,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository"
 	"goshop/pkg/utils"
@@ -15,8 +15,8 @@ import (
 type CategoryService interface {
 	ListCategories(ctx context.Context) ([]*model.Category, error)
 	GetCategoryByID(ctx context.Context, id string) (*model.Category, error)
-	Create(ctx context.Context, req *dto.CreateCategoryReq) (*model.Category, error)
-	Update(ctx context.Context, id string, req *dto.UpdateCategoryReq) (*model.Category, error)
+	Create(ctx context.Context, req *domain.CreateCategoryReq) (*model.Category, error)
+	Update(ctx context.Context, id string, req *domain.UpdateCategoryReq) (*model.Category, error)
 	Delete(ctx context.Context, id string) error
 }
 
@@ -37,7 +37,7 @@ func (s *categorySvc) GetCategoryByID(ctx context.Context, id string) (*model.Ca
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *categorySvc) Create(ctx context.Context, req *dto.CreateCategoryReq) (*model.Category, error) {
+func (s *categorySvc) Create(ctx context.Context, req *domain.CreateCategoryReq) (*model.Category, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *categorySvc) Create(ctx context.Context, req *dto.CreateCategoryReq) (*
 	return &category, nil
 }
 
-func (s *categorySvc) Update(ctx context.Context, id string, req *dto.UpdateCategoryReq) (*model.Category, error) {
+func (s *categorySvc) Update(ctx context.Context, id string, req *domain.UpdateCategoryReq) (*model.Category, error) {
 	category, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err

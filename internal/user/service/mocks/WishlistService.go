@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 
 	mock "github.com/stretchr/testify/mock"
@@ -40,7 +40,7 @@ func (_m *WishlistService) EXPECT() *WishlistService_Expecter {
 }
 
 // AddProduct provides a mock function for the type WishlistService
-func (_mock *WishlistService) AddProduct(ctx context.Context, userID string, req *dto.AddToWishlistReq) error {
+func (_mock *WishlistService) AddProduct(ctx context.Context, userID string, req *domain.AddToWishlistReq) error {
 	ret := _mock.Called(ctx, userID, req)
 
 	if len(ret) == 0 {
@@ -48,7 +48,7 @@ func (_mock *WishlistService) AddProduct(ctx context.Context, userID string, req
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *dto.AddToWishlistReq) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *domain.AddToWishlistReq) error); ok {
 		r0 = returnFunc(ctx, userID, req)
 	} else {
 		r0 = ret.Error(0)
@@ -64,12 +64,12 @@ type WishlistService_AddProduct_Call struct {
 // AddProduct is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-//   - req *dto.AddToWishlistReq
+//   - req *domain.AddToWishlistReq
 func (_e *WishlistService_Expecter) AddProduct(ctx interface{}, userID interface{}, req interface{}) *WishlistService_AddProduct_Call {
 	return &WishlistService_AddProduct_Call{Call: _e.mock.On("AddProduct", ctx, userID, req)}
 }
 
-func (_c *WishlistService_AddProduct_Call) Run(run func(ctx context.Context, userID string, req *dto.AddToWishlistReq)) *WishlistService_AddProduct_Call {
+func (_c *WishlistService_AddProduct_Call) Run(run func(ctx context.Context, userID string, req *domain.AddToWishlistReq)) *WishlistService_AddProduct_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -79,9 +79,9 @@ func (_c *WishlistService_AddProduct_Call) Run(run func(ctx context.Context, use
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *dto.AddToWishlistReq
+		var arg2 *domain.AddToWishlistReq
 		if args[2] != nil {
-			arg2 = args[2].(*dto.AddToWishlistReq)
+			arg2 = args[2].(*domain.AddToWishlistReq)
 		}
 		run(
 			arg0,
@@ -97,7 +97,7 @@ func (_c *WishlistService_AddProduct_Call) Return(err error) *WishlistService_Ad
 	return _c
 }
 
-func (_c *WishlistService_AddProduct_Call) RunAndReturn(run func(ctx context.Context, userID string, req *dto.AddToWishlistReq) error) *WishlistService_AddProduct_Call {
+func (_c *WishlistService_AddProduct_Call) RunAndReturn(run func(ctx context.Context, userID string, req *domain.AddToWishlistReq) error) *WishlistService_AddProduct_Call {
 	_c.Call.Return(run)
 	return _c
 }

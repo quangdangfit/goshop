@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	productModel "goshop/internal/product/model"
 	userModel "goshop/internal/user/model"
@@ -28,17 +28,17 @@ func TestOrderAPI_PlaceOrderSuccess(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
-	req := &dto.PlaceOrderReq{
-		Lines: []dto.PlaceOrderLineReq{
+	req := &domain.PlaceOrderReq{
+		Lines: []domain.PlaceOrderLineReq{
 			{
 				ProductID: p1.ID,
 				Quantity:  2,
@@ -50,7 +50,7 @@ func TestOrderAPI_PlaceOrderSuccess(t *testing.T) {
 		},
 	}
 	writer := makeRequest("POST", "/api/v1/orders", req, accessToken())
-	var res dto.Order
+	var res domain.Order
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, "new", res.Status)
@@ -74,14 +74,14 @@ func TestOrderAPI_PlaceOrderInvalidFieldType(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	req := map[string]interface{}{
 		"lines": []map[string]interface{}{
@@ -111,17 +111,17 @@ func TestOrderAPI_PlaceOrderInvalidMissProductID(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
-	req := &dto.PlaceOrderReq{
-		Lines: []dto.PlaceOrderLineReq{
+	req := &domain.PlaceOrderReq{
+		Lines: []domain.PlaceOrderLineReq{
 			{
 				Quantity: 2,
 			},
@@ -147,17 +147,17 @@ func TestOrderAPI_PlaceOrderInvalidMissQuantity(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
-	req := &dto.PlaceOrderReq{
-		Lines: []dto.PlaceOrderLineReq{
+	req := &domain.PlaceOrderReq{
+		Lines: []domain.PlaceOrderLineReq{
 			{
 				ProductID: p1.ID,
 				Quantity:  2,
@@ -183,17 +183,17 @@ func TestOrderAPI_PlaceOrderInvalidProductNotFound(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
-	req := &dto.PlaceOrderReq{
-		Lines: []dto.PlaceOrderLineReq{
+	req := &domain.PlaceOrderReq{
+		Lines: []domain.PlaceOrderLineReq{
 			{
 				ProductID: p1.ID,
 				Quantity:  2,
@@ -220,17 +220,17 @@ func TestOrderAPI_PlaceOrderUnauthorized(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
-	req := &dto.PlaceOrderReq{
-		Lines: []dto.PlaceOrderLineReq{
+	req := &domain.PlaceOrderReq{
+		Lines: []domain.PlaceOrderLineReq{
 			{
 				ProductID: p1.ID,
 				Quantity:  2,
@@ -255,7 +255,7 @@ func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
 		Email:    "test1@gmail.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -264,14 +264,14 @@ func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o := model.Order{
 		UserID: u.ID,
@@ -286,10 +286,10 @@ func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
 			},
 		},
 	}
-	dbTest.Create(context.Background(), &o)
+	_ = dbTest.Create(context.Background(), &o)
 
 	writer := makeRequest("GET", fmt.Sprintf("/api/v1/orders/%s", o.ID), nil, token)
-	var res dto.Order
+	var res domain.Order
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, "new", res.Status)
@@ -319,7 +319,7 @@ func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -328,14 +328,14 @@ func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o := model.Order{
 		UserID: u.ID,
@@ -350,7 +350,7 @@ func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
 			},
 		},
 	}
-	dbTest.Create(context.Background(), &o)
+	_ = dbTest.Create(context.Background(), &o)
 
 	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, token)
 	assert.Equal(t, http.StatusOK, writer.Code)
@@ -371,7 +371,7 @@ func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -380,14 +380,14 @@ func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o := model.Order{
 		UserID: u.ID,
@@ -403,7 +403,7 @@ func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o)
+	_ = dbTest.Create(context.Background(), &o)
 
 	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, token)
 	var response map[string]map[string]string
@@ -418,7 +418,7 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -427,14 +427,14 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o := model.Order{
 		UserID: u.ID,
@@ -450,7 +450,7 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 		},
 		Status: model.OrderStatusCancelled,
 	}
-	dbTest.Create(context.Background(), &o)
+	_ = dbTest.Create(context.Background(), &o)
 
 	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, token)
 	var response map[string]map[string]string
@@ -465,7 +465,7 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	defer cleanData(&u)
 
 	p1 := productModel.Product{
@@ -473,14 +473,14 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o := model.Order{
 		UserID: u.ID,
@@ -496,7 +496,7 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o)
+	_ = dbTest.Create(context.Background(), &o)
 
 	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/orders/%s/cancel", o.ID), nil, accessToken())
 	var response map[string]map[string]string
@@ -514,7 +514,7 @@ func TestOrderAPI_ListOrdersSuccess(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -523,14 +523,14 @@ func TestOrderAPI_ListOrdersSuccess(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o1 := model.Order{
 		UserID: u.ID,
@@ -542,7 +542,7 @@ func TestOrderAPI_ListOrdersSuccess(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o1)
+	_ = dbTest.Create(context.Background(), &o1)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -554,10 +554,10 @@ func TestOrderAPI_ListOrdersSuccess(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o2)
+	_ = dbTest.Create(context.Background(), &o2)
 
 	writer := makeRequest("GET", "/api/v1/orders", nil, token)
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, int64(2), res.Pagination.Total)
@@ -577,7 +577,7 @@ func TestOrderAPI_ListOrdersNotFound(t *testing.T) {
 	defer cleanData()
 
 	writer := makeRequest("GET", "/api/v1/orders", nil, accessToken())
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Orders))
@@ -598,7 +598,7 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -607,14 +607,14 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o1 := model.Order{
 		UserID: u.ID,
@@ -626,7 +626,7 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o1)
+	_ = dbTest.Create(context.Background(), &o1)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -638,10 +638,10 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o2)
+	_ = dbTest.Create(context.Background(), &o2)
 
 	writer := makeRequest("GET", "/api/v1/orders?status=new", nil, token)
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, int64(1), res.Pagination.Total)
@@ -659,7 +659,7 @@ func TestOrderAPI_ListOrdersFindByStatusNotFound(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -668,14 +668,14 @@ func TestOrderAPI_ListOrdersFindByStatusNotFound(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o1 := model.Order{
 		UserID: u.ID,
@@ -687,7 +687,7 @@ func TestOrderAPI_ListOrdersFindByStatusNotFound(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o1)
+	_ = dbTest.Create(context.Background(), &o1)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -699,10 +699,10 @@ func TestOrderAPI_ListOrdersFindByStatusNotFound(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o2)
+	_ = dbTest.Create(context.Background(), &o2)
 
 	writer := makeRequest("GET", "/api/v1/orders?status=cancelled", nil, token)
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Orders))
@@ -714,7 +714,7 @@ func TestOrderAPI_ListOrdersFindByCodeSuccess(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -723,14 +723,14 @@ func TestOrderAPI_ListOrdersFindByCodeSuccess(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o1 := model.Order{
 		UserID: u.ID,
@@ -742,7 +742,7 @@ func TestOrderAPI_ListOrdersFindByCodeSuccess(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o1)
+	_ = dbTest.Create(context.Background(), &o1)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -754,10 +754,10 @@ func TestOrderAPI_ListOrdersFindByCodeSuccess(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o2)
+	_ = dbTest.Create(context.Background(), &o2)
 
 	writer := makeRequest("GET", fmt.Sprintf("/api/v1/orders?code=%s", o1.Code), nil, token)
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, int64(1), res.Pagination.Total)
@@ -775,7 +775,7 @@ func TestOrderAPI_ListOrdersFindByCodeNotFound(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -784,14 +784,14 @@ func TestOrderAPI_ListOrdersFindByCodeNotFound(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o1 := model.Order{
 		UserID: u.ID,
@@ -803,7 +803,7 @@ func TestOrderAPI_ListOrdersFindByCodeNotFound(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o1)
+	_ = dbTest.Create(context.Background(), &o1)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -815,10 +815,10 @@ func TestOrderAPI_ListOrdersFindByCodeNotFound(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o2)
+	_ = dbTest.Create(context.Background(), &o2)
 
 	writer := makeRequest("GET", "/api/v1/orders?code=notfound", nil, token)
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Orders))
@@ -830,7 +830,7 @@ func TestOrderAPI_ListOrdersWithPagination(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -839,14 +839,14 @@ func TestOrderAPI_ListOrdersWithPagination(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o1 := model.Order{
 		UserID: u.ID,
@@ -858,7 +858,7 @@ func TestOrderAPI_ListOrdersWithPagination(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o1)
+	_ = dbTest.Create(context.Background(), &o1)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -870,10 +870,10 @@ func TestOrderAPI_ListOrdersWithPagination(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o2)
+	_ = dbTest.Create(context.Background(), &o2)
 
 	writer := makeRequest("GET", "/api/v1/orders?page=2&limit=1", nil, token)
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, int64(2), res.Pagination.Total)
@@ -891,7 +891,7 @@ func TestOrderAPI_ListOrdersWithOrder(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{"id": u.ID})
 	defer cleanData(&u)
 
@@ -900,14 +900,14 @@ func TestOrderAPI_ListOrdersWithOrder(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o1 := model.Order{
 		UserID: u.ID,
@@ -919,7 +919,7 @@ func TestOrderAPI_ListOrdersWithOrder(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o1)
+	_ = dbTest.Create(context.Background(), &o1)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -931,10 +931,10 @@ func TestOrderAPI_ListOrdersWithOrder(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o2)
+	_ = dbTest.Create(context.Background(), &o2)
 
 	writer := makeRequest("GET", "/api/v1/orders?order_by=created_at&order_desc=true", nil, token)
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, int64(2), res.Pagination.Total)
@@ -955,7 +955,7 @@ func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
 		Email:    "test1@test.com",
 		Password: "test123456",
 	}
-	dbTest.Create(context.Background(), &u)
+	_ = dbTest.Create(context.Background(), &u)
 	defer cleanData(&u)
 
 	p1 := productModel.Product{
@@ -963,14 +963,14 @@ func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
 		Description: "test-product-1",
 		Price:       1,
 	}
-	dbTest.Create(context.Background(), &p1)
+	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
 		Name:        "test-product-2",
 		Description: "test-product-2",
 		Price:       2,
 	}
-	dbTest.Create(context.Background(), &p2)
+	_ = dbTest.Create(context.Background(), &p2)
 
 	o1 := model.Order{
 		UserID: u.ID,
@@ -982,7 +982,7 @@ func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
 		},
 		Status: model.OrderStatusDone,
 	}
-	dbTest.Create(context.Background(), &o1)
+	_ = dbTest.Create(context.Background(), &o1)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -994,10 +994,10 @@ func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
 		},
 		Status: model.OrderStatusNew,
 	}
-	dbTest.Create(context.Background(), &o2)
+	_ = dbTest.Create(context.Background(), &o2)
 
 	writer := makeRequest("GET", "/api/v1/orders?code=notfound", nil, accessToken())
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
 	assert.Equal(t, 0, len(res.Orders))

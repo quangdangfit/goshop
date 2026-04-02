@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
@@ -58,12 +59,12 @@ func (s *Server) Run() error {
 	s.engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	s.engine.GET("/health", func(c *gin.Context) {
 		response.JSON(c, http.StatusOK, nil)
-		return
 	})
 
 	s.httpSvr = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.cfg.HttpPort),
-		Handler: s.engine,
+		Addr:              fmt.Sprintf(":%d", s.cfg.HttpPort),
+		Handler:           s.engine,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	// Start http server

@@ -6,7 +6,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	"goshop/internal/order/repository"
 	"goshop/pkg/apperror"
@@ -16,7 +16,7 @@ import (
 //go:generate mockery --name=CouponService
 type CouponService interface {
 	GetByCode(ctx context.Context, code string) (*model.Coupon, error)
-	Create(ctx context.Context, req *dto.CreateCouponReq) (*model.Coupon, error)
+	Create(ctx context.Context, req *domain.CreateCouponReq) (*model.Coupon, error)
 	Apply(ctx context.Context, code string, totalPrice float64) (discountAmount float64, coupon *model.Coupon, err error)
 	IncrUsedCount(ctx context.Context, id string) error
 }
@@ -34,7 +34,7 @@ func (s *couponSvc) GetByCode(ctx context.Context, code string) (*model.Coupon, 
 	return s.repo.GetByCode(ctx, code)
 }
 
-func (s *couponSvc) Create(ctx context.Context, req *dto.CreateCouponReq) (*model.Coupon, error) {
+func (s *couponSvc) Create(ctx context.Context, req *domain.CreateCouponReq) (*model.Coupon, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	cartMocks "goshop/internal/cart/repository/mocks"
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	orderMocks "goshop/internal/order/repository/mocks"
 	serviceMocks "goshop/internal/order/service/mocks"
@@ -124,7 +124,7 @@ func (suite *OrderServiceTestSuite) TestGetMyOrders() {
 		suite.Run(tc.name, func() {
 			suite.SetupTest()
 			tc.setup()
-			req := &dto.ListOrderReq{Status: "new"}
+			req := &domain.ListOrderReq{Status: "new"}
 			orders, pagination, err := suite.service.GetMyOrders(context.Background(), req)
 			if tc.wantErr {
 				suite.Nil(orders)
@@ -143,16 +143,16 @@ func (suite *OrderServiceTestSuite) TestGetMyOrders() {
 func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 	tests := []struct {
 		name    string
-		req     *dto.PlaceOrderReq
+		req     *domain.PlaceOrderReq
 		setup   func()
 		wantErr bool
 		sleep   bool
 	}{
 		{
 			name: "Success",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID",
-				Lines:  []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -168,9 +168,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "GetProductByID fail",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID",
-				Lines:  []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -180,17 +180,17 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "Missing UserID",
-			req: &dto.PlaceOrderReq{
-				Lines: []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+			req: &domain.PlaceOrderReq{
+				Lines: []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup:   func() {},
 			wantErr: true,
 		},
 		{
 			name: "CreateOrder fail",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID",
-				Lines:  []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -202,9 +202,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "With coupon",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID", CouponCode: "SAVE10",
-				Lines: []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines: []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -223,9 +223,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "Invalid coupon",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID", CouponCode: "INVALID",
-				Lines: []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines: []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -237,9 +237,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "ClearCart fail (best-effort)",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID",
-				Lines:  []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -255,9 +255,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "DecrementStock fail (best-effort)",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID",
-				Lines:  []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -273,9 +273,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "Coupon IncrUsedCount fail",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID", CouponCode: "SAVE10",
-				Lines: []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines: []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -295,9 +295,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "GetUser for notification fail",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID",
-				Lines:  []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
@@ -313,9 +313,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "SendOrderPlaced notification fail",
-			req: &dto.PlaceOrderReq{
+			req: &domain.PlaceOrderReq{
 				UserID: "userID",
-				Lines:  []dto.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
+				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").

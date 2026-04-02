@@ -6,16 +6,16 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/internal/cart/dto"
+	"goshop/internal/cart/domain"
 	"goshop/internal/cart/model"
 	"goshop/internal/cart/repository"
 )
 
 //go:generate mockery --name=CartService
 type CartService interface {
-	AddProduct(ctx context.Context, req *dto.AddProductReq) (*model.Cart, error)
+	AddProduct(ctx context.Context, req *domain.AddProductReq) (*model.Cart, error)
 	GetCartByUserID(ctx context.Context, userID string) (*model.Cart, error)
-	RemoveProduct(ctx context.Context, req *dto.RemoveProductReq) (*model.Cart, error)
+	RemoveProduct(ctx context.Context, req *domain.RemoveProductReq) (*model.Cart, error)
 }
 
 type cartService struct {
@@ -49,7 +49,7 @@ func (p *cartService) GetCartByUserID(ctx context.Context, userID string) (*mode
 	return cart, nil
 }
 
-func (p *cartService) AddProduct(ctx context.Context, req *dto.AddProductReq) (*model.Cart, error) {
+func (p *cartService) AddProduct(ctx context.Context, req *domain.AddProductReq) (*model.Cart, error) {
 	if err := p.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (p *cartService) AddProduct(ctx context.Context, req *dto.AddProductReq) (*
 	return cart, nil
 }
 
-func (p *cartService) RemoveProduct(ctx context.Context, req *dto.RemoveProductReq) (*model.Cart, error) {
+func (p *cartService) RemoveProduct(ctx context.Context, req *domain.RemoveProductReq) (*model.Cart, error) {
 	if err := p.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}

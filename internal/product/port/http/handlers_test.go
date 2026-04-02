@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	srvMocks "goshop/internal/product/service/mocks"
 	"goshop/pkg/config"
@@ -62,7 +62,7 @@ func (suite *ProductHandlerTestSuite) TestGetProductByID() {
 		{
 			name: "SuccessFromDatabase",
 			setup: func() {
-				suite.mockRedis.On("Get", mock.Anything, &dto.Product{}).Return(errors.New("not found")).Times(1)
+				suite.mockRedis.On("Get", mock.Anything, &domain.Product{}).Return(errors.New("not found")).Times(1)
 				suite.mockService.On("GetProductByID", mock.Anything, mock.Anything).
 					Return(
 						&model.Product{
@@ -77,7 +77,7 @@ func (suite *ProductHandlerTestSuite) TestGetProductByID() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var product dto.Product
+				var product domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&product, &res.Result)
 				suite.Equal("123456", product.ID)
@@ -88,12 +88,12 @@ func (suite *ProductHandlerTestSuite) TestGetProductByID() {
 		{
 			name: "SuccessFromCache",
 			setup: func() {
-				suite.mockRedis.On("Get", mock.Anything, &dto.Product{}).Return(nil).Times(1)
+				suite.mockRedis.On("Get", mock.Anything, &domain.Product{}).Return(nil).Times(1)
 			},
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var product dto.Product
+				var product domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&product, &res.Result)
 				suite.Equal("", product.ID)
@@ -104,7 +104,7 @@ func (suite *ProductHandlerTestSuite) TestGetProductByID() {
 		{
 			name: "Fail",
 			setup: func() {
-				suite.mockRedis.On("Get", mock.Anything, &dto.Product{}).Return(errors.New("not found")).Times(1)
+				suite.mockRedis.On("Get", mock.Anything, &domain.Product{}).Return(errors.New("not found")).Times(1)
 				suite.mockService.On("GetProductByID", mock.Anything, mock.Anything).
 					Return(nil, errors.New("error")).Times(1)
 			},
@@ -138,7 +138,7 @@ func (suite *ProductHandlerTestSuite) TestListProducts() {
 			name: "SuccessFromDatabase",
 			path: "/api/v1/products",
 			setup: func() {
-				suite.mockRedis.On("Get", mock.Anything, &dto.ListProductRes{}).Return(errors.New("not found")).Times(1)
+				suite.mockRedis.On("Get", mock.Anything, &domain.ListProductRes{}).Return(errors.New("not found")).Times(1)
 				suite.mockService.On("ListProducts", mock.Anything, mock.Anything).
 					Return(
 						[]*model.Product{
@@ -156,7 +156,7 @@ func (suite *ProductHandlerTestSuite) TestListProducts() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var products dto.ListProductRes
+				var products domain.ListProductRes
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&products, &res.Result)
 				suite.Equal(1, len(products.Products))
@@ -169,12 +169,12 @@ func (suite *ProductHandlerTestSuite) TestListProducts() {
 			name: "SuccessFromCache",
 			path: "/api/v1/products",
 			setup: func() {
-				suite.mockRedis.On("Get", mock.Anything, &dto.ListProductRes{}).Return(nil).Times(1)
+				suite.mockRedis.On("Get", mock.Anything, &domain.ListProductRes{}).Return(nil).Times(1)
 			},
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var products []*dto.Product
+				var products []*domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&products, &res.Result)
 				suite.Equal(0, len(products))
@@ -190,7 +190,7 @@ func (suite *ProductHandlerTestSuite) TestListProducts() {
 			name: "Fail",
 			path: "/api/v1/products",
 			setup: func() {
-				suite.mockRedis.On("Get", mock.Anything, &dto.ListProductRes{}).Return(errors.New("not found")).Times(1)
+				suite.mockRedis.On("Get", mock.Anything, &domain.ListProductRes{}).Return(errors.New("not found")).Times(1)
 				suite.mockService.On("ListProducts", mock.Anything, mock.Anything).
 					Return(nil, nil, errors.New("error")).Times(1)
 			},
@@ -222,13 +222,13 @@ func (suite *ProductHandlerTestSuite) TestCreateProduct() {
 	}{
 		{
 			name: "Success",
-			body: &dto.CreateProductReq{
+			body: &domain.CreateProductReq{
 				Name:        "product",
 				Description: "description",
 				Price:       10.5,
 			},
 			setup: func() {
-				suite.mockService.On("Create", mock.Anything, &dto.CreateProductReq{
+				suite.mockService.On("Create", mock.Anything, &domain.CreateProductReq{
 					Name:        "product",
 					Description: "description",
 					Price:       10.5,
@@ -245,7 +245,7 @@ func (suite *ProductHandlerTestSuite) TestCreateProduct() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var resData dto.Product
+				var resData domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&resData, &res.Result)
 				suite.Equal("product", resData.Name)
@@ -270,13 +270,13 @@ func (suite *ProductHandlerTestSuite) TestCreateProduct() {
 		},
 		{
 			name: "Fail",
-			body: &dto.CreateProductReq{
+			body: &domain.CreateProductReq{
 				Name:        "product",
 				Description: "description",
 				Price:       10.5,
 			},
 			setup: func() {
-				suite.mockService.On("Create", mock.Anything, &dto.CreateProductReq{
+				suite.mockService.On("Create", mock.Anything, &domain.CreateProductReq{
 					Name:        "product",
 					Description: "description",
 					Price:       10.5,
@@ -315,13 +315,13 @@ func (suite *ProductHandlerTestSuite) TestUpdateProduct() {
 	}{
 		{
 			name: "Success",
-			body: &dto.UpdateProductReq{
+			body: &domain.UpdateProductReq{
 				Name:        "product",
 				Description: "description",
 				Price:       10.5,
 			},
 			setup: func() {
-				suite.mockService.On("Update", mock.Anything, mock.Anything, &dto.UpdateProductReq{
+				suite.mockService.On("Update", mock.Anything, mock.Anything, &domain.UpdateProductReq{
 					Name:        "product",
 					Description: "description",
 					Price:       10.5,
@@ -339,7 +339,7 @@ func (suite *ProductHandlerTestSuite) TestUpdateProduct() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var resData dto.Product
+				var resData domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&resData, &res.Result)
 				suite.Equal("123456", resData.ID)
@@ -365,13 +365,13 @@ func (suite *ProductHandlerTestSuite) TestUpdateProduct() {
 		},
 		{
 			name: "Fail",
-			body: &dto.UpdateProductReq{
+			body: &domain.UpdateProductReq{
 				Name:        "product",
 				Description: "description",
 				Price:       10.5,
 			},
 			setup: func() {
-				suite.mockService.On("Update", mock.Anything, mock.Anything, &dto.UpdateProductReq{
+				suite.mockService.On("Update", mock.Anything, mock.Anything, &domain.UpdateProductReq{
 					Name:        "product",
 					Description: "description",
 					Price:       10.5,

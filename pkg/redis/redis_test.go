@@ -101,7 +101,7 @@ func (s *RedisTestSuite) TestGet_NotFound() {
 }
 
 func (s *RedisTestSuite) TestGet_InvalidJSON() {
-	s.mr.Set("badkey", "not-json")
+	_ = s.mr.Set("badkey", "not-json")
 	var v map[string]string
 	err := s.r.Get("badkey", &v)
 	assert.Error(s.T(), err)

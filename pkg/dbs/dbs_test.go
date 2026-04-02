@@ -23,7 +23,7 @@ func newMockGormDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	t.Helper()
 	sqlDB, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	t.Cleanup(func() { sqlDB.Close() })
+	t.Cleanup(func() { _ = sqlDB.Close() })
 
 	gormDB, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{
 		SkipDefaultTransaction: true,

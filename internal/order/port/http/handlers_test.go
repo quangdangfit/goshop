@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	"goshop/internal/order/service/mocks"
 	productMocks "goshop/internal/product/service/mocks"
@@ -63,17 +63,17 @@ func (suite *OrderHandlerTestSuite) TestPlaceOrder() {
 	}{
 		{
 			name: "Success",
-			body: &dto.PlaceOrderReq{
-				Lines: []dto.PlaceOrderLineReq{
+			body: &domain.PlaceOrderReq{
+				Lines: []domain.PlaceOrderLineReq{
 					{ProductID: "productId1", Quantity: 2},
 					{ProductID: "productId2", Quantity: 3},
 				},
 			},
 			setup: func(ctx *gin.Context) {
 				ctx.Set("userId", "123456")
-				suite.mockService.On("PlaceOrder", mock.Anything, &dto.PlaceOrderReq{
+				suite.mockService.On("PlaceOrder", mock.Anything, &domain.PlaceOrderReq{
 					UserID: "123456",
-					Lines: []dto.PlaceOrderLineReq{
+					Lines: []domain.PlaceOrderLineReq{
 						{ProductID: "productId1", Quantity: 2},
 						{ProductID: "productId2", Quantity: 3},
 					},
@@ -94,7 +94,7 @@ func (suite *OrderHandlerTestSuite) TestPlaceOrder() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var orderRes dto.Order
+				var orderRes domain.Order
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&orderRes, &res.Result)
 				suite.Equal(float64(8), orderRes.TotalPrice)
@@ -134,8 +134,8 @@ func (suite *OrderHandlerTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "Unauthorized",
-			body: &dto.PlaceOrderReq{
-				Lines: []dto.PlaceOrderLineReq{
+			body: &domain.PlaceOrderReq{
+				Lines: []domain.PlaceOrderLineReq{
 					{ProductID: "productId1", Quantity: 2},
 					{ProductID: "productId2", Quantity: 3},
 				},
@@ -150,17 +150,17 @@ func (suite *OrderHandlerTestSuite) TestPlaceOrder() {
 		},
 		{
 			name: "Fail",
-			body: &dto.PlaceOrderReq{
-				Lines: []dto.PlaceOrderLineReq{
+			body: &domain.PlaceOrderReq{
+				Lines: []domain.PlaceOrderLineReq{
 					{ProductID: "productId1", Quantity: 2},
 					{ProductID: "productId2", Quantity: 3},
 				},
 			},
 			setup: func(ctx *gin.Context) {
 				ctx.Set("userId", "123456")
-				suite.mockService.On("PlaceOrder", mock.Anything, &dto.PlaceOrderReq{
+				suite.mockService.On("PlaceOrder", mock.Anything, &domain.PlaceOrderReq{
 					UserID: "123456",
-					Lines: []dto.PlaceOrderLineReq{
+					Lines: []domain.PlaceOrderLineReq{
 						{ProductID: "productId1", Quantity: 2},
 						{ProductID: "productId2", Quantity: 3},
 					},
@@ -215,7 +215,7 @@ func (suite *OrderHandlerTestSuite) TestGetOrderByID() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var orderRes dto.Order
+				var orderRes domain.Order
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&orderRes, &res.Result)
 				suite.Equal(float64(5), orderRes.TotalPrice)
@@ -309,7 +309,7 @@ func (suite *OrderHandlerTestSuite) TestGetOrders() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var orderRes dto.ListOrderRes
+				var orderRes domain.ListOrderRes
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&orderRes, &res.Result)
 				suite.Equal(1, len(orderRes.Orders))
@@ -396,7 +396,7 @@ func (suite *OrderHandlerTestSuite) TestCancelOrder() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var orderRes dto.Order
+				var orderRes domain.Order
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&orderRes, &res.Result)
 				suite.Equal("orderId1", orderRes.ID)

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	srvMocks "goshop/internal/user/service/mocks"
 	"goshop/pkg/config"
@@ -71,7 +71,7 @@ func (suite *WishlistHandlerTestSuite) TestGetWishlist() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var items []*dto.WishlistItem
+				var items []*domain.WishlistItem
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&items, &res.Result)
 				suite.Equal(2, len(items))
@@ -125,17 +125,17 @@ func (suite *WishlistHandlerTestSuite) TestAddProduct() {
 	}{
 		{
 			name:   "Success",
-			body:   &dto.AddToWishlistReq{ProductID: "p1"},
+			body:   &domain.AddToWishlistReq{ProductID: "p1"},
 			userId: "u1",
 			setup: func() {
-				suite.mockService.On("AddProduct", mock.Anything, "u1", &dto.AddToWishlistReq{ProductID: "p1"}).
+				suite.mockService.On("AddProduct", mock.Anything, "u1", &domain.AddToWishlistReq{ProductID: "p1"}).
 					Return(nil).Times(1)
 			},
 			expected: http.StatusOK,
 		},
 		{
 			name:     "Unauthorized",
-			body:     &dto.AddToWishlistReq{ProductID: "p1"},
+			body:     &domain.AddToWishlistReq{ProductID: "p1"},
 			userId:   "",
 			setup:    func() {},
 			expected: http.StatusUnauthorized,
@@ -149,10 +149,10 @@ func (suite *WishlistHandlerTestSuite) TestAddProduct() {
 		},
 		{
 			name:   "Fail",
-			body:   &dto.AddToWishlistReq{ProductID: "p1"},
+			body:   &domain.AddToWishlistReq{ProductID: "p1"},
 			userId: "u1",
 			setup: func() {
-				suite.mockService.On("AddProduct", mock.Anything, "u1", &dto.AddToWishlistReq{ProductID: "p1"}).
+				suite.mockService.On("AddProduct", mock.Anything, "u1", &domain.AddToWishlistReq{ProductID: "p1"}).
 					Return(errors.New("already exists")).Times(1)
 			},
 			expected: http.StatusInternalServerError,

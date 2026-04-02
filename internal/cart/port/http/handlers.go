@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/cart/dto"
+	"goshop/internal/cart/domain"
 	"goshop/internal/cart/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
@@ -27,7 +27,7 @@ func NewCartHandler(service service.CartService) *CartHandler {
 //	@Tags		cart
 //	@Produce	json
 //	@Security	ApiKeyAuth
-//	@Success	200	{object}	dto.Cart
+//	@Success	200	{object}	domain.Cart
 //	@Router		/api/v1/cart [get]
 func (h *CartHandler) GetCart(c *gin.Context) {
 	userID := c.GetString("userId")
@@ -43,7 +43,7 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 		return
 	}
 
-	var res dto.Cart
+	var res domain.Cart
 	utils.Copy(&res, &cart)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -54,8 +54,8 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 //	@Tags		cart
 //	@Produce	json
 //	@Security	ApiKeyAuth
-//	@Param		_	body		dto.CartLineReq	true	"Body"
-//	@Success	200	{object}	dto.Cart
+//	@Param		_	body		domain.CartLineReq	true	"Body"
+//	@Success	200	{object}	domain.Cart
 //	@Router		/api/v1/cart [post]
 func (h *CartHandler) AddProduct(c *gin.Context) {
 	userID := c.GetString("userId")
@@ -64,14 +64,14 @@ func (h *CartHandler) AddProduct(c *gin.Context) {
 		return
 	}
 
-	var line dto.CartLineReq
+	var line domain.CartLineReq
 	if err := c.ShouldBindJSON(&line); err != nil {
 		logger.Error("Failed to get body", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
-	cart, err := h.service.AddProduct(c, &dto.AddProductReq{
+	cart, err := h.service.AddProduct(c, &domain.AddProductReq{
 		UserID: userID,
 		Line:   &line,
 	})
@@ -81,7 +81,7 @@ func (h *CartHandler) AddProduct(c *gin.Context) {
 		return
 	}
 
-	var res dto.Cart
+	var res domain.Cart
 	utils.Copy(&res, &cart)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -107,7 +107,7 @@ func (h *CartHandler) RemoveProduct(c *gin.Context) {
 		return
 	}
 
-	cart, err := h.service.RemoveProduct(c, &dto.RemoveProductReq{
+	cart, err := h.service.RemoveProduct(c, &domain.RemoveProductReq{
 		UserID:    userID,
 		ProductID: productID,
 	})
@@ -117,7 +117,7 @@ func (h *CartHandler) RemoveProduct(c *gin.Context) {
 		return
 	}
 
-	var res dto.Cart
+	var res domain.Cart
 	utils.Copy(&res, &cart)
 	response.JSON(c, http.StatusOK, res)
 }

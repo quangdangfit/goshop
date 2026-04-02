@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/config"
@@ -38,7 +38,7 @@ func NewProductHandler(
 //	@Param		id	path	string	true	"Product ID"
 //	@Router		/api/v1/products/{id} [get]
 func (p *ProductHandler) GetProductByID(c *gin.Context) {
-	var res dto.Product
+	var res domain.Product
 	cacheKey := c.Request.URL.RequestURI()
 	err := p.cache.Get(cacheKey, &res)
 	if err == nil {
@@ -67,14 +67,14 @@ func (p *ProductHandler) GetProductByID(c *gin.Context) {
 //	@Success	200	{object}	dto.ListProductRes
 //	@Router		/api/v1/products [get]
 func (p *ProductHandler) ListProducts(c *gin.Context) {
-	var req dto.ListProductReq
+	var req domain.ListProductReq
 	if err := c.ShouldBindQuery(&req); err != nil {
 		logger.Error("Failed to parse request query: ", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
 	}
 
-	var res dto.ListProductRes
+	var res domain.ListProductRes
 	cacheKey := c.Request.URL.RequestURI()
 	err := p.cache.Get(cacheKey, &res)
 	if err == nil {
@@ -104,7 +104,7 @@ func (p *ProductHandler) ListProducts(c *gin.Context) {
 //	@Param		_	body	dto.CreateProductReq	true	"Body"
 //	@Router		/api/v1/products [post]
 func (p *ProductHandler) CreateProduct(c *gin.Context) {
-	var req dto.CreateProductReq
+	var req domain.CreateProductReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
@@ -118,7 +118,7 @@ func (p *ProductHandler) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	var res dto.Product
+	var res domain.Product
 	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
 	_ = p.cache.RemovePattern("*product*")
@@ -135,7 +135,7 @@ func (p *ProductHandler) CreateProduct(c *gin.Context) {
 //	@Router		/api/v1/products/{id} [put]
 func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 	productId := c.Param("id")
-	var req dto.UpdateProductReq
+	var req domain.UpdateProductReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
@@ -149,7 +149,7 @@ func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	var res dto.Product
+	var res domain.Product
 	utils.Copy(&res, &product)
 	response.JSON(c, http.StatusOK, res)
 	_ = p.cache.RemovePattern("*product*")

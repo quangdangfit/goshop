@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 
 	mock "github.com/stretchr/testify/mock"
@@ -40,7 +40,7 @@ func (_m *CategoryService) EXPECT() *CategoryService_Expecter {
 }
 
 // Create provides a mock function for the type CategoryService
-func (_mock *CategoryService) Create(ctx context.Context, req *dto.CreateCategoryReq) (*model.Category, error) {
+func (_mock *CategoryService) Create(ctx context.Context, req *domain.CreateCategoryReq) (*model.Category, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -49,17 +49,17 @@ func (_mock *CategoryService) Create(ctx context.Context, req *dto.CreateCategor
 
 	var r0 *model.Category
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.CreateCategoryReq) (*model.Category, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.CreateCategoryReq) (*model.Category, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.CreateCategoryReq) *model.Category); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.CreateCategoryReq) *model.Category); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Category)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.CreateCategoryReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.CreateCategoryReq) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -79,15 +79,15 @@ func (_e *CategoryService_Expecter) Create(ctx interface{}, req interface{}) *Ca
 	return &CategoryService_Create_Call{Call: _e.mock.On("Create", ctx, req)}
 }
 
-func (_c *CategoryService_Create_Call) Run(run func(ctx context.Context, req *dto.CreateCategoryReq)) *CategoryService_Create_Call {
+func (_c *CategoryService_Create_Call) Run(run func(ctx context.Context, req *domain.CreateCategoryReq)) *CategoryService_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.CreateCategoryReq
+		var arg1 *domain.CreateCategoryReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.CreateCategoryReq)
+			arg1 = args[1].(*domain.CreateCategoryReq)
 		}
 		run(
 			arg0,
@@ -102,7 +102,7 @@ func (_c *CategoryService_Create_Call) Return(category *model.Category, err erro
 	return _c
 }
 
-func (_c *CategoryService_Create_Call) RunAndReturn(run func(ctx context.Context, req *dto.CreateCategoryReq) (*model.Category, error)) *CategoryService_Create_Call {
+func (_c *CategoryService_Create_Call) RunAndReturn(run func(ctx context.Context, req *domain.CreateCategoryReq) (*model.Category, error)) *CategoryService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -295,7 +295,7 @@ func (_c *CategoryService_ListCategories_Call) RunAndReturn(run func(ctx context
 }
 
 // Update provides a mock function for the type CategoryService
-func (_mock *CategoryService) Update(ctx context.Context, id string, req *dto.UpdateCategoryReq) (*model.Category, error) {
+func (_mock *CategoryService) Update(ctx context.Context, id string, req *domain.UpdateCategoryReq) (*model.Category, error) {
 	ret := _mock.Called(ctx, id, req)
 
 	if len(ret) == 0 {
@@ -304,17 +304,17 @@ func (_mock *CategoryService) Update(ctx context.Context, id string, req *dto.Up
 
 	var r0 *model.Category
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *dto.UpdateCategoryReq) (*model.Category, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *domain.UpdateCategoryReq) (*model.Category, error)); ok {
 		return returnFunc(ctx, id, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *dto.UpdateCategoryReq) *model.Category); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *domain.UpdateCategoryReq) *model.Category); ok {
 		r0 = returnFunc(ctx, id, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Category)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *dto.UpdateCategoryReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *domain.UpdateCategoryReq) error); ok {
 		r1 = returnFunc(ctx, id, req)
 	} else {
 		r1 = ret.Error(1)
@@ -335,7 +335,7 @@ func (_e *CategoryService_Expecter) Update(ctx interface{}, id interface{}, req 
 	return &CategoryService_Update_Call{Call: _e.mock.On("Update", ctx, id, req)}
 }
 
-func (_c *CategoryService_Update_Call) Run(run func(ctx context.Context, id string, req *dto.UpdateCategoryReq)) *CategoryService_Update_Call {
+func (_c *CategoryService_Update_Call) Run(run func(ctx context.Context, id string, req *domain.UpdateCategoryReq)) *CategoryService_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -345,9 +345,9 @@ func (_c *CategoryService_Update_Call) Run(run func(ctx context.Context, id stri
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *dto.UpdateCategoryReq
+		var arg2 *domain.UpdateCategoryReq
 		if args[2] != nil {
-			arg2 = args[2].(*dto.UpdateCategoryReq)
+			arg2 = args[2].(*domain.UpdateCategoryReq)
 		}
 		run(
 			arg0,
@@ -363,7 +363,7 @@ func (_c *CategoryService_Update_Call) Return(category *model.Category, err erro
 	return _c
 }
 
-func (_c *CategoryService_Update_Call) RunAndReturn(run func(ctx context.Context, id string, req *dto.UpdateCategoryReq) (*model.Category, error)) *CategoryService_Update_Call {
+func (_c *CategoryService_Update_Call) RunAndReturn(run func(ctx context.Context, id string, req *domain.UpdateCategoryReq) (*model.Category, error)) *CategoryService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

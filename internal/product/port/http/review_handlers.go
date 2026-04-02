@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
@@ -33,7 +33,7 @@ func (h *ReviewHandler) ListReviews(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res dto.ListReviewRes
+	var res domain.ListReviewRes
 	utils.Copy(&res.Reviews, &reviews)
 	res.Pagination = pagination
 	response.JSON(c, http.StatusOK, res)
@@ -46,7 +46,7 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		return
 	}
 	productID := c.Param("id")
-	var req dto.CreateReviewReq
+	var req domain.CreateReviewReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
@@ -56,7 +56,7 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res dto.Review
+	var res domain.Review
 	utils.Copy(&res, review)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -68,7 +68,7 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 		return
 	}
 	reviewID := c.Param("reviewId")
-	var req dto.UpdateReviewReq
+	var req domain.UpdateReviewReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return
@@ -78,7 +78,7 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res dto.Review
+	var res domain.Review
 	utils.Copy(&res, review)
 	response.JSON(c, http.StatusOK, res)
 }

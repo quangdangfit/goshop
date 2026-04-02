@@ -12,7 +12,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs/mocks"
@@ -24,7 +24,7 @@ func newProductSQLMockGormDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		t.Fatalf("failed to create sql mock: %v", err)
 	}
-	t.Cleanup(func() { sqlDB.Close() })
+	t.Cleanup(func() { _ = sqlDB.Close() })
 	gormDB, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{
 		SkipDefaultTransaction: true,
 	})
@@ -160,13 +160,13 @@ func (suite *ProductRepositoryTestSuite) TestGetProductByID() {
 func (suite *ProductRepositoryTestSuite) TestListProducts() {
 	tests := []struct {
 		name    string
-		req     *dto.ListProductReq
+		req     *domain.ListProductReq
 		setup   func()
 		wantErr bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.ListProductReq{Name: "name", Code: "code", Page: 2, Limit: 10, OrderBy: "name", OrderDesc: true},
+			req:  &domain.ListProductReq{Name: "name", Code: "code", Page: 2, Limit: 10, OrderBy: "name", OrderDesc: true},
 			setup: func() {
 				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
 				suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
@@ -174,7 +174,7 @@ func (suite *ProductRepositoryTestSuite) TestListProducts() {
 		},
 		{
 			name: "With CategoryID",
-			req:  &dto.ListProductReq{CategoryID: "cat1"},
+			req:  &domain.ListProductReq{CategoryID: "cat1"},
 			setup: func() {
 				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
 				suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
@@ -182,7 +182,7 @@ func (suite *ProductRepositoryTestSuite) TestListProducts() {
 		},
 		{
 			name: "Count fail",
-			req:  &dto.ListProductReq{},
+			req:  &domain.ListProductReq{},
 			setup: func() {
 				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)
 			},
@@ -190,7 +190,7 @@ func (suite *ProductRepositoryTestSuite) TestListProducts() {
 		},
 		{
 			name: "Find fail",
-			req:  &dto.ListProductReq{},
+			req:  &domain.ListProductReq{},
 			setup: func() {
 				suite.mockDB.On("Count", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(1)
 				suite.mockDB.On("Find", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("error")).Times(1)

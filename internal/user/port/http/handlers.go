@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/user/dto"
+	"goshop/internal/user/domain"
 	"goshop/internal/user/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
@@ -28,11 +28,11 @@ func NewUserHandler(service service.UserService) *UserHandler {
 //	@Summary	Login
 //	@Tags		users
 //	@Produce	json
-//	@Param		_	body		dto.LoginReq	true	"Body"
-//	@Success	200	{object}	dto.LoginRes
+//	@Param		_	body		domain.LoginReq	true	"Body"
+//	@Success	200	{object}	domain.LoginRes
 //	@Router		/api/v1/auth/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
-	var req dto.LoginReq
+	var req domain.LoginReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body ", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
@@ -46,7 +46,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	var res dto.LoginRes
+	var res domain.LoginRes
 	utils.Copy(&res.User, &user)
 	res.AccessToken = accessToken
 	res.RefreshToken = refreshToken
@@ -58,11 +58,11 @@ func (h *UserHandler) Login(c *gin.Context) {
 //	@Summary	Register new user
 //	@Tags		users
 //	@Produce	json
-//	@Param		_	body		dto.RegisterReq	true	"Body"
-//	@Success	200	{object}	dto.RegisterRes
+//	@Param		_	body		domain.RegisterReq	true	"Body"
+//	@Success	200	{object}	domain.RegisterRes
 //	@Router		/api/v1/auth/register [post]
 func (h *UserHandler) Register(c *gin.Context) {
-	var req dto.RegisterReq
+	var req domain.RegisterReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
@@ -76,7 +76,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	var res dto.RegisterRes
+	var res domain.RegisterRes
 	utils.Copy(&res.User, &user)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -87,7 +87,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 //	@Tags		users
 //	@Security	ApiKeyAuth
 //	@Produce	json
-//	@Success	200	{object}	dto.User
+//	@Success	200	{object}	domain.User
 //	@Router		/api/v1/auth/me [get]
 func (h *UserHandler) GetMe(c *gin.Context) {
 	userID := c.GetString("userId")
@@ -103,7 +103,7 @@ func (h *UserHandler) GetMe(c *gin.Context) {
 		return
 	}
 
-	var res dto.User
+	var res domain.User
 	utils.Copy(&res, &user)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -122,7 +122,7 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	res := dto.RefreshTokenRes{
+	res := domain.RefreshTokenRes{
 		AccessToken: accessToken,
 	}
 	response.JSON(c, http.StatusOK, res)
@@ -134,10 +134,10 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 //	@Tags		users
 //	@Security	ApiKeyAuth
 //	@Produce	json
-//	@Param		_	body	dto.ChangePasswordReq	true	"Body"
+//	@Param		_	body	domain.ChangePasswordReq	true	"Body"
 //	@Router		/api/v1/auth/change-password [put]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
-	var req dto.ChangePasswordReq
+	var req domain.ChangePasswordReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		logger.Error("Failed to get body", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)

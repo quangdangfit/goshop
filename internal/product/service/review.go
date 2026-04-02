@@ -5,7 +5,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository"
 	"goshop/pkg/apperror"
@@ -16,8 +16,8 @@ import (
 //go:generate mockery --name=ReviewService
 type ReviewService interface {
 	ListReviews(ctx context.Context, productID string, page, limit int64) ([]*model.Review, *paging.Pagination, error)
-	CreateReview(ctx context.Context, productID, userID string, req *dto.CreateReviewReq) (*model.Review, error)
-	UpdateReview(ctx context.Context, id, userID string, req *dto.UpdateReviewReq) (*model.Review, error)
+	CreateReview(ctx context.Context, productID, userID string, req *domain.CreateReviewReq) (*model.Review, error)
+	UpdateReview(ctx context.Context, id, userID string, req *domain.UpdateReviewReq) (*model.Review, error)
 	DeleteReview(ctx context.Context, id, userID string) error
 }
 
@@ -39,7 +39,7 @@ func (s *reviewSvc) ListReviews(ctx context.Context, productID string, page, lim
 	return s.repo.ListByProduct(ctx, productID, page, limit)
 }
 
-func (s *reviewSvc) CreateReview(ctx context.Context, productID, userID string, req *dto.CreateReviewReq) (*model.Review, error) {
+func (s *reviewSvc) CreateReview(ctx context.Context, productID, userID string, req *domain.CreateReviewReq) (*model.Review, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (s *reviewSvc) CreateReview(ctx context.Context, productID, userID string, 
 	return &review, nil
 }
 
-func (s *reviewSvc) UpdateReview(ctx context.Context, id, userID string, req *dto.UpdateReviewReq) (*model.Review, error) {
+func (s *reviewSvc) UpdateReview(ctx context.Context, id, userID string, req *domain.UpdateReviewReq) (*model.Review, error) {
 	review, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err

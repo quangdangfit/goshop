@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	svcMocks "goshop/internal/order/service/mocks"
 	"goshop/pkg/config"
@@ -69,13 +69,13 @@ func (suite *CouponHandlerTestSuite) TestCreateCoupon() {
 	}{
 		{
 			name: "Success",
-			body: &dto.CreateCouponReq{
+			body: &domain.CreateCouponReq{
 				Code:          "SAVE10",
 				DiscountType:  "fixed",
 				DiscountValue: 10,
 			},
 			setup: func() {
-				suite.mockCouponService.On("Create", mock.Anything, &dto.CreateCouponReq{
+				suite.mockCouponService.On("Create", mock.Anything, &domain.CreateCouponReq{
 					Code:          "SAVE10",
 					DiscountType:  "fixed",
 					DiscountValue: 10,
@@ -89,7 +89,7 @@ func (suite *CouponHandlerTestSuite) TestCreateCoupon() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var coupon dto.Coupon
+				var coupon domain.Coupon
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&coupon, &res.Result)
 				suite.Equal("SAVE10", coupon.Code)
@@ -103,13 +103,13 @@ func (suite *CouponHandlerTestSuite) TestCreateCoupon() {
 		},
 		{
 			name: "Fail",
-			body: &dto.CreateCouponReq{
+			body: &domain.CreateCouponReq{
 				Code:          "SAVE10",
 				DiscountType:  "fixed",
 				DiscountValue: 10,
 			},
 			setup: func() {
-				suite.mockCouponService.On("Create", mock.Anything, &dto.CreateCouponReq{
+				suite.mockCouponService.On("Create", mock.Anything, &domain.CreateCouponReq{
 					Code:          "SAVE10",
 					DiscountType:  "fixed",
 					DiscountValue: 10,
@@ -156,7 +156,7 @@ func (suite *CouponHandlerTestSuite) TestGetCouponByCode() {
 			expected: http.StatusOK,
 			checkBody: func(writer *httptest.ResponseRecorder) {
 				var res response.Response
-				var coupon dto.Coupon
+				var coupon domain.Coupon
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
 				utils.Copy(&coupon, &res.Result)
 				suite.Equal("SAVE10", coupon.Code)

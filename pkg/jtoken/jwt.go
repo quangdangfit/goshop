@@ -54,7 +54,7 @@ func GenerateRefreshToken(payload map[string]interface{}) string {
 
 func ValidateToken(jwtToken string) (map[string]interface{}, error) {
 	cfg := config.GetConfig()
-	cleanJWT := strings.Replace(jwtToken, "Bearer ", "", -1)
+	cleanJWT := strings.ReplaceAll(jwtToken, "Bearer ", "")
 	tokenData := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(cleanJWT, tokenData, func(token *jwt.Token) (interface{}, error) {
 		return []byte(cfg.AuthSecret), nil

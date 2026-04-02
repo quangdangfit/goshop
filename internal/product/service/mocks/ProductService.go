@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/pkg/paging"
 
@@ -41,7 +41,7 @@ func (_m *ProductService) EXPECT() *ProductService_Expecter {
 }
 
 // Create provides a mock function for the type ProductService
-func (_mock *ProductService) Create(ctx context.Context, req *dto.CreateProductReq) (*model.Product, error) {
+func (_mock *ProductService) Create(ctx context.Context, req *domain.CreateProductReq) (*model.Product, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -50,17 +50,17 @@ func (_mock *ProductService) Create(ctx context.Context, req *dto.CreateProductR
 
 	var r0 *model.Product
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.CreateProductReq) (*model.Product, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.CreateProductReq) (*model.Product, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.CreateProductReq) *model.Product); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.CreateProductReq) *model.Product); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Product)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.CreateProductReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.CreateProductReq) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -80,15 +80,15 @@ func (_e *ProductService_Expecter) Create(ctx interface{}, req interface{}) *Pro
 	return &ProductService_Create_Call{Call: _e.mock.On("Create", ctx, req)}
 }
 
-func (_c *ProductService_Create_Call) Run(run func(ctx context.Context, req *dto.CreateProductReq)) *ProductService_Create_Call {
+func (_c *ProductService_Create_Call) Run(run func(ctx context.Context, req *domain.CreateProductReq)) *ProductService_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.CreateProductReq
+		var arg1 *domain.CreateProductReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.CreateProductReq)
+			arg1 = args[1].(*domain.CreateProductReq)
 		}
 		run(
 			arg0,
@@ -103,7 +103,7 @@ func (_c *ProductService_Create_Call) Return(product *model.Product, err error) 
 	return _c
 }
 
-func (_c *ProductService_Create_Call) RunAndReturn(run func(ctx context.Context, req *dto.CreateProductReq) (*model.Product, error)) *ProductService_Create_Call {
+func (_c *ProductService_Create_Call) RunAndReturn(run func(ctx context.Context, req *domain.CreateProductReq) (*model.Product, error)) *ProductService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -177,7 +177,7 @@ func (_c *ProductService_GetProductByID_Call) RunAndReturn(run func(ctx context.
 }
 
 // ListProducts provides a mock function for the type ProductService
-func (_mock *ProductService) ListProducts(c context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
+func (_mock *ProductService) ListProducts(c context.Context, req *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error) {
 	ret := _mock.Called(c, req)
 
 	if len(ret) == 0 {
@@ -187,24 +187,24 @@ func (_mock *ProductService) ListProducts(c context.Context, req *dto.ListProduc
 	var r0 []*model.Product
 	var r1 *paging.Pagination
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error)); ok {
 		return returnFunc(c, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.ListProductReq) []*model.Product); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.ListProductReq) []*model.Product); ok {
 		r0 = returnFunc(c, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*model.Product)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.ListProductReq) *paging.Pagination); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.ListProductReq) *paging.Pagination); ok {
 		r1 = returnFunc(c, req)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*paging.Pagination)
 		}
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, *dto.ListProductReq) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, *domain.ListProductReq) error); ok {
 		r2 = returnFunc(c, req)
 	} else {
 		r2 = ret.Error(2)
@@ -224,15 +224,15 @@ func (_e *ProductService_Expecter) ListProducts(c interface{}, req interface{}) 
 	return &ProductService_ListProducts_Call{Call: _e.mock.On("ListProducts", c, req)}
 }
 
-func (_c *ProductService_ListProducts_Call) Run(run func(c context.Context, req *dto.ListProductReq)) *ProductService_ListProducts_Call {
+func (_c *ProductService_ListProducts_Call) Run(run func(c context.Context, req *domain.ListProductReq)) *ProductService_ListProducts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.ListProductReq
+		var arg1 *domain.ListProductReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.ListProductReq)
+			arg1 = args[1].(*domain.ListProductReq)
 		}
 		run(
 			arg0,
@@ -247,13 +247,13 @@ func (_c *ProductService_ListProducts_Call) Return(products []*model.Product, pa
 	return _c
 }
 
-func (_c *ProductService_ListProducts_Call) RunAndReturn(run func(c context.Context, req *dto.ListProductReq) ([]*model.Product, *paging.Pagination, error)) *ProductService_ListProducts_Call {
+func (_c *ProductService_ListProducts_Call) RunAndReturn(run func(c context.Context, req *domain.ListProductReq) ([]*model.Product, *paging.Pagination, error)) *ProductService_ListProducts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type ProductService
-func (_mock *ProductService) Update(ctx context.Context, id string, req *dto.UpdateProductReq) (*model.Product, error) {
+func (_mock *ProductService) Update(ctx context.Context, id string, req *domain.UpdateProductReq) (*model.Product, error) {
 	ret := _mock.Called(ctx, id, req)
 
 	if len(ret) == 0 {
@@ -262,17 +262,17 @@ func (_mock *ProductService) Update(ctx context.Context, id string, req *dto.Upd
 
 	var r0 *model.Product
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *dto.UpdateProductReq) (*model.Product, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *domain.UpdateProductReq) (*model.Product, error)); ok {
 		return returnFunc(ctx, id, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *dto.UpdateProductReq) *model.Product); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *domain.UpdateProductReq) *model.Product); ok {
 		r0 = returnFunc(ctx, id, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Product)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *dto.UpdateProductReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *domain.UpdateProductReq) error); ok {
 		r1 = returnFunc(ctx, id, req)
 	} else {
 		r1 = ret.Error(1)
@@ -293,7 +293,7 @@ func (_e *ProductService_Expecter) Update(ctx interface{}, id interface{}, req i
 	return &ProductService_Update_Call{Call: _e.mock.On("Update", ctx, id, req)}
 }
 
-func (_c *ProductService_Update_Call) Run(run func(ctx context.Context, id string, req *dto.UpdateProductReq)) *ProductService_Update_Call {
+func (_c *ProductService_Update_Call) Run(run func(ctx context.Context, id string, req *domain.UpdateProductReq)) *ProductService_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -303,9 +303,9 @@ func (_c *ProductService_Update_Call) Run(run func(ctx context.Context, id strin
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *dto.UpdateProductReq
+		var arg2 *domain.UpdateProductReq
 		if args[2] != nil {
-			arg2 = args[2].(*dto.UpdateProductReq)
+			arg2 = args[2].(*domain.UpdateProductReq)
 		}
 		run(
 			arg0,
@@ -321,7 +321,7 @@ func (_c *ProductService_Update_Call) Return(product *model.Product, err error) 
 	return _c
 }
 
-func (_c *ProductService_Update_Call) RunAndReturn(run func(ctx context.Context, id string, req *dto.UpdateProductReq) (*model.Product, error)) *ProductService_Update_Call {
+func (_c *ProductService_Update_Call) RunAndReturn(run func(ctx context.Context, id string, req *domain.UpdateProductReq) (*model.Product, error)) *ProductService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

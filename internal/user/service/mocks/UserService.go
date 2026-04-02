@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 
 	mock "github.com/stretchr/testify/mock"
@@ -40,7 +40,7 @@ func (_m *UserService) EXPECT() *UserService_Expecter {
 }
 
 // ChangePassword provides a mock function for the type UserService
-func (_mock *UserService) ChangePassword(ctx context.Context, id string, req *dto.ChangePasswordReq) error {
+func (_mock *UserService) ChangePassword(ctx context.Context, id string, req *domain.ChangePasswordReq) error {
 	ret := _mock.Called(ctx, id, req)
 
 	if len(ret) == 0 {
@@ -48,7 +48,7 @@ func (_mock *UserService) ChangePassword(ctx context.Context, id string, req *dt
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *dto.ChangePasswordReq) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *domain.ChangePasswordReq) error); ok {
 		r0 = returnFunc(ctx, id, req)
 	} else {
 		r0 = ret.Error(0)
@@ -64,12 +64,12 @@ type UserService_ChangePassword_Call struct {
 // ChangePassword is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - req *dto.ChangePasswordReq
+//   - req *domain.ChangePasswordReq
 func (_e *UserService_Expecter) ChangePassword(ctx interface{}, id interface{}, req interface{}) *UserService_ChangePassword_Call {
 	return &UserService_ChangePassword_Call{Call: _e.mock.On("ChangePassword", ctx, id, req)}
 }
 
-func (_c *UserService_ChangePassword_Call) Run(run func(ctx context.Context, id string, req *dto.ChangePasswordReq)) *UserService_ChangePassword_Call {
+func (_c *UserService_ChangePassword_Call) Run(run func(ctx context.Context, id string, req *domain.ChangePasswordReq)) *UserService_ChangePassword_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -79,9 +79,9 @@ func (_c *UserService_ChangePassword_Call) Run(run func(ctx context.Context, id 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *dto.ChangePasswordReq
+		var arg2 *domain.ChangePasswordReq
 		if args[2] != nil {
-			arg2 = args[2].(*dto.ChangePasswordReq)
+			arg2 = args[2].(*domain.ChangePasswordReq)
 		}
 		run(
 			arg0,
@@ -97,7 +97,7 @@ func (_c *UserService_ChangePassword_Call) Return(err error) *UserService_Change
 	return _c
 }
 
-func (_c *UserService_ChangePassword_Call) RunAndReturn(run func(ctx context.Context, id string, req *dto.ChangePasswordReq) error) *UserService_ChangePassword_Call {
+func (_c *UserService_ChangePassword_Call) RunAndReturn(run func(ctx context.Context, id string, req *domain.ChangePasswordReq) error) *UserService_ChangePassword_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -171,7 +171,7 @@ func (_c *UserService_GetUserByID_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // Login provides a mock function for the type UserService
-func (_mock *UserService) Login(ctx context.Context, req *dto.LoginReq) (*model.User, string, string, error) {
+func (_mock *UserService) Login(ctx context.Context, req *domain.LoginReq) (*model.User, string, string, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -182,27 +182,27 @@ func (_mock *UserService) Login(ctx context.Context, req *dto.LoginReq) (*model.
 	var r1 string
 	var r2 string
 	var r3 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.LoginReq) (*model.User, string, string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.LoginReq) (*model.User, string, string, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.LoginReq) *model.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.LoginReq) *model.User); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.LoginReq) string); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.LoginReq) string); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, *dto.LoginReq) string); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, *domain.LoginReq) string); ok {
 		r2 = returnFunc(ctx, req)
 	} else {
 		r2 = ret.Get(2).(string)
 	}
-	if returnFunc, ok := ret.Get(3).(func(context.Context, *dto.LoginReq) error); ok {
+	if returnFunc, ok := ret.Get(3).(func(context.Context, *domain.LoginReq) error); ok {
 		r3 = returnFunc(ctx, req)
 	} else {
 		r3 = ret.Error(3)
@@ -217,20 +217,20 @@ type UserService_Login_Call struct {
 
 // Login is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *dto.LoginReq
+//   - req *domain.LoginReq
 func (_e *UserService_Expecter) Login(ctx interface{}, req interface{}) *UserService_Login_Call {
 	return &UserService_Login_Call{Call: _e.mock.On("Login", ctx, req)}
 }
 
-func (_c *UserService_Login_Call) Run(run func(ctx context.Context, req *dto.LoginReq)) *UserService_Login_Call {
+func (_c *UserService_Login_Call) Run(run func(ctx context.Context, req *domain.LoginReq)) *UserService_Login_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.LoginReq
+		var arg1 *domain.LoginReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.LoginReq)
+			arg1 = args[1].(*domain.LoginReq)
 		}
 		run(
 			arg0,
@@ -245,7 +245,7 @@ func (_c *UserService_Login_Call) Return(user *model.User, s string, s1 string, 
 	return _c
 }
 
-func (_c *UserService_Login_Call) RunAndReturn(run func(ctx context.Context, req *dto.LoginReq) (*model.User, string, string, error)) *UserService_Login_Call {
+func (_c *UserService_Login_Call) RunAndReturn(run func(ctx context.Context, req *domain.LoginReq) (*model.User, string, string, error)) *UserService_Login_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -317,7 +317,7 @@ func (_c *UserService_RefreshToken_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // Register provides a mock function for the type UserService
-func (_mock *UserService) Register(ctx context.Context, req *dto.RegisterReq) (*model.User, error) {
+func (_mock *UserService) Register(ctx context.Context, req *domain.RegisterReq) (*model.User, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -326,17 +326,17 @@ func (_mock *UserService) Register(ctx context.Context, req *dto.RegisterReq) (*
 
 	var r0 *model.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.RegisterReq) (*model.User, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.RegisterReq) (*model.User, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dto.RegisterReq) *model.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.RegisterReq) *model.User); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *dto.RegisterReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.RegisterReq) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -351,20 +351,20 @@ type UserService_Register_Call struct {
 
 // Register is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *dto.RegisterReq
+//   - req *domain.RegisterReq
 func (_e *UserService_Expecter) Register(ctx interface{}, req interface{}) *UserService_Register_Call {
 	return &UserService_Register_Call{Call: _e.mock.On("Register", ctx, req)}
 }
 
-func (_c *UserService_Register_Call) Run(run func(ctx context.Context, req *dto.RegisterReq)) *UserService_Register_Call {
+func (_c *UserService_Register_Call) Run(run func(ctx context.Context, req *domain.RegisterReq)) *UserService_Register_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *dto.RegisterReq
+		var arg1 *domain.RegisterReq
 		if args[1] != nil {
-			arg1 = args[1].(*dto.RegisterReq)
+			arg1 = args[1].(*domain.RegisterReq)
 		}
 		run(
 			arg0,
@@ -379,7 +379,7 @@ func (_c *UserService_Register_Call) Return(user *model.User, err error) *UserSe
 	return _c
 }
 
-func (_c *UserService_Register_Call) RunAndReturn(run func(ctx context.Context, req *dto.RegisterReq) (*model.User, error)) *UserService_Register_Call {
+func (_c *UserService_Register_Call) RunAndReturn(run func(ctx context.Context, req *domain.RegisterReq) (*model.User, error)) *UserService_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }

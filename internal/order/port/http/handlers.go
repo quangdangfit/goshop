@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/order/dto"
+	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	"goshop/internal/order/service"
 	"goshop/pkg/apperror"
@@ -30,11 +30,11 @@ func NewOrderHandler(service service.OrderService) *OrderHandler {
 //	@Tags		orders
 //	@Produce	json
 //	@Security	ApiKeyAuth
-//	@Param		_	body		dto.PlaceOrderReq	true	"Body"
-//	@Success	200	{object}	dto.Order
+//	@Param		_	body		domain.PlaceOrderReq	true	"Body"
+//	@Success	200	{object}	domain.Order
 //	@Router		/api/v1/orders [post]
 func (a *OrderHandler) PlaceOrder(c *gin.Context) {
-	var req dto.PlaceOrderReq
+	var req domain.PlaceOrderReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Failed to get body", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
@@ -54,7 +54,7 @@ func (a *OrderHandler) PlaceOrder(c *gin.Context) {
 		return
 	}
 
-	var res dto.Order
+	var res domain.Order
 	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -65,11 +65,11 @@ func (a *OrderHandler) PlaceOrder(c *gin.Context) {
 //	@Tags		orders
 //	@Produce	json
 //	@Security	ApiKeyAuth
-//	@Param		_	query		dto.ListOrderReq	true	"Query"
-//	@Success	200	{object}	dto.ListOrderRes
+//	@Param		_	query		domain.ListOrderReq	true	"Query"
+//	@Success	200	{object}	domain.ListOrderRes
 //	@Router		/api/v1/orders [get]
 func (a *OrderHandler) GetOrders(c *gin.Context) {
-	var req dto.ListOrderReq
+	var req domain.ListOrderReq
 	if err := c.ShouldBindQuery(&req); err != nil {
 		logger.Error("Failed to parse request req: ", err)
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
@@ -89,7 +89,7 @@ func (a *OrderHandler) GetOrders(c *gin.Context) {
 		return
 	}
 
-	var res dto.ListOrderRes
+	var res domain.ListOrderRes
 	res.Pagination = pagination
 	utils.Copy(&res.Orders, &orders)
 	response.JSON(c, http.StatusOK, res)
@@ -102,7 +102,7 @@ func (a *OrderHandler) GetOrders(c *gin.Context) {
 //	@Produce	json
 //	@Security	ApiKeyAuth
 //	@Param		id	path		string	true	"Order ID"
-//	@Success	200	{object}	dto.Order
+//	@Success	200	{object}	domain.Order
 //	@Router		/api/v1/orders/{id} [get]
 func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 	userId := c.GetString("userId")
@@ -124,7 +124,7 @@ func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 		return
 	}
 
-	var res dto.Order
+	var res domain.Order
 	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -158,7 +158,7 @@ func (a *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 		return
 	}
 
-	var res dto.Order
+	var res domain.Order
 	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -191,7 +191,7 @@ func (a *OrderHandler) CancelOrder(c *gin.Context) {
 		return
 	}
 
-	var res dto.Order
+	var res domain.Order
 	utils.Copy(&res, &order)
 	response.JSON(c, http.StatusOK, res)
 }

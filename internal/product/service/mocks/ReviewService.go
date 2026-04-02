@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/pkg/paging"
 
@@ -41,7 +41,7 @@ func (_m *ReviewService) EXPECT() *ReviewService_Expecter {
 }
 
 // CreateReview provides a mock function for the type ReviewService
-func (_mock *ReviewService) CreateReview(ctx context.Context, productID string, userID string, req *dto.CreateReviewReq) (*model.Review, error) {
+func (_mock *ReviewService) CreateReview(ctx context.Context, productID string, userID string, req *domain.CreateReviewReq) (*model.Review, error) {
 	ret := _mock.Called(ctx, productID, userID, req)
 
 	if len(ret) == 0 {
@@ -50,17 +50,17 @@ func (_mock *ReviewService) CreateReview(ctx context.Context, productID string, 
 
 	var r0 *model.Review
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *dto.CreateReviewReq) (*model.Review, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *domain.CreateReviewReq) (*model.Review, error)); ok {
 		return returnFunc(ctx, productID, userID, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *dto.CreateReviewReq) *model.Review); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *domain.CreateReviewReq) *model.Review); ok {
 		r0 = returnFunc(ctx, productID, userID, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Review)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *dto.CreateReviewReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *domain.CreateReviewReq) error); ok {
 		r1 = returnFunc(ctx, productID, userID, req)
 	} else {
 		r1 = ret.Error(1)
@@ -82,7 +82,7 @@ func (_e *ReviewService_Expecter) CreateReview(ctx interface{}, productID interf
 	return &ReviewService_CreateReview_Call{Call: _e.mock.On("CreateReview", ctx, productID, userID, req)}
 }
 
-func (_c *ReviewService_CreateReview_Call) Run(run func(ctx context.Context, productID string, userID string, req *dto.CreateReviewReq)) *ReviewService_CreateReview_Call {
+func (_c *ReviewService_CreateReview_Call) Run(run func(ctx context.Context, productID string, userID string, req *domain.CreateReviewReq)) *ReviewService_CreateReview_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -96,9 +96,9 @@ func (_c *ReviewService_CreateReview_Call) Run(run func(ctx context.Context, pro
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 *dto.CreateReviewReq
+		var arg3 *domain.CreateReviewReq
 		if args[3] != nil {
-			arg3 = args[3].(*dto.CreateReviewReq)
+			arg3 = args[3].(*domain.CreateReviewReq)
 		}
 		run(
 			arg0,
@@ -115,7 +115,7 @@ func (_c *ReviewService_CreateReview_Call) Return(review *model.Review, err erro
 	return _c
 }
 
-func (_c *ReviewService_CreateReview_Call) RunAndReturn(run func(ctx context.Context, productID string, userID string, req *dto.CreateReviewReq) (*model.Review, error)) *ReviewService_CreateReview_Call {
+func (_c *ReviewService_CreateReview_Call) RunAndReturn(run func(ctx context.Context, productID string, userID string, req *domain.CreateReviewReq) (*model.Review, error)) *ReviewService_CreateReview_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -272,7 +272,7 @@ func (_c *ReviewService_ListReviews_Call) RunAndReturn(run func(ctx context.Cont
 }
 
 // UpdateReview provides a mock function for the type ReviewService
-func (_mock *ReviewService) UpdateReview(ctx context.Context, id string, userID string, req *dto.UpdateReviewReq) (*model.Review, error) {
+func (_mock *ReviewService) UpdateReview(ctx context.Context, id string, userID string, req *domain.UpdateReviewReq) (*model.Review, error) {
 	ret := _mock.Called(ctx, id, userID, req)
 
 	if len(ret) == 0 {
@@ -281,17 +281,17 @@ func (_mock *ReviewService) UpdateReview(ctx context.Context, id string, userID 
 
 	var r0 *model.Review
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *dto.UpdateReviewReq) (*model.Review, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *domain.UpdateReviewReq) (*model.Review, error)); ok {
 		return returnFunc(ctx, id, userID, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *dto.UpdateReviewReq) *model.Review); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *domain.UpdateReviewReq) *model.Review); ok {
 		r0 = returnFunc(ctx, id, userID, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Review)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *dto.UpdateReviewReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *domain.UpdateReviewReq) error); ok {
 		r1 = returnFunc(ctx, id, userID, req)
 	} else {
 		r1 = ret.Error(1)
@@ -313,7 +313,7 @@ func (_e *ReviewService_Expecter) UpdateReview(ctx interface{}, id interface{}, 
 	return &ReviewService_UpdateReview_Call{Call: _e.mock.On("UpdateReview", ctx, id, userID, req)}
 }
 
-func (_c *ReviewService_UpdateReview_Call) Run(run func(ctx context.Context, id string, userID string, req *dto.UpdateReviewReq)) *ReviewService_UpdateReview_Call {
+func (_c *ReviewService_UpdateReview_Call) Run(run func(ctx context.Context, id string, userID string, req *domain.UpdateReviewReq)) *ReviewService_UpdateReview_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -327,9 +327,9 @@ func (_c *ReviewService_UpdateReview_Call) Run(run func(ctx context.Context, id 
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 *dto.UpdateReviewReq
+		var arg3 *domain.UpdateReviewReq
 		if args[3] != nil {
-			arg3 = args[3].(*dto.UpdateReviewReq)
+			arg3 = args[3].(*domain.UpdateReviewReq)
 		}
 		run(
 			arg0,
@@ -346,7 +346,7 @@ func (_c *ReviewService_UpdateReview_Call) Return(review *model.Review, err erro
 	return _c
 }
 
-func (_c *ReviewService_UpdateReview_Call) RunAndReturn(run func(ctx context.Context, id string, userID string, req *dto.UpdateReviewReq) (*model.Review, error)) *ReviewService_UpdateReview_Call {
+func (_c *ReviewService_UpdateReview_Call) RunAndReturn(run func(ctx context.Context, id string, userID string, req *domain.UpdateReviewReq) (*model.Review, error)) *ReviewService_UpdateReview_Call {
 	_c.Call.Return(run)
 	return _c
 }

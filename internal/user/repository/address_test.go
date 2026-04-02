@@ -23,7 +23,7 @@ func newAddressSQLMockGormDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		t.Fatalf("failed to create sql mock: %v", err)
 	}
-	t.Cleanup(func() { sqlDB.Close() })
+	t.Cleanup(func() { _ = sqlDB.Close() })
 	gormDB, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{
 		SkipDefaultTransaction: true,
 	})
@@ -263,7 +263,7 @@ func (suite *AddressRepositoryTestSuite) TestSetDefault() {
 				suite.mockDB.On("WithTransaction", mock.Anything).
 					Run(func(args mock.Arguments) {
 						fn := args.Get(0).(func() error)
-						fn()
+						_ = fn()
 					}).
 					Return(nil).Times(1)
 			},
@@ -297,7 +297,7 @@ func (suite *AddressRepositoryTestSuite) TestSetDefault() {
 				suite.mockDB.On("WithTransaction", mock.Anything).
 					Run(func(args mock.Arguments) {
 						fn := args.Get(0).(func() error)
-						fn()
+						_ = fn()
 					}).
 					Return(errors.New("db error")).Times(1)
 			},

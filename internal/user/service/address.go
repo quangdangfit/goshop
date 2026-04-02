@@ -5,7 +5,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/internal/user/dto"
+	"goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/internal/user/repository"
 	"goshop/pkg/utils"
@@ -15,8 +15,8 @@ import (
 type AddressService interface {
 	ListAddresses(ctx context.Context, userID string) ([]*model.Address, error)
 	GetAddressByID(ctx context.Context, id, userID string) (*model.Address, error)
-	Create(ctx context.Context, userID string, req *dto.CreateAddressReq) (*model.Address, error)
-	Update(ctx context.Context, id, userID string, req *dto.UpdateAddressReq) (*model.Address, error)
+	Create(ctx context.Context, userID string, req *domain.CreateAddressReq) (*model.Address, error)
+	Update(ctx context.Context, id, userID string, req *domain.UpdateAddressReq) (*model.Address, error)
 	Delete(ctx context.Context, id, userID string) error
 	SetDefault(ctx context.Context, id, userID string) error
 }
@@ -38,7 +38,7 @@ func (s *addressSvc) GetAddressByID(ctx context.Context, id, userID string) (*mo
 	return s.repo.GetByID(ctx, id, userID)
 }
 
-func (s *addressSvc) Create(ctx context.Context, userID string, req *dto.CreateAddressReq) (*model.Address, error) {
+func (s *addressSvc) Create(ctx context.Context, userID string, req *domain.CreateAddressReq) (*model.Address, error) {
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (s *addressSvc) Create(ctx context.Context, userID string, req *dto.CreateA
 	return &address, nil
 }
 
-func (s *addressSvc) Update(ctx context.Context, id, userID string, req *dto.UpdateAddressReq) (*model.Address, error) {
+func (s *addressSvc) Update(ctx context.Context, id, userID string, req *domain.UpdateAddressReq) (*model.Address, error) {
 	address, err := s.repo.GetByID(ctx, id, userID)
 	if err != nil {
 		return nil, err

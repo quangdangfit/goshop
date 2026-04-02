@@ -6,7 +6,7 @@ package mocks
 
 import (
 	"context"
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 
 	mock "github.com/stretchr/testify/mock"
@@ -40,7 +40,7 @@ func (_m *AddressService) EXPECT() *AddressService_Expecter {
 }
 
 // Create provides a mock function for the type AddressService
-func (_mock *AddressService) Create(ctx context.Context, userID string, req *dto.CreateAddressReq) (*model.Address, error) {
+func (_mock *AddressService) Create(ctx context.Context, userID string, req *domain.CreateAddressReq) (*model.Address, error) {
 	ret := _mock.Called(ctx, userID, req)
 
 	if len(ret) == 0 {
@@ -49,17 +49,17 @@ func (_mock *AddressService) Create(ctx context.Context, userID string, req *dto
 
 	var r0 *model.Address
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *dto.CreateAddressReq) (*model.Address, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *domain.CreateAddressReq) (*model.Address, error)); ok {
 		return returnFunc(ctx, userID, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *dto.CreateAddressReq) *model.Address); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *domain.CreateAddressReq) *model.Address); ok {
 		r0 = returnFunc(ctx, userID, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Address)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *dto.CreateAddressReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *domain.CreateAddressReq) error); ok {
 		r1 = returnFunc(ctx, userID, req)
 	} else {
 		r1 = ret.Error(1)
@@ -75,12 +75,12 @@ type AddressService_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-//   - req *dto.CreateAddressReq
+//   - req *domain.CreateAddressReq
 func (_e *AddressService_Expecter) Create(ctx interface{}, userID interface{}, req interface{}) *AddressService_Create_Call {
 	return &AddressService_Create_Call{Call: _e.mock.On("Create", ctx, userID, req)}
 }
 
-func (_c *AddressService_Create_Call) Run(run func(ctx context.Context, userID string, req *dto.CreateAddressReq)) *AddressService_Create_Call {
+func (_c *AddressService_Create_Call) Run(run func(ctx context.Context, userID string, req *domain.CreateAddressReq)) *AddressService_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -90,9 +90,9 @@ func (_c *AddressService_Create_Call) Run(run func(ctx context.Context, userID s
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 *dto.CreateAddressReq
+		var arg2 *domain.CreateAddressReq
 		if args[2] != nil {
-			arg2 = args[2].(*dto.CreateAddressReq)
+			arg2 = args[2].(*domain.CreateAddressReq)
 		}
 		run(
 			arg0,
@@ -108,7 +108,7 @@ func (_c *AddressService_Create_Call) Return(address *model.Address, err error) 
 	return _c
 }
 
-func (_c *AddressService_Create_Call) RunAndReturn(run func(ctx context.Context, userID string, req *dto.CreateAddressReq) (*model.Address, error)) *AddressService_Create_Call {
+func (_c *AddressService_Create_Call) RunAndReturn(run func(ctx context.Context, userID string, req *domain.CreateAddressReq) (*model.Address, error)) *AddressService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -382,7 +382,7 @@ func (_c *AddressService_SetDefault_Call) RunAndReturn(run func(ctx context.Cont
 }
 
 // Update provides a mock function for the type AddressService
-func (_mock *AddressService) Update(ctx context.Context, id string, userID string, req *dto.UpdateAddressReq) (*model.Address, error) {
+func (_mock *AddressService) Update(ctx context.Context, id string, userID string, req *domain.UpdateAddressReq) (*model.Address, error) {
 	ret := _mock.Called(ctx, id, userID, req)
 
 	if len(ret) == 0 {
@@ -391,17 +391,17 @@ func (_mock *AddressService) Update(ctx context.Context, id string, userID strin
 
 	var r0 *model.Address
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *dto.UpdateAddressReq) (*model.Address, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *domain.UpdateAddressReq) (*model.Address, error)); ok {
 		return returnFunc(ctx, id, userID, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *dto.UpdateAddressReq) *model.Address); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *domain.UpdateAddressReq) *model.Address); ok {
 		r0 = returnFunc(ctx, id, userID, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.Address)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *dto.UpdateAddressReq) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *domain.UpdateAddressReq) error); ok {
 		r1 = returnFunc(ctx, id, userID, req)
 	} else {
 		r1 = ret.Error(1)
@@ -418,12 +418,12 @@ type AddressService_Update_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - userID string
-//   - req *dto.UpdateAddressReq
+//   - req *domain.UpdateAddressReq
 func (_e *AddressService_Expecter) Update(ctx interface{}, id interface{}, userID interface{}, req interface{}) *AddressService_Update_Call {
 	return &AddressService_Update_Call{Call: _e.mock.On("Update", ctx, id, userID, req)}
 }
 
-func (_c *AddressService_Update_Call) Run(run func(ctx context.Context, id string, userID string, req *dto.UpdateAddressReq)) *AddressService_Update_Call {
+func (_c *AddressService_Update_Call) Run(run func(ctx context.Context, id string, userID string, req *domain.UpdateAddressReq)) *AddressService_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -437,9 +437,9 @@ func (_c *AddressService_Update_Call) Run(run func(ctx context.Context, id strin
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 *dto.UpdateAddressReq
+		var arg3 *domain.UpdateAddressReq
 		if args[3] != nil {
-			arg3 = args[3].(*dto.UpdateAddressReq)
+			arg3 = args[3].(*domain.UpdateAddressReq)
 		}
 		run(
 			arg0,
@@ -456,7 +456,7 @@ func (_c *AddressService_Update_Call) Return(address *model.Address, err error) 
 	return _c
 }
 
-func (_c *AddressService_Update_Call) RunAndReturn(run func(ctx context.Context, id string, userID string, req *dto.UpdateAddressReq) (*model.Address, error)) *AddressService_Update_Call {
+func (_c *AddressService_Update_Call) RunAndReturn(run func(ctx context.Context, id string, userID string, req *domain.UpdateAddressReq) (*model.Address, error)) *AddressService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

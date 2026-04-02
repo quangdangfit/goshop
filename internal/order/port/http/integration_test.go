@@ -18,7 +18,7 @@ import (
 	orderModel "goshop/internal/order/model"
 	productModel "goshop/internal/product/model"
 	httpServer "goshop/internal/server/http"
-	userDto "goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	userModel "goshop/internal/user/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
@@ -66,7 +66,7 @@ func setup() bool {
 	if dialErr != nil {
 		return false
 	}
-	conn.Close()
+	_ = conn.Close()
 
 	validator := validation.New()
 	testCache = redis.New(redis.Config{
@@ -79,7 +79,7 @@ func setup() bool {
 	_ = server.MapRoutes()
 	testRouter = server.GetEngine()
 
-	dbTest.Create(context.Background(), &userModel.User{
+	_ = dbTest.Create(context.Background(), &userModel.User{
 		Email:    "test@test.com",
 		Password: "test123456",
 	})
@@ -89,7 +89,7 @@ func setup() bool {
 
 func teardown() {
 	migrator := dbTest.GetDB().Migrator()
-	migrator.DropTable(
+	_ = migrator.DropTable(
 		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
 		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
 		&orderModel.Coupon{}, &orderModel.Order{}, &orderModel.OrderLine{},
@@ -115,7 +115,7 @@ func makeRequest(method, url string, body interface{}, token string) *httptest.R
 }
 
 func accessToken() string {
-	user := userDto.LoginReq{
+	user := domain.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
 	}
@@ -138,8 +138,8 @@ func cleanData(records ...interface{}) {
 	dbTest.GetDB().Where("1 = 1").Delete(&orderModel.Order{})
 
 	for _, record := range records {
-		dbTest.Delete(context.Background(), record)
+		_ = dbTest.Delete(context.Background(), record)
 	}
 
-	testCache.RemovePattern("*")
+	_ = testCache.RemovePattern("*")
 }

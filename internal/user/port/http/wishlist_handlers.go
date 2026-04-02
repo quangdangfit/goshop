@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/logger"
 
-	"goshop/internal/user/dto"
+	"goshop/internal/user/domain"
 	"goshop/internal/user/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
@@ -33,7 +33,7 @@ func (h *WishlistHandler) GetWishlist(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res []*dto.WishlistItem
+	var res []*domain.WishlistItem
 	utils.Copy(&res, &items)
 	response.JSON(c, http.StatusOK, res)
 }
@@ -44,7 +44,7 @@ func (h *WishlistHandler) AddProduct(c *gin.Context) {
 		apperror.ErrUnauthorized.HTTPError(c)
 		return
 	}
-	var req dto.AddToWishlistReq
+	var req domain.AddToWishlistReq
 	if err := c.ShouldBindJSON(&req); c.Request.Body == nil || err != nil {
 		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
 		return

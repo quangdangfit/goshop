@@ -45,7 +45,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ChangePasswordReq"
+                            "$ref": "#/definitions/domain.ChangePasswordReq"
                         }
                     }
                 ],
@@ -68,7 +68,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginReq"
+                            "$ref": "#/definitions/domain.LoginReq"
                         }
                     }
                 ],
@@ -76,7 +76,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginRes"
+                            "$ref": "#/definitions/domain.LoginRes"
                         }
                     }
                 }
@@ -100,7 +100,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.User"
+                            "$ref": "#/definitions/domain.User"
                         }
                     }
                 }
@@ -122,7 +122,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RegisterReq"
+                            "$ref": "#/definitions/domain.RegisterReq"
                         }
                     }
                 ],
@@ -130,7 +130,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.RegisterRes"
+                            "$ref": "#/definitions/domain.RegisterRes"
                         }
                     }
                 }
@@ -166,7 +166,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.ListOrderRes"
+                            "$ref": "#/definitions/domain.ListOrderRes"
                         }
                     }
                 }
@@ -191,7 +191,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.PlaceOrderReq"
+                            "$ref": "#/definitions/domain.PlaceOrderReq"
                         }
                     }
                 ],
@@ -199,7 +199,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Order"
+                            "$ref": "#/definitions/domain.Order"
                         }
                     }
                 }
@@ -232,7 +232,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Order"
+                            "$ref": "#/definitions/domain.Order"
                         }
                     }
                 }
@@ -277,7 +277,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.ListProductRes"
+                            "$ref": "#/definitions/domain.ListProductRes"
                         }
                     }
                 }
@@ -302,7 +302,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateProductReq"
+                            "$ref": "#/definitions/domain.CreateProductReq"
                         }
                     }
                 ],
@@ -356,7 +356,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.UpdateProductReq"
+                            "$ref": "#/definitions/domain.UpdateProductReq"
                         }
                     }
                 ],
@@ -365,7 +365,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.ChangePasswordReq": {
+        "domain.ChangePasswordReq": {
             "type": "object",
             "required": [
                 "new_password",
@@ -380,7 +380,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.CreateProductReq": {
+        "domain.CreateProductReq": {
             "type": "object",
             "required": [
                 "description",
@@ -398,13 +398,13 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ListOrderRes": {
+        "domain.ListOrderRes": {
             "type": "object",
             "properties": {
                 "orders": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.Order"
+                        "$ref": "#/definitions/domain.Order"
                     }
                 },
                 "pagination": {
@@ -412,7 +412,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ListProductRes": {
+        "domain.ListProductRes": {
             "type": "object",
             "properties": {
                 "pagination": {
@@ -421,12 +421,12 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/internal_product_dto.Product"
+                        "$ref": "#/definitions/internal_product_domain.Product"
                     }
                 }
             }
         },
-        "dto.LoginReq": {
+        "domain.LoginReq": {
             "type": "object",
             "required": [
                 "email",
@@ -441,7 +441,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.LoginRes": {
+        "domain.LoginRes": {
             "type": "object",
             "properties": {
                 "access_token": {
@@ -451,11 +451,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/dto.User"
+                    "$ref": "#/definitions/domain.User"
                 }
             }
         },
-        "dto.Order": {
+        "domain.Order": {
             "type": "object",
             "properties": {
                 "code": {
@@ -467,7 +467,7 @@ const docTemplate = `{
                 "lines": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.OrderLine"
+                        "$ref": "#/definitions/domain.OrderLine"
                     }
                 },
                 "status": {
@@ -478,21 +478,21 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.OrderLine": {
+        "domain.OrderLine": {
             "type": "object",
             "properties": {
                 "price": {
                     "type": "number"
                 },
                 "product": {
-                    "$ref": "#/definitions/internal_order_dto.Product"
+                    "$ref": "#/definitions/internal_order_domain.Product"
                 },
                 "quantity": {
                     "type": "integer"
                 }
             }
         },
-        "dto.PlaceOrderLineReq": {
+        "domain.PlaceOrderLineReq": {
             "type": "object",
             "required": [
                 "product_id",
@@ -507,7 +507,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.PlaceOrderReq": {
+        "domain.PlaceOrderReq": {
             "type": "object",
             "required": [
                 "lines",
@@ -518,7 +518,7 @@ const docTemplate = `{
                     "type": "array",
                     "maxItems": 5,
                     "items": {
-                        "$ref": "#/definitions/dto.PlaceOrderLineReq"
+                        "$ref": "#/definitions/domain.PlaceOrderLineReq"
                     }
                 },
                 "user_id": {
@@ -526,7 +526,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.RegisterReq": {
+        "domain.RegisterReq": {
             "type": "object",
             "required": [
                 "email",
@@ -541,15 +541,15 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.RegisterRes": {
+        "domain.RegisterRes": {
             "type": "object",
             "properties": {
                 "user": {
-                    "$ref": "#/definitions/dto.User"
+                    "$ref": "#/definitions/domain.User"
                 }
             }
         },
-        "dto.UpdateProductReq": {
+        "domain.UpdateProductReq": {
             "type": "object",
             "properties": {
                 "description": {
@@ -564,7 +564,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.User": {
+        "domain.User": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -581,7 +581,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_order_dto.Product": {
+        "internal_order_domain.Product": {
             "type": "object",
             "properties": {
                 "code": {
@@ -598,7 +598,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_product_dto.Product": {
+        "internal_product_domain.Product": {
             "type": "object",
             "properties": {
                 "active": {

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/product/dto"
+	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository/mocks"
 	"goshop/pkg/config"
@@ -84,14 +84,14 @@ func (suite *ReviewServiceTestSuite) TestListReviews() {
 func (suite *ReviewServiceTestSuite) TestCreateReview() {
 	tests := []struct {
 		name    string
-		req     *dto.CreateReviewReq
+		req     *domain.CreateReviewReq
 		setup   func()
 		wantErr bool
 		wantNil bool
 	}{
 		{
 			name: "Success",
-			req:  &dto.CreateReviewReq{Rating: 5, Comment: "Great!"},
+			req:  &domain.CreateReviewReq{Rating: 5, Comment: "Great!"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
 				suite.mockRepo.On("GetAggregates", mock.Anything, "p1").
@@ -102,14 +102,14 @@ func (suite *ReviewServiceTestSuite) TestCreateReview() {
 		},
 		{
 			name:    "Validation fail",
-			req:     &dto.CreateReviewReq{},
+			req:     &domain.CreateReviewReq{},
 			setup:   func() {},
 			wantErr: true,
 			wantNil: true,
 		},
 		{
 			name: "DB fail",
-			req:  &dto.CreateReviewReq{Rating: 5, Comment: "Great!"},
+			req:  &domain.CreateReviewReq{Rating: 5, Comment: "Great!"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error")).Times(1)
 			},
@@ -118,7 +118,7 @@ func (suite *ReviewServiceTestSuite) TestCreateReview() {
 		},
 		{
 			name: "GetAggregates fail",
-			req:  &dto.CreateReviewReq{Rating: 5, Comment: "Great!"},
+			req:  &domain.CreateReviewReq{Rating: 5, Comment: "Great!"},
 			setup: func() {
 				suite.mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Times(1)
 				suite.mockRepo.On("GetAggregates", mock.Anything, "p1").
@@ -149,7 +149,7 @@ func (suite *ReviewServiceTestSuite) TestUpdateReview() {
 		name    string
 		id      string
 		userID  string
-		req     *dto.UpdateReviewReq
+		req     *domain.UpdateReviewReq
 		setup   func()
 		wantErr bool
 		errMsg  string
@@ -158,7 +158,7 @@ func (suite *ReviewServiceTestSuite) TestUpdateReview() {
 			name:   "Success",
 			id:     "r1",
 			userID: "u1",
-			req:    &dto.UpdateReviewReq{Rating: 4, Comment: "Updated"},
+			req:    &domain.UpdateReviewReq{Rating: 4, Comment: "Updated"},
 			setup: func() {
 				suite.mockRepo.On("GetByID", mock.Anything, "r1").
 					Return(&model.Review{ID: "r1", ProductID: "p1", UserID: "u1", Rating: 5}, nil).Times(1)
@@ -173,7 +173,7 @@ func (suite *ReviewServiceTestSuite) TestUpdateReview() {
 			name:   "GetByID fail",
 			id:     "notfound",
 			userID: "u1",
-			req:    &dto.UpdateReviewReq{Rating: 4},
+			req:    &domain.UpdateReviewReq{Rating: 4},
 			setup: func() {
 				suite.mockRepo.On("GetByID", mock.Anything, "notfound").
 					Return(nil, errors.New("not found")).Times(1)
@@ -184,7 +184,7 @@ func (suite *ReviewServiceTestSuite) TestUpdateReview() {
 			name:   "Permission denied",
 			id:     "r1",
 			userID: "u1",
-			req:    &dto.UpdateReviewReq{Rating: 4},
+			req:    &domain.UpdateReviewReq{Rating: 4},
 			setup: func() {
 				suite.mockRepo.On("GetByID", mock.Anything, "r1").
 					Return(&model.Review{ID: "r1", ProductID: "p1", UserID: "u2"}, nil).Times(1)
@@ -196,7 +196,7 @@ func (suite *ReviewServiceTestSuite) TestUpdateReview() {
 			name:   "DB fail",
 			id:     "r1",
 			userID: "u1",
-			req:    &dto.UpdateReviewReq{Rating: 4},
+			req:    &domain.UpdateReviewReq{Rating: 4},
 			setup: func() {
 				suite.mockRepo.On("GetByID", mock.Anything, "r1").
 					Return(&model.Review{ID: "r1", ProductID: "p1", UserID: "u1", Rating: 5}, nil).Times(1)

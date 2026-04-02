@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"goshop/internal/user/dto"
+	domain "goshop/internal/user/domain"
 	"goshop/internal/user/model"
 	"goshop/internal/user/service/mocks"
 	"goshop/pkg/config"
@@ -48,7 +48,7 @@ func (suite *UserHandlerTestSuite) TestLogin() {
 		{
 			name: "Success",
 			setup: func() {
-				suite.mockService.On("Login", mock.Anything, &dto.LoginReq{
+				suite.mockService.On("Login", mock.Anything, &domain.LoginReq{
 					Email:    "login@test.com",
 					Password: "test123456",
 				}).Return(
@@ -76,7 +76,7 @@ func (suite *UserHandlerTestSuite) TestLogin() {
 		{
 			name: "Fail",
 			setup: func() {
-				suite.mockService.On("Login", mock.Anything, &dto.LoginReq{
+				suite.mockService.On("Login", mock.Anything, &domain.LoginReq{
 					Email:    "login@test.com",
 					Password: "test123456",
 				}).Return(nil, "", "", errors.New("error")).Times(1)
@@ -129,7 +129,7 @@ func (suite *UserHandlerTestSuite) TestRegister() {
 		{
 			name: "Success",
 			setup: func() {
-				suite.mockService.On("Register", mock.Anything, &dto.RegisterReq{
+				suite.mockService.On("Register", mock.Anything, &domain.RegisterReq{
 					Email:    "register@test.com",
 					Password: "test123456",
 				}).Return(
@@ -153,7 +153,7 @@ func (suite *UserHandlerTestSuite) TestRegister() {
 		{
 			name: "Fail",
 			setup: func() {
-				suite.mockService.On("Register", mock.Anything, &dto.RegisterReq{
+				suite.mockService.On("Register", mock.Anything, &domain.RegisterReq{
 					Email:    "register@test.com",
 					Password: "test123456",
 				}).Return(nil, errors.New("error")).Times(1)
@@ -350,7 +350,7 @@ func (suite *UserHandlerTestSuite) TestChangePassword() {
 		{
 			name: "Success",
 			setup: func() {
-				suite.mockService.On("ChangePassword", mock.Anything, "123456", &dto.ChangePasswordReq{
+				suite.mockService.On("ChangePassword", mock.Anything, "123456", &domain.ChangePasswordReq{
 					Password:    "test123456",
 					NewPassword: "new-test123456",
 				}).Return(nil).Times(1)
@@ -374,7 +374,7 @@ func (suite *UserHandlerTestSuite) TestChangePassword() {
 		{
 			name: "Fail",
 			setup: func() {
-				suite.mockService.On("ChangePassword", mock.Anything, "123456", &dto.ChangePasswordReq{
+				suite.mockService.On("ChangePassword", mock.Anything, "123456", &domain.ChangePasswordReq{
 					Password:    "test123456",
 					NewPassword: "new-test123456",
 				}).Return(errors.New("error")).Times(1)
