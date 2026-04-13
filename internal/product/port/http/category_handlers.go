@@ -29,7 +29,10 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 		return
 	}
 	var res []*domain.Category
-	utils.Copy(&res, &categories)
+	if err := utils.Copy(&res, &categories); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -45,7 +48,10 @@ func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 		return
 	}
 	var res domain.Category
-	utils.Copy(&res, category)
+	if err := utils.Copy(&res, category); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -62,7 +68,10 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		return
 	}
 	var res domain.Category
-	utils.Copy(&res, category)
+	if err := utils.Copy(&res, category); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -79,7 +88,10 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 	var res domain.Category
-	utils.Copy(&res, category)
+	if err := utils.Copy(&res, category); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 

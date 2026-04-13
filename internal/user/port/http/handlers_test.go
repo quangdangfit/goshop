@@ -85,7 +85,7 @@ func (suite *UserHandlerTestSuite) TestLogin() {
 				var loginRes domain.LoginRes
 
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&loginRes, &res.Result)
+				_ = utils.Copy(&loginRes, &res.Result)
 				suite.Equal("login@test.com", loginRes.User.Email)
 				suite.Equal("access-token", loginRes.AccessToken)
 				suite.Equal("refresh-token", loginRes.RefreshToken)
@@ -189,7 +189,7 @@ func (suite *UserHandlerTestSuite) TestRegister() {
 				var registerRes domain.RegisterRes
 
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&registerRes, &res.Result)
+				_ = utils.Copy(&registerRes, &res.Result)
 				suite.Equal("register@test.com", registerRes.User.Email)
 			},
 		},
@@ -287,7 +287,7 @@ func (suite *UserHandlerTestSuite) TestGetMe() {
 				var getMeRes domain.User
 
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&getMeRes, &res.Result)
+				_ = utils.Copy(&getMeRes, &res.Result)
 				suite.Equal("123456", getMeRes.ID)
 				suite.Equal("user@test.com", getMeRes.Email)
 			},
@@ -360,7 +360,7 @@ func (suite *UserHandlerTestSuite) TestRefreshToken() {
 				var refreshRes domain.RefreshTokenRes
 
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&refreshRes, &res.Result)
+				_ = utils.Copy(&refreshRes, &res.Result)
 				suite.Equal("access-token", refreshRes.AccessToken)
 			},
 		},

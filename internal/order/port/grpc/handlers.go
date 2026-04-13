@@ -48,7 +48,9 @@ func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReq) (*
 	}
 
 	var res pb.PlaceOrderRes
-	utils.Copy(&res.Order, &order)
+	if err := utils.Copy(&res.Order, &order); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }
 
@@ -69,7 +71,9 @@ func (h *OrderHandler) GetOrderByID(ctx context.Context, req *pb.GetOrderByIDReq
 	}
 
 	var res pb.GetOrderByIDRes
-	utils.Copy(&res.Order, &order)
+	if err := utils.Copy(&res.Order, &order); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }
 
@@ -93,7 +97,9 @@ func (h *OrderHandler) GetMyOrders(ctx context.Context, req *pb.GetMyOrdersReq) 
 	}
 
 	var res pb.GetMyOrdersRes
-	utils.Copy(&res.Orders, &orders)
+	if err := utils.Copy(&res.Orders, &orders); err != nil {
+		return nil, err
+	}
 	if pagination != nil {
 		res.Total = pagination.Total
 		res.CurrentPage = pagination.CurrentPage
@@ -119,6 +125,8 @@ func (h *OrderHandler) CancelOrder(ctx context.Context, req *pb.CancelOrderReq) 
 	}
 
 	var res pb.CancelOrderRes
-	utils.Copy(&res.Order, &order)
+	if err := utils.Copy(&res.Order, &order); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }

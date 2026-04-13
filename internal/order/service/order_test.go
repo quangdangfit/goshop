@@ -254,7 +254,8 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 			},
 		},
 		{
-			name: "DecrementStock fail (best-effort)",
+			name:    "DecrementStock fail",
+			wantErr: true,
 			req: &domain.PlaceOrderReq{
 				UserID: "userID",
 				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
@@ -266,9 +267,6 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
 				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(errors.New("stock error")).Times(1)
 				suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
-				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
-					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
-				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").Return(nil).Maybe()
 			},
 		},
 		{

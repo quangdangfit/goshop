@@ -72,7 +72,7 @@ func (suite *CategoryHandlerTestSuite) TestListCategories() {
 				var res response.Response
 				var categories []*domain.Category
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&categories, &res.Result)
+				_ = utils.Copy(&categories, &res.Result)
 				suite.Equal(2, len(categories))
 				suite.Equal("c1", categories[0].ID)
 				suite.Equal("Electronics", categories[0].Name)
@@ -129,7 +129,7 @@ func (suite *CategoryHandlerTestSuite) TestGetCategoryByID() {
 				var res response.Response
 				var category domain.Category
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&category, &res.Result)
+				_ = utils.Copy(&category, &res.Result)
 				suite.Equal("c1", category.ID)
 				suite.Equal("Electronics", category.Name)
 			},
@@ -204,7 +204,7 @@ func (suite *CategoryHandlerTestSuite) TestCreateCategory() {
 				var res response.Response
 				var category domain.Category
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&category, &res.Result)
+				_ = utils.Copy(&category, &res.Result)
 				suite.Equal("c1", category.ID)
 				suite.Equal("Electronics", category.Name)
 				suite.Equal("electronics", category.Slug)
@@ -289,7 +289,7 @@ func (suite *CategoryHandlerTestSuite) TestUpdateCategory() {
 				var res response.Response
 				var category domain.Category
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&category, &res.Result)
+				_ = utils.Copy(&category, &res.Result)
 				suite.Equal("c1", category.ID)
 				suite.Equal("Updated Electronics", category.Name)
 			},

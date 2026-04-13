@@ -23,6 +23,7 @@ func TestCopy(t *testing.T) {
 		name     string
 		src      interface{}
 		newDst   func() interface{}
+		wantErr  bool
 		assertFn func(t *testing.T, dst interface{})
 	}{
 		{
@@ -60,13 +61,26 @@ func TestCopy(t *testing.T) {
 				assert.Equal(t, "hello", d.Name)
 			},
 		},
+		{
+			name:    "unmarshal error",
+			src:     "valid string",
+			newDst:  func() interface{} { return &struct{}{} },
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			dst := tc.newDst()
-			Copy(dst, tc.src)
-			tc.assertFn(t, dst)
+			err := Copy(dst, tc.src)
+			if tc.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			if tc.assertFn != nil {
+				tc.assertFn(t, dst)
+			}
 		})
 	}
 }

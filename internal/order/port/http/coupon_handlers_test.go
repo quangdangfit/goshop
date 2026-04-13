@@ -91,7 +91,7 @@ func (suite *CouponHandlerTestSuite) TestCreateCoupon() {
 				var res response.Response
 				var coupon domain.Coupon
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&coupon, &res.Result)
+				_ = utils.Copy(&coupon, &res.Result)
 				suite.Equal("SAVE10", coupon.Code)
 			},
 		},
@@ -158,7 +158,7 @@ func (suite *CouponHandlerTestSuite) TestGetCouponByCode() {
 				var res response.Response
 				var coupon domain.Coupon
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&coupon, &res.Result)
+				_ = utils.Copy(&coupon, &res.Result)
 				suite.Equal("SAVE10", coupon.Code)
 			},
 		},

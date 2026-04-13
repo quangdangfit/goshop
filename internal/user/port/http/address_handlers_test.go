@@ -72,7 +72,7 @@ func (suite *AddressHandlerTestSuite) TestListAddresses() {
 				var res response.Response
 				var addresses []*domain.Address
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&addresses, &res.Result)
+				_ = utils.Copy(&addresses, &res.Result)
 				suite.Equal(2, len(addresses))
 			},
 		},
@@ -135,7 +135,7 @@ func (suite *AddressHandlerTestSuite) TestGetAddressByID() {
 				var res response.Response
 				var address domain.Address
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&address, &res.Result)
+				_ = utils.Copy(&address, &res.Result)
 				suite.Equal("a1", address.ID)
 			},
 		},
@@ -208,7 +208,7 @@ func (suite *AddressHandlerTestSuite) TestCreateAddress() {
 				var res response.Response
 				var address domain.Address
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&address, &res.Result)
+				_ = utils.Copy(&address, &res.Result)
 				suite.Equal("a1", address.ID)
 			},
 		},
@@ -282,7 +282,7 @@ func (suite *AddressHandlerTestSuite) TestUpdateAddress() {
 				var res response.Response
 				var address domain.Address
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&address, &res.Result)
+				_ = utils.Copy(&address, &res.Result)
 				suite.Equal("a1", address.ID)
 			},
 		},

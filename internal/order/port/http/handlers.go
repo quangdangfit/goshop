@@ -55,7 +55,10 @@ func (a *OrderHandler) PlaceOrder(c *gin.Context) {
 	}
 
 	var res domain.Order
-	utils.Copy(&res, &order)
+	if err := utils.Copy(&res, &order); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -91,7 +94,10 @@ func (a *OrderHandler) GetOrders(c *gin.Context) {
 
 	var res domain.ListOrderRes
 	res.Pagination = pagination
-	utils.Copy(&res.Orders, &orders)
+	if err := utils.Copy(&res.Orders, &orders); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -125,7 +131,10 @@ func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 	}
 
 	var res domain.Order
-	utils.Copy(&res, &order)
+	if err := utils.Copy(&res, &order); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -145,13 +154,13 @@ func (a *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 		return
 	}
 
-	status := c.Query("status")
-	if status == "" {
-		apperror.WrapMessage(apperror.ErrBadRequest, nil, "Missing status").HTTPError(c)
+	status := model.OrderStatus(c.Query("status"))
+	if !status.IsValid() {
+		apperror.WrapMessage(apperror.ErrBadRequest, nil, "Invalid status").HTTPError(c)
 		return
 	}
 
-	order, err := a.service.UpdateOrderStatus(c, orderID, model.OrderStatus(status))
+	order, err := a.service.UpdateOrderStatus(c, orderID, status)
 	if err != nil {
 		logger.Errorf("Failed to update order status, id: %s, error: %s", orderID, err)
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
@@ -159,7 +168,10 @@ func (a *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 	}
 
 	var res domain.Order
-	utils.Copy(&res, &order)
+	if err := utils.Copy(&res, &order); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -192,6 +204,9 @@ func (a *OrderHandler) CancelOrder(c *gin.Context) {
 	}
 
 	var res domain.Order
-	utils.Copy(&res, &order)
+	if err := utils.Copy(&res, &order); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }

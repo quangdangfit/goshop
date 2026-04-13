@@ -34,7 +34,10 @@ func (h *ReviewHandler) ListReviews(c *gin.Context) {
 		return
 	}
 	var res domain.ListReviewRes
-	utils.Copy(&res.Reviews, &reviews)
+	if err := utils.Copy(&res.Reviews, &reviews); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	res.Pagination = pagination
 	response.JSON(c, http.StatusOK, res)
 }
@@ -57,7 +60,10 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		return
 	}
 	var res domain.Review
-	utils.Copy(&res, review)
+	if err := utils.Copy(&res, review); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -79,7 +85,10 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 		return
 	}
 	var res domain.Review
-	utils.Copy(&res, review)
+	if err := utils.Copy(&res, review); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 

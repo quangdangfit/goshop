@@ -129,7 +129,7 @@ func accessToken() string {
 func parseResponseResult(resData []byte, result interface{}) {
 	var response map[string]interface{}
 	_ = json.Unmarshal(resData, &response)
-	utils.Copy(result, response["result"])
+	_ = utils.Copy(result, response["result"])
 }
 
 func cleanData() {

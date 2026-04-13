@@ -36,7 +36,9 @@ func (h *ProductHandler) GetProductByID(ctx context.Context, req *pb.GetProductB
 	}
 
 	var res pb.GetProductByIDRes
-	utils.Copy(&res.Product, &product)
+	if err := utils.Copy(&res.Product, &product); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }
 
@@ -55,7 +57,9 @@ func (h *ProductHandler) ListProducts(ctx context.Context, req *pb.ListProductsR
 	}
 
 	var res pb.ListProductsRes
-	utils.Copy(&res.Products, &products)
+	if err := utils.Copy(&res.Products, &products); err != nil {
+		return nil, err
+	}
 	if pagination != nil {
 		res.Total = pagination.Total
 		res.CurrentPage = pagination.CurrentPage
@@ -76,7 +80,9 @@ func (h *ProductHandler) CreateProduct(ctx context.Context, req *pb.CreateProduc
 	}
 
 	var res pb.CreateProductRes
-	utils.Copy(&res.Product, &product)
+	if err := utils.Copy(&res.Product, &product); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }
 
@@ -96,6 +102,8 @@ func (h *ProductHandler) UpdateProduct(ctx context.Context, req *pb.UpdateProduc
 	}
 
 	var res pb.UpdateProductRes
-	utils.Copy(&res.Product, &product)
+	if err := utils.Copy(&res.Product, &product); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }

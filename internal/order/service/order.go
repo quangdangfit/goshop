@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
@@ -61,7 +62,9 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq
 	}
 
 	var lines []*model.OrderLine
-	utils.Copy(&lines, &req.Lines)
+	if err := utils.Copy(&lines, &req.Lines); err != nil {
+		return nil, err
+	}
 
 	productMap := make(map[string]*model.Product)
 	for _, line := range lines {
@@ -103,15 +106,15 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq
 		line.Product = productMap[line.ProductID]
 	}
 
-	// Clear cart after successful order (best effort)
+	// Clear cart after successful order
 	if err := s.cartRepo.ClearCart(ctx, req.UserID); err != nil {
 		logger.Errorf("Failed to clear cart for user %s: %s", req.UserID, err)
 	}
 
-	// Decrement stock (best effort — non-blocking)
+	// Decrement stock for each ordered product
 	for _, line := range lines {
 		if err := s.productRepo.DecrementStock(ctx, line.ProductID, int(line.Quantity)); err != nil { //nolint:gosec // quantity is bounded by business logic
-			logger.Errorf("Failed to decrement stock for product %s: %s", line.ProductID, err)
+			return nil, fmt.Errorf("failed to decrement stock for product %s: %w", line.ProductID, err)
 		}
 	}
 

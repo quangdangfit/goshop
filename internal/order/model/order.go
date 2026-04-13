@@ -18,6 +18,14 @@ const (
 	OrderStatusCancelled  OrderStatus = "cancelled"
 )
 
+func (s OrderStatus) IsValid() bool {
+	switch s {
+	case OrderStatusNew, OrderStatusInProgress, OrderStatusDone, OrderStatusCancelled:
+		return true
+	}
+	return false
+}
+
 type Order struct {
 	ID             string     `json:"id" gorm:"unique;not null;index;primary_key"`
 	CreatedAt      time.Time  `json:"created_at"`

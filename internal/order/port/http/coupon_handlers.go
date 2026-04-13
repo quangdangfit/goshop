@@ -46,7 +46,10 @@ func (h *CouponHandler) CreateCoupon(c *gin.Context) {
 	}
 
 	var res domain.Coupon
-	utils.Copy(&res, coupon)
+	if err := utils.Copy(&res, coupon); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -68,6 +71,9 @@ func (h *CouponHandler) GetCouponByCode(c *gin.Context) {
 	}
 
 	var res domain.Coupon
-	utils.Copy(&res, coupon)
+	if err := utils.Copy(&res, coupon); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }

@@ -1,17 +1,14 @@
-version: "3.8"
 services:
   goshop:
-    image: "github.com/quangdangfit/goshop"
     build: .
     ports:
       - "8888:8888"
     environment:
       port: 8888
-      auth_secret: auth_secret
-      database_uri: postgres://postgres:1234@postgres:5432/postgres
+      auth_secret: ${AUTH_SECRET:-auth_secret}
+      database_uri: postgres://postgres:${POSTGRES_PASSWORD:-1234}@postgres:5432/postgres
       redis_uri: redis:6379
       redis_db: 0
-
     depends_on:
       - postgres
       - redis
@@ -21,7 +18,6 @@ services:
 
   postgres:
     restart: always
-    image: "postgres:latest"
+    image: "postgres:16-alpine"
     environment:
-      DATABASE_USER: postgres
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-1234}

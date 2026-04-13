@@ -50,6 +50,7 @@ func (s *userService) Login(ctx context.Context, req *domain.LoginReq) (*model.U
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		logger.Errorf("CompareHashAndPassword fail, email: %s, error: %s", req.Email, err)
 		return nil, "", "", apperror.ErrInvalidCredentials
 	}
 
@@ -69,7 +70,9 @@ func (s *userService) Register(ctx context.Context, req *domain.RegisterReq) (*m
 	}
 
 	var user model.User
-	utils.Copy(&user, &req)
+	if err := utils.Copy(&user, &req); err != nil {
+		return nil, err
+	}
 	err := s.repo.Create(ctx, &user)
 	if err != nil {
 		logger.Errorf("Register.Create fail, email: %s, error: %s", req.Email, err)

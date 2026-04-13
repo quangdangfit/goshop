@@ -25,12 +25,13 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	reviewHandler := NewReviewHandler(reviewSvc)
 
 	authMiddleware := middleware.JWTAuth()
+	adminMiddleware := middleware.AdminOnly()
 
 	productRoute := r.Group("/products")
 	{
 		productRoute.GET("", productHandler.ListProducts)
-		productRoute.POST("", authMiddleware, productHandler.CreateProduct)
-		productRoute.PUT("/:id", authMiddleware, productHandler.UpdateProduct)
+		productRoute.POST("", authMiddleware, adminMiddleware, productHandler.CreateProduct)
+		productRoute.PUT("/:id", authMiddleware, adminMiddleware, productHandler.UpdateProduct)
 		productRoute.GET("/:id", productHandler.GetProductByID)
 		productRoute.GET("/:id/reviews", reviewHandler.ListReviews)
 		productRoute.POST("/:id/reviews", authMiddleware, reviewHandler.CreateReview)
@@ -42,8 +43,8 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	{
 		categoryRoute.GET("", categoryHandler.ListCategories)
 		categoryRoute.GET("/:id", categoryHandler.GetCategoryByID)
-		categoryRoute.POST("", authMiddleware, categoryHandler.CreateCategory)
-		categoryRoute.PUT("/:id", authMiddleware, categoryHandler.UpdateCategory)
-		categoryRoute.DELETE("/:id", authMiddleware, categoryHandler.DeleteCategory)
+		categoryRoute.POST("", authMiddleware, adminMiddleware, categoryHandler.CreateCategory)
+		categoryRoute.PUT("/:id", authMiddleware, adminMiddleware, categoryHandler.UpdateCategory)
+		categoryRoute.DELETE("/:id", authMiddleware, adminMiddleware, categoryHandler.DeleteCategory)
 	}
 }

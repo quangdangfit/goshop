@@ -74,7 +74,7 @@ func (suite *ReviewHandlerTestSuite) TestListReviews() {
 				var res response.Response
 				var reviews domain.ListReviewRes
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&reviews, &res.Result)
+				_ = utils.Copy(&reviews, &res.Result)
 				suite.Equal(2, len(reviews.Reviews))
 				suite.Equal("r1", reviews.Reviews[0].ID)
 				suite.Equal(5, reviews.Reviews[0].Rating)
@@ -144,7 +144,7 @@ func (suite *ReviewHandlerTestSuite) TestCreateReview() {
 				var res response.Response
 				var review domain.Review
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&review, &res.Result)
+				_ = utils.Copy(&review, &res.Result)
 				suite.Equal("r1", review.ID)
 				suite.Equal(5, review.Rating)
 				suite.Equal("Excellent product!", review.Comment)
@@ -220,7 +220,7 @@ func (suite *ReviewHandlerTestSuite) TestUpdateReview() {
 				var res response.Response
 				var review domain.Review
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&review, &res.Result)
+				_ = utils.Copy(&review, &res.Result)
 				suite.Equal("r1", review.ID)
 				suite.Equal(4, review.Rating)
 				suite.Equal("Updated comment", review.Comment)

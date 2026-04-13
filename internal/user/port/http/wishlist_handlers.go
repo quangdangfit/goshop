@@ -34,7 +34,10 @@ func (h *WishlistHandler) GetWishlist(c *gin.Context) {
 		return
 	}
 	var res []*domain.WishlistItem
-	utils.Copy(&res, &items)
+	if err := utils.Copy(&res, &items); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 

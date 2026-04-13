@@ -1,6 +1,7 @@
 package jtoken
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -69,7 +70,9 @@ func ValidateToken(jwtToken string) (map[string]interface{}, error) {
 	}
 
 	var data map[string]interface{}
-	utils.Copy(&data, tokenData["payload"])
+	if err := utils.Copy(&data, tokenData["payload"]); err != nil {
+		return nil, fmt.Errorf("invalid token payload: %w", err)
+	}
 
 	return data, nil
 }

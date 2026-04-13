@@ -43,7 +43,9 @@ func (h *CartHandler) AddProduct(ctx context.Context, req *pb.AddProductReq) (*p
 	}
 
 	var res pb.AddProductRes
-	utils.Copy(&res.Cart, &cart)
+	if err := utils.Copy(&res.Cart, &cart); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }
 
@@ -63,7 +65,9 @@ func (h *CartHandler) RemoveProduct(ctx context.Context, req *pb.RemoveProductRe
 	}
 
 	var res pb.RemoveProductRes
-	utils.Copy(&res.Cart, &cart)
+	if err := utils.Copy(&res.Cart, &cart); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }
 
@@ -80,6 +84,8 @@ func (h *CartHandler) GetCart(ctx context.Context, req *pb.GetCartReq) (*pb.GetC
 	}
 
 	var res pb.GetCartRes
-	utils.Copy(&res.Cart, &cart)
+	if err := utils.Copy(&res.Cart, &cart); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }

@@ -44,7 +44,10 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 	}
 
 	var res domain.Cart
-	utils.Copy(&res, &cart)
+	if err := utils.Copy(&res, &cart); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -82,7 +85,10 @@ func (h *CartHandler) AddProduct(c *gin.Context) {
 	}
 
 	var res domain.Cart
-	utils.Copy(&res, &cart)
+	if err := utils.Copy(&res, &cart); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -118,6 +124,9 @@ func (h *CartHandler) RemoveProduct(c *gin.Context) {
 	}
 
 	var res domain.Cart
-	utils.Copy(&res, &cart)
+	if err := utils.Copy(&res, &cart); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }

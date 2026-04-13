@@ -39,7 +39,9 @@ func (s *couponSvc) Create(ctx context.Context, req *domain.CreateCouponReq) (*m
 		return nil, err
 	}
 	var coupon model.Coupon
-	utils.Copy(&coupon, req)
+	if err := utils.Copy(&coupon, req); err != nil {
+		return nil, err
+	}
 	if err := s.repo.Create(ctx, &coupon); err != nil {
 		return nil, err
 	}

@@ -72,7 +72,7 @@ func (suite *CartHandlerTestSuite) TestGetCart() {
 				var res response.Response
 				var cartRes domain.Cart
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&cartRes, &res.Result)
+				_ = utils.Copy(&cartRes, &res.Result)
 				suite.Equal("cartId1", cartRes.ID)
 			},
 		},
@@ -141,7 +141,7 @@ func (suite *CartHandlerTestSuite) TestAddProduct() {
 				var res response.Response
 				var cartRes domain.Cart
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&cartRes, &res.Result)
+				_ = utils.Copy(&cartRes, &res.Result)
 				suite.Equal("cartId1", cartRes.ID)
 			},
 		},
@@ -222,7 +222,7 @@ func (suite *CartHandlerTestSuite) TestRemoveProduct() {
 				var res response.Response
 				var cartRes domain.Cart
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&cartRes, &res.Result)
+				_ = utils.Copy(&cartRes, &res.Result)
 				suite.Equal("cartId1", cartRes.ID)
 			},
 		},

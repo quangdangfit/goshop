@@ -43,7 +43,9 @@ func (s *addressSvc) Create(ctx context.Context, userID string, req *domain.Crea
 		return nil, err
 	}
 	var address model.Address
-	utils.Copy(&address, req)
+	if err := utils.Copy(&address, req); err != nil {
+		return nil, err
+	}
 	address.UserID = userID
 	if err := s.repo.Create(ctx, &address); err != nil {
 		return nil, err
@@ -56,7 +58,9 @@ func (s *addressSvc) Update(ctx context.Context, id, userID string, req *domain.
 	if err != nil {
 		return nil, err
 	}
-	utils.Copy(address, req)
+	if err := utils.Copy(address, req); err != nil {
+		return nil, err
+	}
 	if err := s.repo.Update(ctx, address); err != nil {
 		return nil, err
 	}

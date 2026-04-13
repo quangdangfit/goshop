@@ -54,7 +54,10 @@ func (p *ProductHandler) GetProductByID(c *gin.Context) {
 		return
 	}
 
-	utils.Copy(&res, &product)
+	if err := utils.Copy(&res, &product); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 	_ = p.cache.SetWithExpiration(cacheKey, res, config.ProductCachingTime)
 }
@@ -89,7 +92,10 @@ func (p *ProductHandler) ListProducts(c *gin.Context) {
 		return
 	}
 
-	utils.Copy(&res.Products, &products)
+	if err := utils.Copy(&res.Products, &products); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	res.Pagination = pagination
 	response.JSON(c, http.StatusOK, res)
 	_ = p.cache.SetWithExpiration(cacheKey, res, config.ProductCachingTime)
@@ -119,7 +125,10 @@ func (p *ProductHandler) CreateProduct(c *gin.Context) {
 	}
 
 	var res domain.Product
-	utils.Copy(&res, &product)
+	if err := utils.Copy(&res, &product); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 	_ = p.cache.RemovePattern("*product*")
 }
@@ -150,7 +159,10 @@ func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	var res domain.Product
-	utils.Copy(&res, &product)
+	if err := utils.Copy(&res, &product); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 	_ = p.cache.RemovePattern("*product*")
 }

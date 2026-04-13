@@ -47,7 +47,10 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 
 	var res domain.LoginRes
-	utils.Copy(&res.User, &user)
+	if err := utils.Copy(&res.User, &user); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	res.AccessToken = accessToken
 	res.RefreshToken = refreshToken
 	response.JSON(c, http.StatusOK, res)
@@ -77,7 +80,10 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	var res domain.RegisterRes
-	utils.Copy(&res.User, &user)
+	if err := utils.Copy(&res.User, &user); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -104,7 +110,10 @@ func (h *UserHandler) GetMe(c *gin.Context) {
 	}
 
 	var res domain.User
-	utils.Copy(&res, &user)
+	if err := utils.Copy(&res, &user); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 

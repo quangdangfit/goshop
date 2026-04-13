@@ -27,6 +27,7 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	couponHandler := NewCouponHandler(couponSvc)
 
 	authMiddleware := middleware.JWTAuth()
+	adminMiddleware := middleware.AdminOnly()
 
 	orderRoute := r.Group("/orders", authMiddleware)
 	{
@@ -34,12 +35,12 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 		orderRoute.GET("/:id", orderHandler.GetOrderByID)
 		orderRoute.GET("", orderHandler.GetOrders)
 		orderRoute.PUT("/:id/cancel", orderHandler.CancelOrder)
-		orderRoute.PUT("/:id/status", orderHandler.UpdateOrderStatus)
+		orderRoute.PUT("/:id/status", adminMiddleware, orderHandler.UpdateOrderStatus)
 	}
 
 	couponRoute := r.Group("/coupons", authMiddleware)
 	{
-		couponRoute.POST("", couponHandler.CreateCoupon)
+		couponRoute.POST("", adminMiddleware, couponHandler.CreateCoupon)
 		couponRoute.GET("/:code", couponHandler.GetCouponByCode)
 	}
 }

@@ -68,22 +68,12 @@ func (d *database) AutoMigrate(models ...any) error {
 }
 
 func (d *database) WithTransaction(function func() error) error {
-	tx := d.db.Begin()
-	if tx.Error != nil {
-		return tx.Error
-	}
-
-	originalDB := d.db
-	d.db = tx
-
-	if err := function(); err != nil {
-		d.db = originalDB
-		tx.Rollback()
-		return err
-	}
-
-	d.db = originalDB
-	return tx.Commit().Error
+	return d.db.Transaction(func(tx *gorm.DB) error {
+		original := d.db
+		d.db = tx
+		defer func() { d.db = original }()
+		return function()
+	})
 }
 
 func (d *database) Create(ctx context.Context, doc any) error {

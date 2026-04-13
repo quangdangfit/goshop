@@ -60,7 +60,9 @@ func (p *productSvc) Create(ctx context.Context, req *domain.CreateProductReq) (
 	}
 
 	var product model.Product
-	utils.Copy(&product, req)
+	if err := utils.Copy(&product, req); err != nil {
+		return nil, err
+	}
 
 	err := p.repo.Create(ctx, &product)
 	if err != nil {
@@ -82,7 +84,9 @@ func (p *productSvc) Update(ctx context.Context, id string, req *domain.UpdatePr
 		return nil, err
 	}
 
-	utils.Copy(product, req)
+	if err := utils.Copy(product, req); err != nil {
+		return nil, err
+	}
 	err = p.repo.Update(ctx, product)
 	if err != nil {
 		logger.Errorf("Update fail, id: %s, error: %s", id, err)

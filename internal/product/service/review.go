@@ -44,7 +44,9 @@ func (s *reviewSvc) CreateReview(ctx context.Context, productID, userID string, 
 		return nil, err
 	}
 	var review model.Review
-	utils.Copy(&review, req)
+	if err := utils.Copy(&review, req); err != nil {
+		return nil, err
+	}
 	review.ProductID = productID
 	review.UserID = userID
 	if err := s.repo.Create(ctx, &review); err != nil {
@@ -62,7 +64,9 @@ func (s *reviewSvc) UpdateReview(ctx context.Context, id, userID string, req *do
 	if review.UserID != userID {
 		return nil, apperror.ErrForbidden
 	}
-	utils.Copy(review, req)
+	if err := utils.Copy(review, req); err != nil {
+		return nil, err
+	}
 	if err := s.repo.Update(ctx, review); err != nil {
 		return nil, err
 	}

@@ -42,7 +42,9 @@ func (s *categorySvc) Create(ctx context.Context, req *domain.CreateCategoryReq)
 		return nil, err
 	}
 	var category model.Category
-	utils.Copy(&category, req)
+	if err := utils.Copy(&category, req); err != nil {
+		return nil, err
+	}
 	if err := s.repo.Create(ctx, &category); err != nil {
 		return nil, err
 	}
@@ -54,7 +56,9 @@ func (s *categorySvc) Update(ctx context.Context, id string, req *domain.UpdateC
 	if err != nil {
 		return nil, err
 	}
-	utils.Copy(category, req)
+	if err := utils.Copy(category, req); err != nil {
+		return nil, err
+	}
 	if err := s.repo.Update(ctx, category); err != nil {
 		return nil, err
 	}

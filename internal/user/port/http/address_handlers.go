@@ -34,7 +34,10 @@ func (h *AddressHandler) ListAddresses(c *gin.Context) {
 		return
 	}
 	var res []*domain.Address
-	utils.Copy(&res, &addresses)
+	if err := utils.Copy(&res, &addresses); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -55,7 +58,10 @@ func (h *AddressHandler) GetAddressByID(c *gin.Context) {
 		return
 	}
 	var res domain.Address
-	utils.Copy(&res, address)
+	if err := utils.Copy(&res, address); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -77,7 +83,10 @@ func (h *AddressHandler) CreateAddress(c *gin.Context) {
 		return
 	}
 	var res domain.Address
-	utils.Copy(&res, address)
+	if err := utils.Copy(&res, address); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 
@@ -99,7 +108,10 @@ func (h *AddressHandler) UpdateAddress(c *gin.Context) {
 		return
 	}
 	var res domain.Address
-	utils.Copy(&res, address)
+	if err := utils.Copy(&res, address); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
 	response.JSON(c, http.StatusOK, res)
 }
 

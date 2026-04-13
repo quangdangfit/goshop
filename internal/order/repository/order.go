@@ -65,7 +65,9 @@ func (r *orderRepo) createOrder(ctx context.Context, order *model.Order, lines [
 		return err
 	}
 
-	utils.Copy(&order.Lines, &lines)
+	if err := utils.Copy(&order.Lines, &lines); err != nil {
+		return err
+	}
 	return nil
 }
 

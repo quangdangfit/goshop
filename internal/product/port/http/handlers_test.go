@@ -79,7 +79,7 @@ func (suite *ProductHandlerTestSuite) TestGetProductByID() {
 				var res response.Response
 				var product domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&product, &res.Result)
+				_ = utils.Copy(&product, &res.Result)
 				suite.Equal("123456", product.ID)
 				suite.Equal("product", product.Name)
 				suite.Equal("description", product.Description)
@@ -95,7 +95,7 @@ func (suite *ProductHandlerTestSuite) TestGetProductByID() {
 				var res response.Response
 				var product domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&product, &res.Result)
+				_ = utils.Copy(&product, &res.Result)
 				suite.Equal("", product.ID)
 				suite.Equal("", product.Name)
 				suite.Equal("", product.Description)
@@ -158,7 +158,7 @@ func (suite *ProductHandlerTestSuite) TestListProducts() {
 				var res response.Response
 				var products domain.ListProductRes
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&products, &res.Result)
+				_ = utils.Copy(&products, &res.Result)
 				suite.Equal(1, len(products.Products))
 				suite.Equal("123456", products.Products[0].ID)
 				suite.Equal("product", products.Products[0].Name)
@@ -176,7 +176,7 @@ func (suite *ProductHandlerTestSuite) TestListProducts() {
 				var res response.Response
 				var products []*domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&products, &res.Result)
+				_ = utils.Copy(&products, &res.Result)
 				suite.Equal(0, len(products))
 			},
 		},
@@ -247,7 +247,7 @@ func (suite *ProductHandlerTestSuite) TestCreateProduct() {
 				var res response.Response
 				var resData domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&resData, &res.Result)
+				_ = utils.Copy(&resData, &res.Result)
 				suite.Equal("product", resData.Name)
 				suite.Equal("description", resData.Description)
 				suite.Equal(10.5, resData.Price)
@@ -341,7 +341,7 @@ func (suite *ProductHandlerTestSuite) TestUpdateProduct() {
 				var res response.Response
 				var resData domain.Product
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&resData, &res.Result)
+				_ = utils.Copy(&resData, &res.Result)
 				suite.Equal("123456", resData.ID)
 				suite.Equal("product", resData.Name)
 				suite.Equal("description", resData.Description)

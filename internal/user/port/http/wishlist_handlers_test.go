@@ -73,7 +73,7 @@ func (suite *WishlistHandlerTestSuite) TestGetWishlist() {
 				var res response.Response
 				var items []*domain.WishlistItem
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&items, &res.Result)
+				_ = utils.Copy(&items, &res.Result)
 				suite.Equal(2, len(items))
 			},
 		},

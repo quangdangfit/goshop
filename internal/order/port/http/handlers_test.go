@@ -96,7 +96,7 @@ func (suite *OrderHandlerTestSuite) TestPlaceOrder() {
 				var res response.Response
 				var orderRes domain.Order
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&orderRes, &res.Result)
+				_ = utils.Copy(&orderRes, &res.Result)
 				suite.Equal(float64(8), orderRes.TotalPrice)
 				suite.Equal(string(model.OrderStatusNew), orderRes.Status)
 				suite.Equal(2, len(orderRes.Lines))
@@ -217,7 +217,7 @@ func (suite *OrderHandlerTestSuite) TestGetOrderByID() {
 				var res response.Response
 				var orderRes domain.Order
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&orderRes, &res.Result)
+				_ = utils.Copy(&orderRes, &res.Result)
 				suite.Equal(float64(5), orderRes.TotalPrice)
 				suite.Equal(string(model.OrderStatusNew), orderRes.Status)
 				suite.Equal(0, len(orderRes.Lines))
@@ -311,7 +311,7 @@ func (suite *OrderHandlerTestSuite) TestGetOrders() {
 				var res response.Response
 				var orderRes domain.ListOrderRes
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&orderRes, &res.Result)
+				_ = utils.Copy(&orderRes, &res.Result)
 				suite.Equal(1, len(orderRes.Orders))
 				suite.Equal("orderId1", orderRes.Orders[0].ID)
 				suite.Equal(float64(5), orderRes.Orders[0].TotalPrice)
@@ -398,7 +398,7 @@ func (suite *OrderHandlerTestSuite) TestCancelOrder() {
 				var res response.Response
 				var orderRes domain.Order
 				_ = json.Unmarshal(writer.Body.Bytes(), &res)
-				utils.Copy(&orderRes, &res.Result)
+				_ = utils.Copy(&orderRes, &res.Result)
 				suite.Equal("orderId1", orderRes.ID)
 				suite.Equal(float64(5), orderRes.TotalPrice)
 				suite.Equal(string(model.OrderStatusNew), orderRes.Status)

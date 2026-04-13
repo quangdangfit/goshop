@@ -178,7 +178,7 @@ func (s *RedisTestSuite) TestRemovePattern() {
 	}
 }
 
-func (s *RedisTestSuite) TestRemovePattern_KeysError() {
+func (s *RedisTestSuite) TestRemovePattern_ScanError() {
 	s.mr.Close()
 	err := s.r.RemovePattern("*")
 	assert.Error(s.T(), err)

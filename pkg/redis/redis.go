@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	goredis "github.com/redis/go-redis/v9"
@@ -82,8 +83,7 @@ func (r *redis) Get(key string, value interface{}) error {
 		return err
 	}
 
-	err = json.Unmarshal([]byte(strValue), value)
-	if err != nil {
+	if err := json.Unmarshal([]byte(strValue), value); err != nil {
 		return err
 	}
 
@@ -94,38 +94,29 @@ func (r *redis) SetWithExpiration(key string, value interface{}, expiration time
 	ctx, cancel := context.WithTimeout(context.Background(), Timeout*time.Second)
 	defer cancel()
 
-	bData, _ := json.Marshal(value)
-	err := r.cmd.Set(ctx, key, bData, expiration).Err()
+	bData, err := json.Marshal(value)
 	if err != nil {
-		return err
+		return fmt.Errorf("redis set marshal: %w", err)
 	}
-
-	return nil
+	return r.cmd.Set(ctx, key, bData, expiration).Err()
 }
 
 func (r *redis) Set(key string, value interface{}) error {
 	ctx, cancel := context.WithTimeout(context.Background(), Timeout*time.Second)
 	defer cancel()
 
-	bData, _ := json.Marshal(value)
-	err := r.cmd.Set(ctx, key, bData, 0).Err()
+	bData, err := json.Marshal(value)
 	if err != nil {
-		return err
+		return fmt.Errorf("redis set marshal: %w", err)
 	}
-
-	return nil
+	return r.cmd.Set(ctx, key, bData, 0).Err()
 }
 
 func (r *redis) Remove(keys ...string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), Timeout*time.Second)
 	defer cancel()
 
-	err := r.cmd.Del(ctx, keys...).Err()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.cmd.Del(ctx, keys...).Err()
 }
 
 func (r *redis) Keys(pattern string) ([]string, error) {
@@ -141,20 +132,25 @@ func (r *redis) Keys(pattern string) ([]string, error) {
 }
 
 func (r *redis) RemovePattern(pattern string) error {
-	keys, err := r.Keys(pattern)
-	if err != nil {
-		return err
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), Timeout*time.Second)
+	defer cancel()
 
-	if len(keys) == 0 {
-		return nil
+	var cursor uint64
+	for {
+		keys, nextCursor, err := r.cmd.Scan(ctx, cursor, pattern, 100).Result()
+		if err != nil {
+			return err
+		}
+		if len(keys) > 0 {
+			if err := r.cmd.Del(ctx, keys...).Err(); err != nil {
+				return err
+			}
+		}
+		cursor = nextCursor
+		if cursor == 0 {
+			break
+		}
 	}
-
-	err = r.Remove(keys...)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -167,7 +163,7 @@ func (r *redis) Incr(key string, expiration time.Duration) (int64, error) {
 		return 0, err
 	}
 	if count == 1 {
-		r.cmd.Expire(ctx, key, expiration)
+		r.cmd.Expire(ctx, key, expiration) //nolint:errcheck // best-effort TTL set
 	}
 	return count, nil
 }

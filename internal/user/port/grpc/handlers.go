@@ -35,7 +35,9 @@ func (h *UserHandler) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes
 	}
 
 	var res pb.LoginRes
-	utils.Copy(&res.User, &user)
+	if err := utils.Copy(&res.User, &user); err != nil {
+		return nil, err
+	}
 	res.AccessToken = accessToken
 	res.RefreshToken = refreshToken
 	return &res, nil
@@ -52,7 +54,9 @@ func (h *UserHandler) Register(ctx context.Context, req *pb.RegisterReq) (*pb.Re
 	}
 
 	var res pb.RegisterRes
-	utils.Copy(&res.User, &user)
+	if err := utils.Copy(&res.User, &user); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }
 
@@ -69,7 +73,9 @@ func (h *UserHandler) GetMe(ctx context.Context, _ *pb.GetMeReq) (*pb.GetMeRes, 
 	}
 
 	var res pb.GetMeRes
-	utils.Copy(&res.User, &user)
+	if err := utils.Copy(&res.User, &user); err != nil {
+		return nil, err
+	}
 	return &res, nil
 }
 
