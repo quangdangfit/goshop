@@ -84,6 +84,12 @@ func setup() bool {
 		Password: "test123456",
 	})
 
+	_ = dbTest.Create(context.Background(), &userModel.User{
+		Email:    "admin@test.com",
+		Password: "admin123456",
+		Role:     userModel.UserRoleAdmin,
+	})
+
 	return true
 }
 
@@ -130,6 +136,18 @@ func parseResponseResult(resData []byte, result interface{}) {
 	var response map[string]interface{}
 	_ = json.Unmarshal(resData, &response)
 	_ = utils.Copy(result, response["result"])
+}
+
+func adminAccessToken() string {
+	user := domain.LoginReq{
+		Email:    "admin@test.com",
+		Password: "admin123456",
+	}
+
+	writer := makeRequest("POST", "/api/v1/auth/login", user, "")
+	var response map[string]map[string]string
+	_ = json.Unmarshal(writer.Body.Bytes(), &response)
+	return response["result"]["access_token"]
 }
 
 func cleanData(records ...interface{}) {

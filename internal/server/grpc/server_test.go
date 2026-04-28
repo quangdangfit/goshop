@@ -65,3 +65,26 @@ func TestServer_Run_ListenError(t *testing.T) {
 	err := server.Run()
 	assert.Error(t, err)
 }
+
+func TestServer_Shutdown(t *testing.T) {
+	mockDB := dbMocks.NewDatabase(t)
+	mockRedis := redisMocks.NewRedis(t)
+
+	server := NewServer(validation.New(), mockDB, mockRedis)
+	server.cfg.GrpcPort = 0
+
+	runDone := make(chan error, 1)
+	go func() { runDone <- server.Run() }()
+
+	time.Sleep(50 * time.Millisecond)
+
+	// GracefulStop — exercise the Shutdown code path.
+	server.Shutdown()
+
+	select {
+	case err := <-runDone:
+		assert.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Error("server did not exit after Shutdown")
+	}
+}

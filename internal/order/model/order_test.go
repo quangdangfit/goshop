@@ -41,3 +41,25 @@ func TestOrderLine_BeforeCreate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, line.ID)
 }
+
+func TestOrderStatus_IsValid(t *testing.T) {
+	tests := []struct {
+		name   string
+		status OrderStatus
+		want   bool
+	}{
+		{name: "new", status: OrderStatusNew, want: true},
+		{name: "in-progress", status: OrderStatusInProgress, want: true},
+		{name: "done", status: OrderStatusDone, want: true},
+		{name: "cancelled", status: OrderStatusCancelled, want: true},
+		{name: "empty string", status: OrderStatus(""), want: false},
+		{name: "unknown", status: OrderStatus("shipped"), want: false},
+		{name: "wrong casing", status: OrderStatus("NEW"), want: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, tc.status.IsValid())
+		})
+	}
+}

@@ -110,6 +110,51 @@ func TestJWTRefresh(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
+func TestAdminOnly(t *testing.T) {
+	tests := []struct {
+		name     string
+		role     string
+		expected int
+	}{
+		{
+			name:     "AdminAllowed",
+			role:     "admin",
+			expected: http.StatusOK,
+		},
+		{
+			name:     "CustomerForbidden",
+			role:     "customer",
+			expected: http.StatusForbidden,
+		},
+		{
+			name:     "EmptyRoleForbidden",
+			role:     "",
+			expected: http.StatusForbidden,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			config.LoadConfig()
+			setupGinTest()
+
+			w := httptest.NewRecorder()
+			_, engine := gin.CreateTestContext(w)
+			engine.Use(func(c *gin.Context) {
+				c.Set("role", tc.role)
+				c.Next()
+			})
+			engine.Use(AdminOnly())
+			engine.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+			req, _ := http.NewRequest(http.MethodGet, "/test", nil)
+			engine.ServeHTTP(w, req)
+
+			assert.Equal(t, tc.expected, w.Code)
+		})
+	}
+}
+
 func TestCORS(t *testing.T) {
 	tests := []struct {
 		name           string

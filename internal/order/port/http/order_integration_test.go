@@ -24,16 +24,18 @@ func TestOrderAPI_PlaceOrderSuccess(t *testing.T) {
 	defer cleanData()
 
 	p1 := productModel.Product{
-		Name:        "test-product-1",
-		Description: "test-product-1",
-		Price:       1,
+		Name:          "test-product-1",
+		Description:   "test-product-1",
+		Price:         1,
+		StockQuantity: 100,
 	}
 	_ = dbTest.Create(context.Background(), &p1)
 
 	p2 := productModel.Product{
-		Name:        "test-product-2",
-		Description: "test-product-2",
-		Price:       2,
+		Name:          "test-product-2",
+		Description:   "test-product-2",
+		Price:         2,
+		StockQuantity: 100,
 	}
 	_ = dbTest.Create(context.Background(), &p2)
 

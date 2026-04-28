@@ -334,7 +334,7 @@ func TestProductAPI_CreateProductSuccess(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	writer := makeRequest("POST", "/api/v1/products", p, accessToken())
+	writer := makeRequest("POST", "/api/v1/products", p, adminAccessToken())
 	var res model.Product
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
@@ -352,7 +352,7 @@ func TestProductAPI_CreateProductInvalidFieldType(t *testing.T) {
 		"description": "test-product",
 		"price":       "1",
 	}
-	writer := makeRequest("POST", "/api/v1/products", p, accessToken())
+	writer := makeRequest("POST", "/api/v1/products", p, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
@@ -367,7 +367,7 @@ func TestProductAPI_CreateProductMissingName(t *testing.T) {
 		Description: "test-product",
 		Price:       1,
 	}
-	writer := makeRequest("POST", "/api/v1/products", p, accessToken())
+	writer := makeRequest("POST", "/api/v1/products", p, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
@@ -382,7 +382,7 @@ func TestProductAPI_CreateProductMissingDescription(t *testing.T) {
 		Name:  "test-product",
 		Price: 1,
 	}
-	writer := makeRequest("POST", "/api/v1/products", p, accessToken())
+	writer := makeRequest("POST", "/api/v1/products", p, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
@@ -398,7 +398,7 @@ func TestProductAPI_CreateProductPriceLessThanZero(t *testing.T) {
 		Description: "test-product",
 		Price:       -1,
 	}
-	writer := makeRequest("POST", "/api/v1/products", p, accessToken())
+	writer := makeRequest("POST", "/api/v1/products", p, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
@@ -414,7 +414,7 @@ func TestProductAPI_CreateProductPriceEqualZero(t *testing.T) {
 		Description: "test-product",
 		Price:       0,
 	}
-	writer := makeRequest("POST", "/api/v1/products", p, accessToken())
+	writer := makeRequest("POST", "/api/v1/products", p, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
@@ -432,7 +432,7 @@ func TestProductAPI_CreateProductDuplicateName(t *testing.T) {
 	}
 	_ = dbTest.Create(context.Background(), &p)
 
-	writer := makeRequest("POST", "/api/v1/products", p, accessToken())
+	writer := makeRequest("POST", "/api/v1/products", p, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
@@ -456,7 +456,7 @@ func TestProductAPI_UpdateProductSuccess(t *testing.T) {
 	update := &domain.UpdateProductReq{
 		Name: "update-test-product",
 	}
-	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/products/%s", p.ID), update, accessToken())
+	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/products/%s", p.ID), update, adminAccessToken())
 	var res model.Product
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
@@ -479,7 +479,7 @@ func TestProductAPI_UpdateProductInvalidFieldType(t *testing.T) {
 	update := map[string]interface{}{
 		"price": "1",
 	}
-	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/products/%s", p.ID), update, accessToken())
+	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/products/%s", p.ID), update, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusBadRequest, writer.Code)
@@ -500,7 +500,7 @@ func TestProductAPI_UpdateProductPriceLessThanZero(t *testing.T) {
 	update := &domain.UpdateProductReq{
 		Price: -1,
 	}
-	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/products/%s", p.ID), update, accessToken())
+	writer := makeRequest("PUT", fmt.Sprintf("/api/v1/products/%s", p.ID), update, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
@@ -513,7 +513,7 @@ func TestProductAPI_UpdateProductNotFound(t *testing.T) {
 	update := &domain.UpdateProductReq{
 		Price: 1,
 	}
-	writer := makeRequest("PUT", "/api/v1/products/notfound", update, accessToken())
+	writer := makeRequest("PUT", "/api/v1/products/notfound", update, adminAccessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
 	assert.Equal(t, http.StatusInternalServerError, writer.Code)
