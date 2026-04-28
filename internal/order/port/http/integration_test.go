@@ -138,18 +138,6 @@ func parseResponseResult(resData []byte, result interface{}) {
 	_ = utils.Copy(result, response["result"])
 }
 
-func adminAccessToken() string {
-	user := domain.LoginReq{
-		Email:    "admin@test.com",
-		Password: "admin123456",
-	}
-
-	writer := makeRequest("POST", "/api/v1/auth/login", user, "")
-	var response map[string]map[string]string
-	_ = json.Unmarshal(writer.Body.Bytes(), &response)
-	return response["result"]["access_token"]
-}
-
 func cleanData(records ...interface{}) {
 	dbTest.GetDB().Where("1 = 1").Delete(&orderModel.OrderLine{})
 	dbTest.GetDB().Where("1 = 1").Delete(&productModel.Product{})
