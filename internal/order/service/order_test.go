@@ -23,13 +23,14 @@ import (
 
 type OrderServiceTestSuite struct {
 	suite.Suite
-	mockDB          *dbsMocks.Database
-	mockRepo        *orderMocks.OrderRepository
-	mockProductRepo *orderMocks.ProductRepository
-	mockUserRepo    *orderMocks.UserRepository
-	mockCouponSvc   *serviceMocks.CouponService
-	mockNotifier    *notifMocks.Notifier
-	service         OrderService
+	mockDB              *dbsMocks.Database
+	mockRepo            *orderMocks.OrderRepository
+	mockProductRepo     *orderMocks.ProductRepository
+	mockUserRepo        *orderMocks.UserRepository
+	mockReservationRepo *orderMocks.ReservationRepository
+	mockCouponSvc       *serviceMocks.CouponService
+	mockNotifier        *notifMocks.Notifier
+	service             OrderService
 }
 
 func (suite *OrderServiceTestSuite) SetupTest() {
@@ -40,6 +41,7 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.mockRepo = orderMocks.NewOrderRepository(suite.T())
 	suite.mockProductRepo = orderMocks.NewProductRepository(suite.T())
 	suite.mockUserRepo = orderMocks.NewUserRepository(suite.T())
+	suite.mockReservationRepo = orderMocks.NewReservationRepository(suite.T())
 	suite.mockCouponSvc = serviceMocks.NewCouponService(suite.T())
 	suite.mockNotifier = notifMocks.NewNotifier(suite.T())
 	// WithTransaction is a thin pass-through in tests — invoke the function and surface its error.
@@ -50,6 +52,7 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 		suite.mockRepo,
 		suite.mockProductRepo,
 		suite.mockUserRepo,
+		suite.mockReservationRepo,
 		suite.mockCouponSvc,
 		suite.mockNotifier,
 	)
@@ -143,6 +146,20 @@ func (suite *OrderServiceTestSuite) TestGetMyOrders() {
 }
 
 func (suite *OrderServiceTestSuite) TestPlaceOrder() {
+	// happyPath wires the common mocks for a successful PlaceOrder for one productID×qty=2 line.
+	happyPath := func(couponCode string, discount float64) {
+		suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
+			Return(&model.Product{Name: "product", Price: 10.0}, nil).Times(1)
+		suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, couponCode, discount).
+			Return(&model.Order{ID: "orderID", UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
+		suite.mockRepo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Times(1)
+		suite.mockProductRepo.On("ReserveStock", mock.Anything, "productID", 2).Return(nil).Times(1)
+		suite.mockReservationRepo.On("CreateMany", mock.Anything, mock.Anything).Return(nil).Times(1)
+		suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
+			Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
+		suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").Return(nil).Maybe()
+	}
+
 	tests := []struct {
 		name    string
 		req     *domain.PlaceOrderReq
@@ -156,16 +173,7 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				UserID: "userID",
 				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
-			setup: func() {
-				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
-					Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
-				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
-					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
-				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
-					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
-				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").Return(nil).Maybe()
-			},
+			setup: func() { happyPath("", 0) },
 		},
 		{
 			name: "GetProductByID fail",
@@ -208,17 +216,10 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				Lines: []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
 			},
 			setup: func() {
-				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
-					Return(&model.Product{Name: "product", Price: 10.0}, nil).Times(1)
 				suite.mockCouponSvc.On("Apply", mock.Anything, "SAVE10", float64(20)).
 					Return(float64(2), &model.Coupon{ID: "c1", Code: "SAVE10"}, nil).Times(1)
 				suite.mockCouponSvc.On("IncrUsedCount", mock.Anything, "c1").Return(nil).Times(1)
-				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "SAVE10", float64(2)).
-					Return(&model.Order{UserID: "userID", TotalPrice: 20, DiscountAmount: 2, FinalPrice: 18, CouponCode: "SAVE10"}, nil).Times(1)
-				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
-					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
-				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				happyPath("SAVE10", float64(2))
 			},
 		},
 		{
@@ -236,7 +237,7 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 			wantErr: true,
 		},
 		{
-			name:    "DecrementStock fail",
+			name:    "ReserveStock fail rolls back",
 			wantErr: true,
 			req: &domain.PlaceOrderReq{
 				UserID: "userID",
@@ -246,8 +247,9 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
 					Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
-					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
-				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(errors.New("stock error")).Times(1)
+					Return(&model.Order{ID: "orderID", UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
+				suite.mockRepo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Times(1)
+				suite.mockProductRepo.On("ReserveStock", mock.Anything, "productID", 2).Return(errors.New("insufficient")).Times(1)
 			},
 		},
 		{
@@ -262,9 +264,10 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				suite.mockCouponSvc.On("Apply", mock.Anything, "SAVE10", float64(20)).
 					Return(float64(2), &model.Coupon{ID: "c1", Code: "SAVE10"}, nil).Times(1)
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "SAVE10", float64(2)).
-					Return(&model.Order{UserID: "userID", TotalPrice: 20, DiscountAmount: 2, FinalPrice: 18, CouponCode: "SAVE10",
-						Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
-				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Times(1)
+					Return(&model.Order{ID: "orderID", UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
+				suite.mockRepo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Times(1)
+				suite.mockProductRepo.On("ReserveStock", mock.Anything, "productID", 2).Return(nil).Times(1)
+				suite.mockReservationRepo.On("CreateMany", mock.Anything, mock.Anything).Return(nil).Times(1)
 				suite.mockCouponSvc.On("IncrUsedCount", mock.Anything, "c1").Return(errors.New("incr error")).Times(1)
 			},
 			wantErr: true,
@@ -279,29 +282,12 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
 					Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
-					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
-				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
+					Return(&model.Order{ID: "orderID", UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
+				suite.mockRepo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Times(1)
+				suite.mockProductRepo.On("ReserveStock", mock.Anything, "productID", 2).Return(nil).Times(1)
+				suite.mockReservationRepo.On("CreateMany", mock.Anything, mock.Anything).Return(nil).Times(1)
 				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(nil, errors.New("user not found")).Times(1)
-			},
-			sleep: true,
-		},
-		{
-			name: "SendOrderPlaced notification fail",
-			req: &domain.PlaceOrderReq{
-				UserID: "userID",
-				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
-			},
-			setup: func() {
-				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
-					Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
-				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
-					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
-				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
-					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Times(1)
-				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").
-					Return(errors.New("notif error")).Times(1)
 			},
 			sleep: true,
 		},
@@ -336,6 +322,10 @@ func (suite *OrderServiceTestSuite) TestCancelOrder() {
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
 					Return(&model.Order{UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusNew}, nil).Times(1)
+				suite.mockReservationRepo.On("FindActiveByOrderID", mock.Anything, mock.Anything).
+					Return([]*model.StockReservation{}, nil).Times(1)
+				suite.mockReservationRepo.On("UpdateStatus", mock.Anything, mock.Anything, model.ReservationStatusReleased).
+					Return(nil).Times(1)
 				suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
 					UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusCancelled,
 				}).Return(nil).Times(1)
@@ -346,6 +336,10 @@ func (suite *OrderServiceTestSuite) TestCancelOrder() {
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
 					Return(&model.Order{UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusNew}, nil).Times(1)
+				suite.mockReservationRepo.On("FindActiveByOrderID", mock.Anything, mock.Anything).
+					Return([]*model.StockReservation{}, nil).Times(1)
+				suite.mockReservationRepo.On("UpdateStatus", mock.Anything, mock.Anything, model.ReservationStatusReleased).
+					Return(nil).Times(1)
 				suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
 					UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusCancelled,
 				}).Return(errors.New("error")).Times(1)

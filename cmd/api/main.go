@@ -11,12 +11,15 @@ import (
 	"github.com/quangdangfit/gocommon/validation"
 
 	orderModel "goshop/internal/order/model"
+	orderRepository "goshop/internal/order/repository"
+	orderService "goshop/internal/order/service"
 	productModel "goshop/internal/product/model"
 	grpcServer "goshop/internal/server/grpc"
 	httpServer "goshop/internal/server/http"
 	userModel "goshop/internal/user/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
+	"goshop/pkg/notification"
 	"goshop/pkg/redis"
 )
 
@@ -49,7 +52,7 @@ func main() {
 	err = db.AutoMigrate(
 		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
 		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
-		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{},
+		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{}, orderModel.StockReservation{},
 	)
 	if err != nil {
 		logger.Fatal("Database migration fail", err)
@@ -78,6 +81,11 @@ func main() {
 		}
 	}()
 
+	// Background sweeper: release expired stock reservations and cancel their unpaid orders.
+	sweeperCtx, sweeperCancel := context.WithCancel(context.Background())
+	defer sweeperCancel()
+	go runReservationSweeper(sweeperCtx, validator, db)
+
 	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -93,5 +101,35 @@ func main() {
 		logger.Error("HTTP server forced to shutdown: ", err)
 	}
 
+	sweeperCancel()
 	logger.Info("Servers exited gracefully")
+}
+
+func runReservationSweeper(ctx context.Context, validator validation.Validation, db dbs.Database) {
+	svc := orderService.NewOrderService(
+		validator, db,
+		orderRepository.NewOrderRepository(db),
+		orderRepository.NewProductRepository(db),
+		orderRepository.NewUserRepository(db),
+		orderRepository.NewReservationRepository(db),
+		orderService.NewCouponService(validator, orderRepository.NewCouponRepository(db)),
+		notification.NewLoggerNotifier(),
+	)
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			released, err := svc.SweepExpiredReservations(ctx, 100)
+			if err != nil {
+				logger.Error("reservation sweeper: ", err)
+				continue
+			}
+			if released > 0 {
+				logger.Infof("reservation sweeper released %d expired reservations", released)
+			}
+		}
+	}
 }

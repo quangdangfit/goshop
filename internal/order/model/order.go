@@ -12,15 +12,19 @@ import (
 type OrderStatus string
 
 const (
-	OrderStatusNew        OrderStatus = "new"
-	OrderStatusInProgress OrderStatus = "in-progress"
-	OrderStatusDone       OrderStatus = "done"
-	OrderStatusCancelled  OrderStatus = "cancelled"
+	OrderStatusNew            OrderStatus = "new"
+	OrderStatusPendingPayment OrderStatus = "pending_payment"
+	OrderStatusPaid           OrderStatus = "paid"
+	OrderStatusInProgress     OrderStatus = "in-progress"
+	OrderStatusDone           OrderStatus = "done"
+	OrderStatusCancelled      OrderStatus = "cancelled"
+	OrderStatusPaymentFailed  OrderStatus = "payment_failed"
 )
 
 func (s OrderStatus) IsValid() bool {
 	switch s {
-	case OrderStatusNew, OrderStatusInProgress, OrderStatusDone, OrderStatusCancelled:
+	case OrderStatusNew, OrderStatusPendingPayment, OrderStatusPaid,
+		OrderStatusInProgress, OrderStatusDone, OrderStatusCancelled, OrderStatusPaymentFailed:
 		return true
 	}
 	return false

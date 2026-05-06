@@ -16,11 +16,12 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	orderRepo := repository.NewOrderRepository(db)
 	couponRepo := repository.NewCouponRepository(db)
 	userRepo := repository.NewUserRepository(db)
+	reservationRepo := repository.NewReservationRepository(db)
 
 	couponSvc := service.NewCouponService(validator, couponRepo)
 	notifier := notification.NewLoggerNotifier()
 
-	orderSvc := service.NewOrderService(validator, db, orderRepo, productRepo, userRepo, couponSvc, notifier)
+	orderSvc := service.NewOrderService(validator, db, orderRepo, productRepo, userRepo, reservationRepo, couponSvc, notifier)
 	orderHandler := NewOrderHandler(orderSvc)
 	couponHandler := NewCouponHandler(couponSvc)
 
