@@ -40,6 +40,12 @@ type Schema struct {
 	StripeWebhookSecret  string `env:"stripe_webhook_secret"`
 	StripePublishableKey string `env:"stripe_publishable_key"`
 	StripeAPIBase        string `env:"stripe_api_base"` // override for stripe-mock in tests
+
+	SMTPHost     string `env:"smtp_host"`
+	SMTPPort     int    `env:"smtp_port" envDefault:"25"`
+	SMTPUser     string `env:"smtp_user"`
+	SMTPPassword string `env:"smtp_password"`
+	EmailFrom    string `env:"email_from"`
 }
 
 var (

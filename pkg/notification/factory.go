@@ -1,0 +1,32 @@
+package notification
+
+// Settings is the projection of pkg/config that the notifier factory needs. Defined here so
+// the package doesn't depend on pkg/config (which would create a cycle for tests).
+type Settings struct {
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUser     string
+	SMTPPassword string
+	EmailFrom    string
+}
+
+// BuildDefault returns a Notifier appropriate for the runtime config. SMTP is layered in
+// only when both SMTPHost and EmailFrom are set; otherwise the notifier is logger-only so
+// local development never tries to dial a non-existent mail server.
+func BuildDefault(s Settings) Notifier {
+	notifiers := []Notifier{NewLoggerNotifier()}
+	if s.SMTPHost != "" && s.EmailFrom != "" {
+		sender := NewSMTPSender(SMTPConfig{
+			Host:     s.SMTPHost,
+			Port:     s.SMTPPort,
+			User:     s.SMTPUser,
+			Password: s.SMTPPassword,
+			From:     s.EmailFrom,
+		})
+		notifiers = append(notifiers, NewEmailNotifier(sender, AlwaysOnPreferences{}))
+	}
+	if len(notifiers) == 1 {
+		return notifiers[0]
+	}
+	return NewMultiNotifier(notifiers...)
+}

@@ -6,6 +6,7 @@ import (
 
 	"goshop/internal/order/repository"
 	"goshop/internal/order/service"
+	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/middleware"
 	"goshop/pkg/notification"
@@ -18,8 +19,15 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	userRepo := repository.NewUserRepository(db)
 	reservationRepo := repository.NewReservationRepository(db)
 
+	cfg := config.GetConfig()
 	couponSvc := service.NewCouponService(validator, couponRepo)
-	notifier := notification.NewLoggerNotifier()
+	notifier := notification.BuildDefault(notification.Settings{
+		SMTPHost:     cfg.SMTPHost,
+		SMTPPort:     cfg.SMTPPort,
+		SMTPUser:     cfg.SMTPUser,
+		SMTPPassword: cfg.SMTPPassword,
+		EmailFrom:    cfg.EmailFrom,
+	})
 
 	orderSvc := service.NewOrderService(validator, db, orderRepo, productRepo, userRepo, reservationRepo, couponSvc, notifier)
 	orderHandler := NewOrderHandler(orderSvc)
