@@ -13,6 +13,7 @@ import (
 	orderModel "goshop/internal/order/model"
 	orderRepository "goshop/internal/order/repository"
 	orderService "goshop/internal/order/service"
+	paymentModel "goshop/internal/payment/model"
 	productModel "goshop/internal/product/model"
 	grpcServer "goshop/internal/server/grpc"
 	httpServer "goshop/internal/server/http"
@@ -53,6 +54,7 @@ func main() {
 		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
 		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
 		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{}, orderModel.StockReservation{},
+		&paymentModel.Payment{}, &paymentModel.ProviderEvent{},
 	)
 	if err != nil {
 		logger.Fatal("Database migration fail", err)
