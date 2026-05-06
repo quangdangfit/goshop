@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	cartMocks "goshop/internal/cart/repository/mocks"
 	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	orderMocks "goshop/internal/order/repository/mocks"
@@ -26,7 +25,6 @@ type OrderServiceTestSuite struct {
 	mockRepo        *orderMocks.OrderRepository
 	mockProductRepo *orderMocks.ProductRepository
 	mockUserRepo    *orderMocks.UserRepository
-	mockCartRepo    *cartMocks.CartRepository
 	mockCouponSvc   *serviceMocks.CouponService
 	mockNotifier    *notifMocks.Notifier
 	service         OrderService
@@ -39,7 +37,6 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	suite.mockRepo = orderMocks.NewOrderRepository(suite.T())
 	suite.mockProductRepo = orderMocks.NewProductRepository(suite.T())
 	suite.mockUserRepo = orderMocks.NewUserRepository(suite.T())
-	suite.mockCartRepo = cartMocks.NewCartRepository(suite.T())
 	suite.mockCouponSvc = serviceMocks.NewCouponService(suite.T())
 	suite.mockNotifier = notifMocks.NewNotifier(suite.T())
 	suite.service = NewOrderService(
@@ -47,7 +44,6 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 		suite.mockRepo,
 		suite.mockProductRepo,
 		suite.mockUserRepo,
-		suite.mockCartRepo,
 		suite.mockCouponSvc,
 		suite.mockNotifier,
 	)
@@ -160,7 +156,6 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
 					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
 				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
 				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
 				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").Return(nil).Maybe()
@@ -215,7 +210,6 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "SAVE10", float64(2)).
 					Return(&model.Order{UserID: "userID", TotalPrice: 20, DiscountAmount: 2, FinalPrice: 18, CouponCode: "SAVE10"}, nil).Times(1)
 				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
 				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
 				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
@@ -236,24 +230,6 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 			wantErr: true,
 		},
 		{
-			name: "ClearCart fail (best-effort)",
-			req: &domain.PlaceOrderReq{
-				UserID: "userID",
-				Lines:  []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
-			},
-			setup: func() {
-				suite.mockProductRepo.On("GetProductByID", mock.Anything, "productID").
-					Return(&model.Product{Name: "product", Price: 1.1}, nil).Times(1)
-				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
-					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
-				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(errors.New("clear error")).Times(1)
-				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
-					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
-				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").Return(nil).Maybe()
-			},
-		},
-		{
 			name:    "DecrementStock fail",
 			wantErr: true,
 			req: &domain.PlaceOrderReq{
@@ -266,7 +242,6 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
 					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
 				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(errors.New("stock error")).Times(1)
-				suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
 			},
 		},
 		{
@@ -285,7 +260,6 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 					Return(&model.Order{UserID: "userID", TotalPrice: 20, DiscountAmount: 2, FinalPrice: 18, CouponCode: "SAVE10",
 						Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
 				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
 				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
 				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
@@ -303,7 +277,6 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
 					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
 				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
 				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(nil, errors.New("user not found")).Times(1)
 			},
@@ -321,7 +294,6 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "", float64(0)).
 					Return(&model.Order{UserID: "userID", Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
 				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockCartRepo.On("ClearCart", mock.Anything, "userID").Return(nil).Maybe()
 				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
 					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Times(1)
 				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, "user@test.com").

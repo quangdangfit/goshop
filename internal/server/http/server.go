@@ -14,7 +14,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "goshop/docs"
-	cartHttp "goshop/internal/cart/port/http"
 	orderHttp "goshop/internal/order/port/http"
 	productHttp "goshop/internal/product/port/http"
 	userHttp "goshop/internal/user/port/http"
@@ -90,6 +89,5 @@ func (s *Server) MapRoutes() error {
 	userHttp.Routes(v1, s.db, s.validator)
 	productHttp.Routes(v1, s.db, s.validator, s.cache)
 	orderHttp.Routes(v1, s.db, s.validator)
-	cartHttp.Routes(v1, s.db, s.validator)
 	return nil
 }

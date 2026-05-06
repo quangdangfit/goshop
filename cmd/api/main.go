@@ -10,7 +10,6 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
-	cartModel "goshop/internal/cart/model"
 	orderModel "goshop/internal/order/model"
 	productModel "goshop/internal/product/model"
 	grpcServer "goshop/internal/server/grpc"
@@ -50,7 +49,6 @@ func main() {
 	err = db.AutoMigrate(
 		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
 		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
-		&cartModel.Cart{}, &cartModel.CartLine{},
 		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{},
 	)
 	if err != nil {
