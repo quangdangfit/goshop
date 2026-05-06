@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	cartGRPC "goshop/internal/cart/port/grpc"
 	orderGRPC "goshop/internal/order/port/grpc"
 	productGRPC "goshop/internal/product/port/grpc"
 	userGRPC "goshop/internal/user/port/grpc"
@@ -47,7 +46,6 @@ func NewServer(validator validation.Validation, db dbs.Database, cache redis.Red
 
 func (s *Server) Run() error {
 	userGRPC.RegisterHandlers(s.engine, s.db, s.validator)
-	cartGRPC.RegisterHandlers(s.engine, s.db, s.validator)
 	productGRPC.RegisterHandlers(s.engine, s.db, s.validator)
 	orderGRPC.RegisterHandlers(s.engine, s.db, s.validator)
 

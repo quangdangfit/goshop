@@ -32,12 +32,6 @@ packages:
   goshop/internal/order/service:
     config:
       all: true
-  goshop/internal/cart/repository:
-    config:
-      all: true
-  goshop/internal/cart/service:
-    config:
-      all: true
   goshop/internal/user/repository:
     config:
       all: true

@@ -7,7 +7,6 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
-	"goshop/internal/cart/repository"
 	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
 	orderRepo "goshop/internal/order/repository"
@@ -31,7 +30,6 @@ type orderService struct {
 	repo        orderRepo.OrderRepository
 	productRepo orderRepo.ProductRepository
 	userRepo    orderRepo.UserRepository
-	cartRepo    repository.CartRepository
 	couponSvc   CouponService
 	notifier    notification.Notifier
 }
@@ -41,7 +39,6 @@ func NewOrderService(
 	repo orderRepo.OrderRepository,
 	productRepo orderRepo.ProductRepository,
 	userRepo orderRepo.UserRepository,
-	cartRepo repository.CartRepository,
 	couponSvc CouponService,
 	notifier notification.Notifier,
 ) OrderService {
@@ -50,7 +47,6 @@ func NewOrderService(
 		repo:        repo,
 		productRepo: productRepo,
 		userRepo:    userRepo,
-		cartRepo:    cartRepo,
 		couponSvc:   couponSvc,
 		notifier:    notifier,
 	}
@@ -104,11 +100,6 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq
 
 	for _, line := range order.Lines {
 		line.Product = productMap[line.ProductID]
-	}
-
-	// Clear cart after successful order
-	if err := s.cartRepo.ClearCart(ctx, req.UserID); err != nil {
-		logger.Errorf("Failed to clear cart for user %s: %s", req.UserID, err)
 	}
 
 	// Decrement stock for each ordered product
