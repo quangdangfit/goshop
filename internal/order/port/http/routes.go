@@ -20,7 +20,7 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	couponSvc := service.NewCouponService(validator, couponRepo)
 	notifier := notification.NewLoggerNotifier()
 
-	orderSvc := service.NewOrderService(validator, orderRepo, productRepo, userRepo, couponSvc, notifier)
+	orderSvc := service.NewOrderService(validator, db, orderRepo, productRepo, userRepo, couponSvc, notifier)
 	orderHandler := NewOrderHandler(orderSvc)
 	couponHandler := NewCouponHandler(couponSvc)
 
