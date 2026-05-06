@@ -16,12 +16,14 @@ import (
 	orderMocks "goshop/internal/order/repository/mocks"
 	serviceMocks "goshop/internal/order/service/mocks"
 	"goshop/pkg/config"
+	dbsMocks "goshop/pkg/dbs/mocks"
 	notifMocks "goshop/pkg/notification/mocks"
 	"goshop/pkg/paging"
 )
 
 type OrderServiceTestSuite struct {
 	suite.Suite
+	mockDB          *dbsMocks.Database
 	mockRepo        *orderMocks.OrderRepository
 	mockProductRepo *orderMocks.ProductRepository
 	mockUserRepo    *orderMocks.UserRepository
@@ -34,13 +36,17 @@ func (suite *OrderServiceTestSuite) SetupTest() {
 	logger.Initialize(config.ProductionEnv)
 
 	validator := validation.New()
+	suite.mockDB = dbsMocks.NewDatabase(suite.T())
 	suite.mockRepo = orderMocks.NewOrderRepository(suite.T())
 	suite.mockProductRepo = orderMocks.NewProductRepository(suite.T())
 	suite.mockUserRepo = orderMocks.NewUserRepository(suite.T())
 	suite.mockCouponSvc = serviceMocks.NewCouponService(suite.T())
 	suite.mockNotifier = notifMocks.NewNotifier(suite.T())
+	// WithTransaction is a thin pass-through in tests — invoke the function and surface its error.
+	suite.mockDB.On("WithTransaction", mock.Anything).Return(func(fn func() error) error { return fn() }).Maybe()
 	suite.service = NewOrderService(
 		validator,
+		suite.mockDB,
 		suite.mockRepo,
 		suite.mockProductRepo,
 		suite.mockUserRepo,
@@ -245,7 +251,7 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 			},
 		},
 		{
-			name: "Coupon IncrUsedCount fail",
+			name: "Coupon IncrUsedCount fail rolls back order",
 			req: &domain.PlaceOrderReq{
 				UserID: "userID", CouponCode: "SAVE10",
 				Lines: []domain.PlaceOrderLineReq{{ProductID: "productID", Quantity: 2}},
@@ -255,15 +261,13 @@ func (suite *OrderServiceTestSuite) TestPlaceOrder() {
 					Return(&model.Product{Name: "product", Price: 10.0}, nil).Times(1)
 				suite.mockCouponSvc.On("Apply", mock.Anything, "SAVE10", float64(20)).
 					Return(float64(2), &model.Coupon{ID: "c1", Code: "SAVE10"}, nil).Times(1)
-				suite.mockCouponSvc.On("IncrUsedCount", mock.Anything, "c1").Return(errors.New("incr error")).Times(1)
 				suite.mockRepo.On("CreateOrder", mock.Anything, "userID", mock.Anything, "SAVE10", float64(2)).
 					Return(&model.Order{UserID: "userID", TotalPrice: 20, DiscountAmount: 2, FinalPrice: 18, CouponCode: "SAVE10",
 						Lines: []*model.OrderLine{{ProductID: "productID", Quantity: 2}}}, nil).Times(1)
-				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Maybe()
-				suite.mockUserRepo.On("GetUserByID", mock.Anything, "userID").
-					Return(&model.User{ID: "userID", Email: "user@test.com"}, nil).Maybe()
-				suite.mockNotifier.On("SendOrderPlaced", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				suite.mockProductRepo.On("DecrementStock", mock.Anything, "productID", 2).Return(nil).Times(1)
+				suite.mockCouponSvc.On("IncrUsedCount", mock.Anything, "c1").Return(errors.New("incr error")).Times(1)
 			},
+			wantErr: true,
 		},
 		{
 			name: "GetUser for notification fail",

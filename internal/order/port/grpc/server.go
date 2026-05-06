@@ -18,7 +18,7 @@ func RegisterHandlers(svr *grpc.Server, db dbs.Database, validator validation.Va
 	couponRepo := repository.NewCouponRepository(db)
 	couponSvc := service.NewCouponService(validator, couponRepo)
 	notifier := notification.NewLoggerNotifier()
-	orderSvc := service.NewOrderService(validator, oRepo, pRepo, uRepo, couponSvc, notifier)
+	orderSvc := service.NewOrderService(validator, db, oRepo, pRepo, uRepo, couponSvc, notifier)
 	orderHandler := NewOrderHandler(orderSvc)
 
 	pb.RegisterOrderServiceServer(svr, orderHandler)

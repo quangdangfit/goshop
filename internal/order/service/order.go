@@ -11,6 +11,7 @@ import (
 	"goshop/internal/order/model"
 	orderRepo "goshop/internal/order/repository"
 	"goshop/pkg/apperror"
+	"goshop/pkg/dbs"
 	"goshop/pkg/notification"
 	"goshop/pkg/paging"
 	"goshop/pkg/utils"
@@ -27,6 +28,7 @@ type OrderService interface {
 
 type orderService struct {
 	validator   validation.Validation
+	db          dbs.Database
 	repo        orderRepo.OrderRepository
 	productRepo orderRepo.ProductRepository
 	userRepo    orderRepo.UserRepository
@@ -36,6 +38,7 @@ type orderService struct {
 
 func NewOrderService(
 	validator validation.Validation,
+	db dbs.Database,
 	repo orderRepo.OrderRepository,
 	productRepo orderRepo.ProductRepository,
 	userRepo orderRepo.UserRepository,
@@ -44,6 +47,7 @@ func NewOrderService(
 ) OrderService {
 	return &orderService{
 		validator:   validator,
+		db:          db,
 		repo:        repo,
 		productRepo: productRepo,
 		userRepo:    userRepo,
@@ -77,9 +81,10 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq
 		totalPrice += line.Price
 	}
 
-	// Apply coupon if provided
+	// Apply coupon (read-only) outside the transaction.
 	var discountAmount float64
 	var couponCode string
+	var couponID string
 	if req.CouponCode != "" {
 		discount, coupon, err := s.couponSvc.Apply(ctx, req.CouponCode, totalPrice)
 		if err != nil {
@@ -87,26 +92,37 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq
 		}
 		discountAmount = discount
 		couponCode = coupon.Code
-		// Increment usage count (best effort)
-		if err := s.couponSvc.IncrUsedCount(ctx, coupon.ID); err != nil {
-			logger.Error("Failed to increment coupon usage: ", err)
-		}
+		couponID = coupon.ID
 	}
 
-	order, err := s.repo.CreateOrder(ctx, req.UserID, lines, couponCode, discountAmount)
-	if err != nil {
-		return nil, err
+	// Create the order, decrement stock, and bump coupon usage atomically. If any line cannot
+	// be decremented (insufficient stock), the whole order rolls back so we never persist an
+	// order whose inventory cannot be honored.
+	var order *model.Order
+	txErr := s.db.WithTransaction(func() error {
+		o, err := s.repo.CreateOrder(ctx, req.UserID, lines, couponCode, discountAmount)
+		if err != nil {
+			return err
+		}
+		for _, line := range lines {
+			if err := s.productRepo.DecrementStock(ctx, line.ProductID, int(line.Quantity)); err != nil { //nolint:gosec // quantity bounded by validation
+				return fmt.Errorf("decrement stock for product %s: %w", line.ProductID, err)
+			}
+		}
+		if couponID != "" {
+			if err := s.couponSvc.IncrUsedCount(ctx, couponID); err != nil {
+				return fmt.Errorf("increment coupon usage: %w", err)
+			}
+		}
+		order = o
+		return nil
+	})
+	if txErr != nil {
+		return nil, txErr
 	}
 
 	for _, line := range order.Lines {
 		line.Product = productMap[line.ProductID]
-	}
-
-	// Decrement stock for each ordered product
-	for _, line := range lines {
-		if err := s.productRepo.DecrementStock(ctx, line.ProductID, int(line.Quantity)); err != nil { //nolint:gosec // quantity is bounded by business logic
-			return nil, fmt.Errorf("failed to decrement stock for product %s: %w", line.ProductID, err)
-		}
 	}
 
 	// Send notification (best effort)

@@ -94,7 +94,7 @@ func (r *productRepo) Update(ctx context.Context, product *model.Product) error 
 
 func (r *productRepo) DecrementStock(ctx context.Context, id string, qty int) error {
 	result := r.db.GetDB().WithContext(ctx).Model(&model.Product{}).
-		Where("id = ? AND stock_quantity >= ?", id, qty).
+		Where("id = ? AND stock_quantity - reserved_quantity >= ?", id, qty).
 		UpdateColumn("stock_quantity", gorm.Expr("stock_quantity - ?", qty))
 	if result.Error != nil {
 		return result.Error
