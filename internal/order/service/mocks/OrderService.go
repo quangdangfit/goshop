@@ -399,3 +399,57 @@ func (_c *OrderService_UpdateOrderStatus_Call) RunAndReturn(run func(ctx context
 	_c.Call.Return(run)
 	return _c
 }
+
+// MarkOrderPaid provides a mock function for the type OrderService
+func (_mock *OrderService) MarkOrderPaid(ctx context.Context, orderID string) (*model.Order, error) {
+	ret := _mock.Called(ctx, orderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkOrderPaid")
+	}
+
+	var r0 *model.Order
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.Order, error)); ok {
+		return returnFunc(ctx, orderID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.Order); ok {
+		r0 = returnFunc(ctx, orderID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Order)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, orderID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// SweepExpiredReservations provides a mock function for the type OrderService
+func (_mock *OrderService) SweepExpiredReservations(ctx context.Context, batchSize int) (int, error) {
+	ret := _mock.Called(ctx, batchSize)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SweepExpiredReservations")
+	}
+
+	var r0 int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) (int, error)); ok {
+		return returnFunc(ctx, batchSize)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) int); ok {
+		r0 = returnFunc(ctx, batchSize)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, batchSize)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}

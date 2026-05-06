@@ -168,3 +168,27 @@ func (_c *ProductRepository_GetProductByID_Call) RunAndReturn(run func(ctx conte
 	_c.Call.Return(run)
 	return _c
 }
+
+func (_m *ProductRepository) ReserveStock(ctx context.Context, id string, qty int) error {
+	ret := _m.Called(ctx, id, qty)
+	if fn, ok := ret.Get(0).(func(context.Context, string, int) error); ok {
+		return fn(ctx, id, qty)
+	}
+	return ret.Error(0)
+}
+
+func (_m *ProductRepository) CommitReservation(ctx context.Context, id string, qty int) error {
+	ret := _m.Called(ctx, id, qty)
+	if fn, ok := ret.Get(0).(func(context.Context, string, int) error); ok {
+		return fn(ctx, id, qty)
+	}
+	return ret.Error(0)
+}
+
+func (_m *ProductRepository) ReleaseReservation(ctx context.Context, id string, qty int) error {
+	ret := _m.Called(ctx, id, qty)
+	if fn, ok := ret.Get(0).(func(context.Context, string, int) error); ok {
+		return fn(ctx, id, qty)
+	}
+	return ret.Error(0)
+}
