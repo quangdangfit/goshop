@@ -40,7 +40,13 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 		orderRepository.NewUserRepository(db),
 		orderRepository.NewReservationRepository(db),
 		orderService.NewCouponService(validator, orderRepository.NewCouponRepository(db)),
-		notification.NewLoggerNotifier(),
+		notification.BuildDefault(notification.Settings{
+			SMTPHost:     cfg.SMTPHost,
+			SMTPPort:     cfg.SMTPPort,
+			SMTPUser:     cfg.SMTPUser,
+			SMTPPassword: cfg.SMTPPassword,
+			EmailFrom:    cfg.EmailFrom,
+		}),
 	)
 
 	paymentSvc := service.NewPaymentService(provider, paymentRepo, orderSvc, orderSvc)

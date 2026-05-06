@@ -10,6 +10,7 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
+	notificationModel "goshop/internal/notification/model"
 	orderModel "goshop/internal/order/model"
 	orderRepository "goshop/internal/order/repository"
 	orderService "goshop/internal/order/service"
@@ -55,6 +56,7 @@ func main() {
 		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
 		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{}, orderModel.StockReservation{},
 		&paymentModel.Payment{}, &paymentModel.ProviderEvent{},
+		&notificationModel.Preference{},
 	)
 	if err != nil {
 		logger.Fatal("Database migration fail", err)
