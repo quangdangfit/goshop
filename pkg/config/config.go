@@ -35,6 +35,11 @@ type Schema struct {
 	CORSAllowedOrigins     string `env:"cors_allowed_origins" envDefault:"*"`
 	RateLimitRequests      int    `env:"rate_limit_requests" envDefault:"100"`
 	RateLimitWindowSeconds int    `env:"rate_limit_window_seconds" envDefault:"60"`
+
+	StripeSecretKey      string `env:"stripe_secret_key"`
+	StripeWebhookSecret  string `env:"stripe_webhook_secret"`
+	StripePublishableKey string `env:"stripe_publishable_key"`
+	StripeAPIBase        string `env:"stripe_api_base"` // override for stripe-mock in tests
 }
 
 var (

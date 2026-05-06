@@ -1,0 +1,150 @@
+package service
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"gorm.io/gorm"
+
+	orderModel "goshop/internal/order/model"
+	orderService "goshop/internal/order/service"
+	"goshop/internal/payment/model"
+	"goshop/internal/payment/repository"
+	"goshop/pkg/payment"
+)
+
+const stripeProvider = "stripe"
+
+//go:generate mockery --name=PaymentService
+type PaymentService interface {
+	// CreateIntentForOrder creates (or reuses) a payment intent for the given order. Idempotent
+	// per order: a second call returns the existing intent instead of charging twice.
+	CreateIntentForOrder(ctx context.Context, orderID string) (*payment.Intent, error)
+	// HandleWebhook verifies, deduplicates, and applies a provider webhook payload. Returns
+	// nil for events that are valid but unrelated (ignored types, duplicates).
+	HandleWebhook(ctx context.Context, payload []byte, signatureHeader string) error
+}
+
+// OrderQuery is the read-only slice of OrderService that PaymentService needs. Defined here
+// to keep the dependency narrow and to avoid an import cycle with the order service.
+type OrderQuery interface {
+	GetOrderByID(ctx context.Context, id string) (*orderModel.Order, error)
+}
+
+type paymentService struct {
+	provider     payment.Provider
+	repo         repository.PaymentRepository
+	orderQuery   OrderQuery
+	orderService orderService.OrderService
+	providerName string
+}
+
+func NewPaymentService(
+	provider payment.Provider,
+	repo repository.PaymentRepository,
+	orderQuery OrderQuery,
+	orderSvc orderService.OrderService,
+) PaymentService {
+	return &paymentService{
+		provider:     provider,
+		repo:         repo,
+		orderQuery:   orderQuery,
+		orderService: orderSvc,
+		providerName: stripeProvider,
+	}
+}
+
+func (s *paymentService) CreateIntentForOrder(ctx context.Context, orderID string) (*payment.Intent, error) {
+	order, err := s.orderQuery.GetOrderByID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order.Status != orderModel.OrderStatusPendingPayment {
+		return nil, fmt.Errorf("order %s is not pending payment (status=%s)", orderID, order.Status)
+	}
+
+	// Reuse any existing pending payment row to keep the intent idempotent per order.
+	existing, err := s.repo.GetByOrderID(ctx, orderID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	if existing != nil && existing.Status == model.PaymentStatusPending {
+		return &payment.Intent{
+			ID:       existing.ProviderIntentID,
+			Status:   string(existing.Status),
+			Amount:   existing.Amount,
+			Currency: existing.Currency,
+		}, nil
+	}
+
+	amount := int64(order.FinalPrice * 100) // assume USD-style minor units
+	currency := "usd"
+	intent, err := s.provider.CreateIntent(ctx, payment.CreateIntentParams{
+		Amount:         amount,
+		Currency:       currency,
+		OrderID:        order.ID,
+		IdempotencyKey: "order_" + order.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rec := &model.Payment{
+		OrderID:          order.ID,
+		Provider:         s.providerName,
+		ProviderIntentID: intent.ID,
+		Amount:           amount,
+		Currency:         currency,
+		Status:           model.PaymentStatusPending,
+	}
+	if err := s.repo.Create(ctx, rec); err != nil {
+		return nil, err
+	}
+	return intent, nil
+}
+
+func (s *paymentService) HandleWebhook(ctx context.Context, payload []byte, signatureHeader string) error {
+	event, err := s.provider.VerifyWebhook(payload, signatureHeader)
+	if err != nil {
+		return err
+	}
+
+	// Dedup before doing any side-effects.
+	if err := s.repo.RecordProviderEvent(ctx, s.providerName, event.ID); err != nil {
+		if errors.Is(err, repository.ErrEventAlreadyProcessed) {
+			return nil
+		}
+		return err
+	}
+
+	if event.OrderID == "" {
+		return fmt.Errorf("webhook event %s missing order_id metadata", event.ID)
+	}
+	rec, err := s.repo.GetByOrderID(ctx, event.OrderID)
+	if err != nil {
+		return err
+	}
+
+	switch event.Type {
+	case payment.EventPaymentSucceeded:
+		rec.Status = model.PaymentStatusSucceeded
+		if err := s.repo.Update(ctx, rec); err != nil {
+			return err
+		}
+		if _, err := s.orderService.MarkOrderPaid(ctx, event.OrderID); err != nil {
+			return err
+		}
+	case payment.EventPaymentFailed:
+		rec.Status = model.PaymentStatusFailed
+		if err := s.repo.Update(ctx, rec); err != nil {
+			return err
+		}
+		if _, err := s.orderService.UpdateOrderStatus(ctx, event.OrderID, orderModel.OrderStatusPaymentFailed); err != nil {
+			return err
+		}
+	default:
+		// Unhandled event type — already deduped, nothing else to do.
+	}
+	return nil
+}

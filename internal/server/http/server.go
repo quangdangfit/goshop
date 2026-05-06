@@ -15,6 +15,7 @@ import (
 
 	_ "goshop/docs"
 	orderHttp "goshop/internal/order/port/http"
+	paymentHttp "goshop/internal/payment/port/http"
 	productHttp "goshop/internal/product/port/http"
 	userHttp "goshop/internal/user/port/http"
 	"goshop/pkg/config"
@@ -89,5 +90,6 @@ func (s *Server) MapRoutes() error {
 	userHttp.Routes(v1, s.db, s.validator)
 	productHttp.Routes(v1, s.db, s.validator, s.cache)
 	orderHttp.Routes(v1, s.db, s.validator)
+	paymentHttp.Routes(v1, s.db, s.validator)
 	return nil
 }
