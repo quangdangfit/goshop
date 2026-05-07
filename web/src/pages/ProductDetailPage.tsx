@@ -16,7 +16,7 @@ import {
 } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { productsApi } from '@/api/products'
-import { cartApi } from '@/api/cart'
+import { cartStore } from '@/api/cart'
 import { wishlistApi } from '@/api/wishlist'
 import { useAuth } from '@/context/AuthContext'
 import StarRating from '@/components/StarRating'
@@ -58,15 +58,11 @@ export default function ProductDetailPage() {
 
   const isWishlisted = wishlist?.some((w) => w.product_id === id)
 
-  const addToCartMutation = useMutation({
-    mutationFn: () =>
-      cartApi.addToCart({ product_id: id!, quantity }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
-      toast.success('Added to cart!')
-    },
-    onError: () => toast.error('Failed to add to cart'),
-  })
+  const handleAddToCart = () => {
+    if (!product) return
+    cartStore.add(product, quantity)
+    toast.success('Added to cart!')
+  }
 
   const wishlistMutation = useMutation({
     mutationFn: async (): Promise<void> => {
@@ -243,18 +239,12 @@ export default function ProductDetailPage() {
                 </div>
 
                 <button
-                  onClick={() => {
-                    if (!isAuthenticated) {
-                      toast.error('Please login to add items to cart')
-                      return
-                    }
-                    addToCartMutation.mutate()
-                  }}
-                  disabled={addToCartMutation.isPending}
+                  onClick={handleAddToCart}
+                  disabled={!product || product.stock_quantity === 0}
                   className="flex-1 btn-primary"
                 >
                   <ShoppingCart className="h-4 w-4" />
-                  {addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}
+                  Add to Cart
                 </button>
 
                 <button

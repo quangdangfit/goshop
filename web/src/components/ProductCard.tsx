@@ -2,7 +2,7 @@ import { Heart, ShoppingCart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { cartApi } from '@/api/cart'
+import { cartStore } from '@/api/cart'
 import { wishlistApi } from '@/api/wishlist'
 import { useAuth } from '@/context/AuthContext'
 import type { Product } from '@/types'
@@ -24,15 +24,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const isWishlisted = wishlist?.some((w) => w.product_id === product.id)
 
-  const addToCartMutation = useMutation({
-    mutationFn: () =>
-      cartApi.addToCart({ product_id: product.id, quantity: 1 }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
-      toast.success('Added to cart!')
-    },
-    onError: () => toast.error('Failed to add to cart'),
-  })
+  const handleAddToCart_ = () => {
+    cartStore.add(product, 1)
+    toast.success('Added to cart!')
+  }
 
   const wishlistMutation = useMutation({
     mutationFn: async (): Promise<void> => {
@@ -51,11 +46,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (!isAuthenticated) {
-      toast.error('Please login to add items to cart')
-      return
-    }
-    addToCartMutation.mutate()
+    handleAddToCart_()
   }
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -125,9 +116,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </span>
           <button
             onClick={handleAddToCart}
-            disabled={
-              product.stock_quantity === 0 || addToCartMutation.isPending
-            }
+            disabled={product.stock_quantity === 0}
             className="flex items-center gap-1 px-3 py-1.5 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <ShoppingCart className="h-3.5 w-3.5" />
