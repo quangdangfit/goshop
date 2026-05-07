@@ -56,7 +56,7 @@ func main() {
 		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
 		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{}, orderModel.StockReservation{},
 		&paymentModel.Payment{}, &paymentModel.ProviderEvent{},
-		&notificationModel.Preference{},
+		&notificationModel.Preference{}, &notificationModel.DeadLetterNotification{},
 	)
 	if err != nil {
 		logger.Fatal("Database migration fail", err)

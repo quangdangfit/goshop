@@ -35,6 +35,7 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 		SMTPPassword: cfg.SMTPPassword,
 		EmailFrom:    cfg.EmailFrom,
 		Prefs:        prefChecker,
+		DLQ:          notificationRepo.NewDeadLetterSink(db),
 	})
 
 	orderSvc := service.NewOrderService(validator, db, orderRepo, productRepo, userRepo, reservationRepo, couponSvc, notifier)
