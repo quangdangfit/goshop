@@ -10,6 +10,8 @@ type Settings struct {
 	EmailFrom    string
 	// Prefs filters per-user delivery. Nil falls back to AlwaysOnPreferences.
 	Prefs PreferenceChecker
+	// DLQ receives notifications that exhausted retries. Nil disables retry+DLQ wrapping.
+	DLQ DeadLetterSink
 }
 
 // BuildDefault returns a Notifier appropriate for the runtime config. SMTP is layered in
@@ -31,8 +33,14 @@ func BuildDefault(s Settings) Notifier {
 		}
 		notifiers = append(notifiers, NewEmailNotifier(sender, prefs))
 	}
+	var n Notifier
 	if len(notifiers) == 1 {
-		return notifiers[0]
+		n = notifiers[0]
+	} else {
+		n = NewMultiNotifier(notifiers...)
 	}
-	return NewMultiNotifier(notifiers...)
+	if s.DLQ != nil {
+		n = NewRetryingNotifier(n, RetryConfig{}, s.DLQ)
+	}
+	return n
 }

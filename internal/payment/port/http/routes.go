@@ -53,6 +53,7 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 				notificationSvc.NewUserRepoLookup(userRepo.NewUserRepository(db)),
 				notificationRepo.NewPreferenceRepository(db),
 			),
+			DLQ: notificationRepo.NewDeadLetterSink(db),
 		}),
 	)
 

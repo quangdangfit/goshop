@@ -336,6 +336,21 @@ func (s *orderService) SweepExpiredReservations(ctx context.Context, batchSize i
 			continue
 		}
 		released += len(group)
+
+		// Notify the buyer their reservation was released. Best-effort: failures only log.
+		go func(orderID string) {
+			order, err := s.repo.GetOrderByID(ctx, orderID, false)
+			if err != nil {
+				return
+			}
+			user, err := s.userRepo.GetUserByID(ctx, order.UserID)
+			if err != nil || user == nil {
+				return
+			}
+			if err := s.notifier.SendOrderStatusChanged(ctx, order.ID, user.Email, string(model.OrderStatusCancelled)); err != nil {
+				logger.Errorf("sweep notify %s: %s", order.ID, err)
+			}
+		}(orderID)
 	}
 	return released, nil
 }
