@@ -143,6 +143,30 @@ func (s *paymentService) HandleWebhook(ctx context.Context, payload []byte, sign
 		if _, err := s.orderService.UpdateOrderStatus(ctx, event.OrderID, orderModel.OrderStatusPaymentFailed); err != nil {
 			return err
 		}
+	case payment.EventPaymentCanceled:
+		// Customer or system aborted the intent. Cancel the order and let the sweeper / order
+		// flow release any remaining stock reservations.
+		rec.Status = model.PaymentStatusCanceled
+		if err := s.repo.Update(ctx, rec); err != nil {
+			return err
+		}
+		if _, err := s.orderService.UpdateOrderStatus(ctx, event.OrderID, orderModel.OrderStatusCancelled); err != nil {
+			return err
+		}
+	case payment.EventPaymentProcessing:
+		// Async payment methods (e.g. bank debits) sit in processing. Reflect it on the payment
+		// record so the FE can show the right state; order stays pending_payment.
+		rec.Status = model.PaymentStatusProcessing
+		if err := s.repo.Update(ctx, rec); err != nil {
+			return err
+		}
+	case payment.EventPaymentRequiresAction:
+		// 3DS / SCA challenge — the customer needs to come back to the payment page. No state
+		// change to the order; just mark the payment so we don't auto-cancel.
+		rec.Status = model.PaymentStatusRequiresAction
+		if err := s.repo.Update(ctx, rec); err != nil {
+			return err
+		}
 	default:
 		// Unhandled event type — already deduped, nothing else to do.
 	}

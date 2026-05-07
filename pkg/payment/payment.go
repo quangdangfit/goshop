@@ -22,8 +22,11 @@ type Intent struct {
 type EventType string
 
 const (
-	EventPaymentSucceeded EventType = "payment_intent.succeeded"
-	EventPaymentFailed    EventType = "payment_intent.payment_failed"
+	EventPaymentSucceeded      EventType = "payment_intent.succeeded"
+	EventPaymentFailed         EventType = "payment_intent.payment_failed"
+	EventPaymentCanceled       EventType = "payment_intent.canceled"
+	EventPaymentProcessing     EventType = "payment_intent.processing"
+	EventPaymentRequiresAction EventType = "payment_intent.requires_action"
 )
 
 // Event is the verified, normalized form of a provider webhook callback.

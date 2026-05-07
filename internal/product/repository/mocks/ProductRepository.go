@@ -429,3 +429,30 @@ func (_c *ProductRepository_UpdateRating_Call) RunAndReturn(run func(ctx context
 	_c.Call.Return(run)
 	return _c
 }
+
+// AddStock provides a mock function for the type ProductRepository
+func (_mock *ProductRepository) AddStock(ctx context.Context, id string, qty int) error {
+	ret := _mock.Called(ctx, id, qty)
+	if len(ret) == 0 {
+		panic("no return value specified for AddStock")
+	}
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int) error); ok {
+		r0 = returnFunc(ctx, id, qty)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// ProductRepository_AddStock_Call mirrors the existing call wrappers in this file.
+type ProductRepository_AddStock_Call struct{ *mock.Call }
+
+func (_e *ProductRepository_Expecter) AddStock(ctx interface{}, id interface{}, qty interface{}) *ProductRepository_AddStock_Call {
+	return &ProductRepository_AddStock_Call{Call: _e.mock.On("AddStock", ctx, id, qty)}
+}
+
+func (_c *ProductRepository_AddStock_Call) Return(err error) *ProductRepository_AddStock_Call {
+	_c.Call.Return(err)
+	return _c
+}

@@ -199,6 +199,13 @@ func (s *orderService) UpdateOrderStatus(ctx context.Context, orderID string, st
 		return nil, err
 	}
 
+	if !status.IsValid() {
+		return nil, apperror.ErrInvalidStatus
+	}
+	if !order.Status.CanTransitionTo(status) {
+		return nil, apperror.ErrInvalidStatus
+	}
+
 	order.Status = status
 	if err := s.repo.UpdateOrder(ctx, order); err != nil {
 		return nil, err

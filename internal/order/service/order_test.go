@@ -72,7 +72,7 @@ func (suite *OrderServiceTestSuite) TestGetOrderByID() {
 			name: "Success",
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", true).
-					Return(&model.Order{UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusNew}, nil).Times(1)
+					Return(&model.Order{UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusInProgress}, nil).Times(1)
 			},
 		},
 		{
@@ -321,7 +321,7 @@ func (suite *OrderServiceTestSuite) TestCancelOrder() {
 			name: "Success",
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
-					Return(&model.Order{UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusNew}, nil).Times(1)
+					Return(&model.Order{UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusInProgress}, nil).Times(1)
 				suite.mockReservationRepo.On("FindActiveByOrderID", mock.Anything, mock.Anything).
 					Return([]*model.StockReservation{}, nil).Times(1)
 				suite.mockReservationRepo.On("UpdateStatus", mock.Anything, mock.Anything, model.ReservationStatusReleased).
@@ -335,7 +335,7 @@ func (suite *OrderServiceTestSuite) TestCancelOrder() {
 			name: "Update fail",
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
-					Return(&model.Order{UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusNew}, nil).Times(1)
+					Return(&model.Order{UserID: "userID", TotalPrice: 111.1, Status: model.OrderStatusInProgress}, nil).Times(1)
 				suite.mockReservationRepo.On("FindActiveByOrderID", mock.Anything, mock.Anything).
 					Return([]*model.StockReservation{}, nil).Times(1)
 				suite.mockReservationRepo.On("UpdateStatus", mock.Anything, mock.Anything, model.ReservationStatusReleased).
@@ -350,7 +350,7 @@ func (suite *OrderServiceTestSuite) TestCancelOrder() {
 			name: "Different user",
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
-					Return(&model.Order{UserID: "userID1", TotalPrice: 111.1, Status: model.OrderStatusNew}, nil).Times(1)
+					Return(&model.Order{UserID: "userID1", TotalPrice: 111.1, Status: model.OrderStatusInProgress}, nil).Times(1)
 			},
 			wantErr: true,
 		},
@@ -399,7 +399,7 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatus() {
 			name: "Success",
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
-					Return(&model.Order{ID: "orderID", UserID: "userID", Status: model.OrderStatusNew}, nil).Times(1)
+					Return(&model.Order{ID: "orderID", UserID: "userID", Status: model.OrderStatusInProgress}, nil).Times(1)
 				suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
 					ID: "orderID", UserID: "userID", Status: model.OrderStatusDone,
 				}).Return(nil).Times(1)
@@ -421,7 +421,7 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatus() {
 			name: "Update fail",
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
-					Return(&model.Order{ID: "orderID", UserID: "userID", Status: model.OrderStatusNew}, nil).Times(1)
+					Return(&model.Order{ID: "orderID", UserID: "userID", Status: model.OrderStatusInProgress}, nil).Times(1)
 				suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
 					ID: "orderID", UserID: "userID", Status: model.OrderStatusDone,
 				}).Return(errors.New("db error")).Times(1)
@@ -432,7 +432,7 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatus() {
 			name: "GetUser fail (goroutine)",
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
-					Return(&model.Order{ID: "orderID", UserID: "userID", Status: model.OrderStatusNew}, nil).Times(1)
+					Return(&model.Order{ID: "orderID", UserID: "userID", Status: model.OrderStatusInProgress}, nil).Times(1)
 				suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
 					ID: "orderID", UserID: "userID", Status: model.OrderStatusDone,
 				}).Return(nil).Times(1)
@@ -445,7 +445,7 @@ func (suite *OrderServiceTestSuite) TestUpdateOrderStatus() {
 			name: "Send notification fail (goroutine)",
 			setup: func() {
 				suite.mockRepo.On("GetOrderByID", mock.Anything, "orderID", false).
-					Return(&model.Order{ID: "orderID", UserID: "userID", Status: model.OrderStatusNew}, nil).Times(1)
+					Return(&model.Order{ID: "orderID", UserID: "userID", Status: model.OrderStatusInProgress}, nil).Times(1)
 				suite.mockRepo.On("UpdateOrder", mock.Anything, &model.Order{
 					ID: "orderID", UserID: "userID", Status: model.OrderStatusDone,
 				}).Return(nil).Times(1)
