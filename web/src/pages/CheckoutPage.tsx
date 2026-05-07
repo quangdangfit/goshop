@@ -18,6 +18,7 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
   const [couponError, setCouponError] = useState('')
   const [showAddAddress, setShowAddAddress] = useState(false)
+  const [stockConflict, setStockConflict] = useState<{ productId: string; requested: number; message: string } | null>(null)
   const [newAddress, setNewAddress] = useState({
     name: '', phone: '', street: '', city: '', country: '',
   })
@@ -49,7 +50,19 @@ export default function CheckoutPage() {
       toast.success('Order placed — finish payment to confirm')
       navigate(`/checkout/payment/${order.id}`)
     },
-    onError: () => toast.error('Failed to place order'),
+    onError: (err: unknown) => {
+      const e = err as { response?: { status?: number; data?: { error?: { code?: string; message?: string; details?: { product_id?: string; requested?: number } } } } }
+      if (e.response?.status === 409 && e.response.data?.error?.code === 'INSUFFICIENT_STOCK') {
+        const d = e.response.data.error
+        setStockConflict({
+          productId: d.details?.product_id ?? '',
+          requested: d.details?.requested ?? 0,
+          message: d.message ?? 'Some items are no longer available in the requested quantity.',
+        })
+        return
+      }
+      toast.error('Failed to place order')
+    },
   })
 
   const applyCoupon = async () => {
@@ -347,6 +360,39 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {stockConflict && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <h3 className="font-bold text-lg text-gray-900 mb-2">Stock unavailable</h3>
+            <p className="text-sm text-gray-600 mb-4">{stockConflict.message}</p>
+            <p className="text-xs text-gray-500 mb-5">
+              Product {stockConflict.productId.slice(0, 8)}… — requested {stockConflict.requested}.
+              Reduce the quantity in your cart and try again.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  if (stockConflict.productId) cartStore.remove(stockConflict.productId)
+                  setStockConflict(null)
+                }}
+                className="btn-secondary text-sm"
+              >
+                Remove from cart
+              </button>
+              <button
+                onClick={() => {
+                  setStockConflict(null)
+                  navigate('/cart')
+                }}
+                className="btn-primary text-sm"
+              >
+                Edit cart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

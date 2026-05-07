@@ -4,8 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quangdangfit/gocommon/validation"
 
+	notificationRepo "goshop/internal/notification/repository"
+	notificationSvc "goshop/internal/notification/service"
 	"goshop/internal/order/repository"
 	"goshop/internal/order/service"
+	userRepository "goshop/internal/user/repository"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/middleware"
@@ -21,12 +24,17 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 
 	cfg := config.GetConfig()
 	couponSvc := service.NewCouponService(validator, couponRepo)
+	prefChecker := notificationSvc.NewDBPreferenceChecker(
+		notificationSvc.NewUserRepoLookup(userRepository.NewUserRepository(db)),
+		notificationRepo.NewPreferenceRepository(db),
+	)
 	notifier := notification.BuildDefault(notification.Settings{
 		SMTPHost:     cfg.SMTPHost,
 		SMTPPort:     cfg.SMTPPort,
 		SMTPUser:     cfg.SMTPUser,
 		SMTPPassword: cfg.SMTPPassword,
 		EmailFrom:    cfg.EmailFrom,
+		Prefs:        prefChecker,
 	})
 
 	orderSvc := service.NewOrderService(validator, db, orderRepo, productRepo, userRepo, reservationRepo, couponSvc, notifier)
