@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -127,6 +128,9 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq
 		for _, line := range lines {
 			qty := int(line.Quantity) //nolint:gosec // bounded by validation (lte=5 lines, uint qty)
 			if err := s.productRepo.ReserveStock(ctx, line.ProductID, qty); err != nil {
+				if errors.Is(err, orderRepo.ErrInsufficientStock) {
+					return &InsufficientStockError{ProductID: line.ProductID, Requested: qty}
+				}
 				return fmt.Errorf("reserve stock for product %s: %w", line.ProductID, err)
 			}
 			reservations = append(reservations, &model.StockReservation{

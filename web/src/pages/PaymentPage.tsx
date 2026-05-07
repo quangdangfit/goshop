@@ -61,6 +61,15 @@ export default function PaymentPage() {
     enabled: !!orderId,
   })
 
+  // Reservation TTL is 15 minutes from order creation. We approximate from order.created_at;
+  // when expired, the sweeper will cancel server-side, but we surface the deadline immediately
+  // so the customer knows why the payment form may stop accepting input.
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(t)
+  }, [])
+
   // Poll order status so the UI flips to "paid" once the webhook lands server-side.
   const { data: order } = useQuery({
     queryKey: ['order', orderId],
@@ -130,7 +139,15 @@ export default function PaymentPage() {
         Complete Payment
       </h1>
       <p className="text-sm text-gray-500 mb-6">
-        Order #{orderId} — your items are reserved for 15 minutes.
+        Order #{orderId} — {(() => {
+          if (!order?.created_at) return 'reserved for 15 minutes.'
+          const deadline = new Date(order.created_at).getTime() + 15 * 60 * 1000
+          const remainingMs = deadline - now
+          if (remainingMs <= 0) return 'reservation expired — order will be cancelled shortly.'
+          const m = Math.floor(remainingMs / 60000)
+          const s = Math.floor((remainingMs % 60000) / 1000)
+          return `reserved for ${m}:${String(s).padStart(2, '0')}.`
+        })()}
       </p>
 
       <div className="card">

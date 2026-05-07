@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -49,6 +50,20 @@ func (a *OrderHandler) PlaceOrder(c *gin.Context) {
 
 	order, err := a.service.PlaceOrder(c, &req)
 	if err != nil {
+		var stockErr *service.InsufficientStockError
+		if errors.As(err, &stockErr) {
+			response.JSON(c, http.StatusConflict, gin.H{
+				"error": gin.H{
+					"code":    "INSUFFICIENT_STOCK",
+					"message": stockErr.Error(),
+					"details": gin.H{
+						"product_id": stockErr.ProductID,
+						"requested":  stockErr.Requested,
+					},
+				},
+			})
+			return
+		}
 		logger.Error("Failed to create OrderHandler: ", err.Error())
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return

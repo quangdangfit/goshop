@@ -8,6 +8,8 @@ type Settings struct {
 	SMTPUser     string
 	SMTPPassword string
 	EmailFrom    string
+	// Prefs filters per-user delivery. Nil falls back to AlwaysOnPreferences.
+	Prefs PreferenceChecker
 }
 
 // BuildDefault returns a Notifier appropriate for the runtime config. SMTP is layered in
@@ -23,7 +25,11 @@ func BuildDefault(s Settings) Notifier {
 			Password: s.SMTPPassword,
 			From:     s.EmailFrom,
 		})
-		notifiers = append(notifiers, NewEmailNotifier(sender, AlwaysOnPreferences{}))
+		prefs := s.Prefs
+		if prefs == nil {
+			prefs = AlwaysOnPreferences{}
+		}
+		notifiers = append(notifiers, NewEmailNotifier(sender, prefs))
 	}
 	if len(notifiers) == 1 {
 		return notifiers[0]
