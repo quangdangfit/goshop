@@ -30,6 +30,34 @@ func (s OrderStatus) IsValid() bool {
 	return false
 }
 
+// allowedTransitions maps each status to the set of statuses it can advance to. Terminal
+// statuses (done, cancelled) have no outbound transitions. Designed for admin-driven
+// fulfillment moves; payment-driven transitions (pending_payment -> paid/payment_failed)
+// also live here so the webhook path goes through the same gate.
+var allowedTransitions = map[OrderStatus]map[OrderStatus]struct{}{
+	OrderStatusNew:            {OrderStatusInProgress: {}, OrderStatusCancelled: {}},
+	OrderStatusPendingPayment: {OrderStatusPaid: {}, OrderStatusPaymentFailed: {}, OrderStatusCancelled: {}},
+	OrderStatusPaid:           {OrderStatusInProgress: {}, OrderStatusCancelled: {}},
+	OrderStatusInProgress:     {OrderStatusDone: {}, OrderStatusCancelled: {}},
+	OrderStatusPaymentFailed:  {OrderStatusCancelled: {}, OrderStatusPendingPayment: {}},
+	OrderStatusDone:           {},
+	OrderStatusCancelled:      {},
+}
+
+// CanTransitionTo reports whether `s` is allowed to advance to `next`. Idempotent moves
+// (s == next) are accepted so retried webhooks don't fail the gate.
+func (s OrderStatus) CanTransitionTo(next OrderStatus) bool {
+	if s == next {
+		return true
+	}
+	allowed, ok := allowedTransitions[s]
+	if !ok {
+		return false
+	}
+	_, ok = allowed[next]
+	return ok
+}
+
 type Order struct {
 	ID             string     `json:"id" gorm:"unique;not null;index;primary_key"`
 	CreatedAt      time.Time  `json:"created_at"`

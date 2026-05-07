@@ -325,3 +325,38 @@ func (_c *ProductService_Update_Call) RunAndReturn(run func(ctx context.Context,
 	_c.Call.Return(run)
 	return _c
 }
+
+// AddStock provides a mock function for the type ProductService
+func (_mock *ProductService) AddStock(ctx context.Context, id string, qty int, adminUserID string) (*model.Product, error) {
+	ret := _mock.Called(ctx, id, qty, adminUserID)
+	if len(ret) == 0 {
+		panic("no return value specified for AddStock")
+	}
+	var r0 *model.Product
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, string) (*model.Product, error)); ok {
+		return returnFunc(ctx, id, qty, adminUserID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, string) *model.Product); ok {
+		r0 = rf(ctx, id, qty, adminUserID)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*model.Product)
+	}
+	if rf, ok := ret.Get(1).(func(context.Context, string, int, string) error); ok {
+		r1 = rf(ctx, id, qty, adminUserID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+type ProductService_AddStock_Call struct{ *mock.Call }
+
+func (_e *ProductService_Expecter) AddStock(ctx interface{}, id interface{}, qty interface{}, adminUserID interface{}) *ProductService_AddStock_Call {
+	return &ProductService_AddStock_Call{Call: _e.mock.On("AddStock", ctx, id, qty, adminUserID)}
+}
+
+func (_c *ProductService_AddStock_Call) Return(p *model.Product, err error) *ProductService_AddStock_Call {
+	_c.Call.Return(p, err)
+	return _c
+}

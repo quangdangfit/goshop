@@ -166,3 +166,42 @@ func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 	response.JSON(c, http.StatusOK, res)
 	_ = p.cache.RemovePattern("*product*")
 }
+
+// AddStock godoc
+//
+//	@Summary	Admin: add stock to a product
+//	@Tags		products
+//	@Accept		json
+//	@Produce	json
+//	@Security	ApiKeyAuth
+//	@Param		id	path	string		true	"Product ID"
+//	@Param		_	body	addStockReq	true	"Body"
+//	@Router		/api/v1/products/{id}/stock [post]
+func (p *ProductHandler) AddStock(c *gin.Context) {
+	productId := c.Param("id")
+	var req addStockReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		apperror.Wrap(apperror.ErrBadRequest, err).HTTPError(c)
+		return
+	}
+
+	adminID := c.GetString("userId")
+	product, err := p.service.AddStock(c, productId, req.Quantity, adminID)
+	if err != nil {
+		logger.Error("Failed to add stock: ", err.Error())
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	var res domain.Product
+	if err := utils.Copy(&res, &product); err != nil {
+		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+	response.JSON(c, http.StatusOK, res)
+	_ = p.cache.RemovePattern("*product*")
+}
+
+type addStockReq struct {
+	Quantity int `json:"quantity" binding:"required,gt=0"`
+}

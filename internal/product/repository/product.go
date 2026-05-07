@@ -21,6 +21,7 @@ type ProductRepository interface {
 	GetProductByID(ctx context.Context, id string) (*model.Product, error)
 	DecrementStock(ctx context.Context, id string, qty int) error
 	UpdateRating(ctx context.Context, id string, avgRating float64, reviewCount int) error
+	AddStock(ctx context.Context, id string, qty int) error
 }
 
 type productRepo struct {
@@ -101,6 +102,21 @@ func (r *productRepo) DecrementStock(ctx context.Context, id string, qty int) er
 	}
 	if result.RowsAffected == 0 {
 		return errors.New("insufficient stock")
+	}
+	return nil
+}
+
+// AddStock atomically increases stock_quantity by qty. Used by the admin restock endpoint.
+// qty must be positive; the caller is responsible for validating.
+func (r *productRepo) AddStock(ctx context.Context, id string, qty int) error {
+	result := r.db.GetDB().WithContext(ctx).Model(&model.Product{}).
+		Where("id = ?", id).
+		UpdateColumn("stock_quantity", gorm.Expr("stock_quantity + ?", qty))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("product not found")
 	}
 	return nil
 }

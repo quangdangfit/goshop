@@ -10,9 +10,12 @@ import (
 type PaymentStatus string
 
 const (
-	PaymentStatusPending   PaymentStatus = "pending"
-	PaymentStatusSucceeded PaymentStatus = "succeeded"
-	PaymentStatusFailed    PaymentStatus = "failed"
+	PaymentStatusPending        PaymentStatus = "pending"
+	PaymentStatusProcessing     PaymentStatus = "processing"
+	PaymentStatusRequiresAction PaymentStatus = "requires_action"
+	PaymentStatusSucceeded      PaymentStatus = "succeeded"
+	PaymentStatusFailed         PaymentStatus = "failed"
+	PaymentStatusCanceled       PaymentStatus = "canceled"
 )
 
 // Payment is the local record of a charge attempt against an external provider. Each Order

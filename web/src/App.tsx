@@ -14,6 +14,7 @@ import PaymentPage from '@/pages/PaymentPage'
 import OrdersPage from '@/pages/OrdersPage'
 import OrderDetailPage from '@/pages/OrderDetailPage'
 import ProfilePage from '@/pages/ProfilePage'
+import NotificationPreferencesPage from '@/pages/NotificationPreferencesPage'
 
 import AdminLayout from '@/pages/admin/AdminLayout'
 import AdminProductsPage from '@/pages/admin/AdminProductsPage'
@@ -76,6 +77,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationPreferencesPage />
             </ProtectedRoute>
           }
         />

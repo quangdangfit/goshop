@@ -37,6 +37,7 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 		productRoute.POST("/:id/reviews", authMiddleware, reviewHandler.CreateReview)
 		productRoute.PUT("/:id/reviews/:reviewId", authMiddleware, reviewHandler.UpdateReview)
 		productRoute.DELETE("/:id/reviews/:reviewId", authMiddleware, reviewHandler.DeleteReview)
+		productRoute.POST("/:id/stock", authMiddleware, adminMiddleware, productHandler.AddStock)
 	}
 
 	categoryRoute := r.Group("/categories")
