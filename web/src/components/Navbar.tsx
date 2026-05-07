@@ -8,23 +8,17 @@ import {
   Store,
   User,
 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { cartApi } from '@/api/cart'
+import { useCart } from '@/hooks/useCart'
 
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const { data: cart } = useQuery({
-    queryKey: ['cart'],
-    queryFn: cartApi.getCart,
-    enabled: isAuthenticated,
-  })
-
-  const cartCount = cart?.lines?.reduce((sum, l) => sum + l.quantity, 0) ?? 0
+  const { cart } = useCart()
+  const cartCount = cart.items.reduce((sum, l) => sum + l.quantity, 0)
 
   const handleLogout = () => {
     logout()

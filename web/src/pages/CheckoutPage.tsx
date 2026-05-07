@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { cartApi } from '@/api/cart'
+import { useCart } from '@/hooks/useCart'
 import { ordersApi } from '@/api/orders'
 import { addressesApi } from '@/api/addresses'
 import { couponsApi } from '@/api/coupons'
@@ -22,10 +22,8 @@ export default function CheckoutPage() {
     name: '', phone: '', street: '', city: '', country: '',
   })
 
-  const { data: cart, isLoading: cartLoading } = useQuery({
-    queryKey: ['cart'],
-    queryFn: cartApi.getCart,
-  })
+  const { cart, store: cartStore } = useCart()
+  const cartLoading = false
 
   const { data: addresses, isLoading: addressLoading } = useQuery({
     queryKey: ['addresses'],
@@ -46,10 +44,10 @@ export default function CheckoutPage() {
   const placeOrderMutation = useMutation({
     mutationFn: ordersApi.createOrder,
     onSuccess: (order) => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
+      cartStore.clear()
       queryClient.invalidateQueries({ queryKey: ['orders'] })
-      toast.success('Order placed successfully!')
-      navigate(`/orders/${order.id}`)
+      toast.success('Order placed — finish payment to confirm')
+      navigate(`/checkout/payment/${order.id}`)
     },
     onError: () => toast.error('Failed to place order'),
   })
@@ -67,10 +65,10 @@ export default function CheckoutPage() {
     }
   }
 
-  const lines = cart?.lines || []
+  const lines = cart.items
   const subtotal = lines.reduce(
-    (sum, line) => sum + (line.product?.price || 0) * line.quantity,
-    0
+    (sum, line) => sum + (line.snapshot?.price || 0) * line.quantity,
+    0,
   )
 
   const discount = appliedCoupon
@@ -93,7 +91,7 @@ export default function CheckoutPage() {
         product_id: l.product_id,
         quantity: l.quantity,
       })),
-    })
+    } as never)
   }
 
   if (cartLoading || addressLoading) {
@@ -283,13 +281,13 @@ export default function CheckoutPage() {
             <h2 className="font-bold text-gray-900 mb-4">Order Items</h2>
             <div className="space-y-3">
               {lines.map((line) => (
-                <div key={line.id} className="flex justify-between text-sm py-2 border-b border-gray-50 last:border-0">
+                <div key={line.product_id} className="flex justify-between text-sm py-2 border-b border-gray-50 last:border-0">
                   <div>
-                    <p className="font-medium text-gray-900">{line.product?.name}</p>
+                    <p className="font-medium text-gray-900">{line.snapshot?.name}</p>
                     <p className="text-gray-500">Qty: {line.quantity}</p>
                   </div>
                   <span className="font-medium text-gray-900">
-                    ${((line.product?.price || 0) * line.quantity).toFixed(2)}
+                    ${((line.snapshot?.price || 0) * line.quantity).toFixed(2)}
                   </span>
                 </div>
               ))}

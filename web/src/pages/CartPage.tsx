@@ -1,42 +1,23 @@
 import { Minus, Plus, ShoppingCart, Trash2, ArrowRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { cartApi } from '@/api/cart'
-import LoadingSpinner from '@/components/LoadingSpinner'
+
+import { useCart } from '@/hooks/useCart'
 
 export default function CartPage() {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { cart, store } = useCart()
+  const lines = cart.items
 
-  const { data: cart, isLoading } = useQuery({
-    queryKey: ['cart'],
-    queryFn: cartApi.getCart,
-  })
-
-  const addMutation = useMutation({
-    mutationFn: ({ productId, quantity }: { productId: string; quantity: number }) =>
-      cartApi.addToCart({ product_id: productId, quantity }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
-    onError: () => toast.error('Failed to update cart'),
-  })
-
-  const removeMutation = useMutation({
-    mutationFn: (productId: string) => cartApi.removeFromCart(productId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
-      toast.success('Item removed')
-    },
-    onError: () => toast.error('Failed to remove item'),
-  })
-
-  if (isLoading) return <LoadingSpinner className="min-h-[400px]" size="lg" />
-
-  const lines = cart?.lines || []
   const subtotal = lines.reduce(
-    (sum, line) => sum + (line.product?.price || 0) * line.quantity,
-    0
+    (sum, line) => sum + (line.snapshot?.price || 0) * line.quantity,
+    0,
   )
+
+  const handleRemove = (productId: string) => {
+    store.remove(productId)
+    toast.success('Item removed')
+  }
 
   if (lines.length === 0) {
     return (
@@ -58,19 +39,17 @@ export default function CartPage() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cart Items */}
         <div className="lg:col-span-2 space-y-3">
           {lines.map((line) => (
             <div
-              key={line.id}
+              key={line.product_id}
               className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4"
             >
-              {/* Image */}
               <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
-                {line.product?.images?.[0] ? (
+                {line.snapshot?.images?.[0] ? (
                   <img
-                    src={line.product.images[0]}
-                    alt={line.product.name}
+                    src={line.snapshot.images[0]}
+                    alt={line.snapshot.name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -78,48 +57,28 @@ export default function CartPage() {
                 )}
               </div>
 
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <Link
                   to={`/products/${line.product_id}`}
                   className="font-medium text-gray-900 hover:text-primary-600 line-clamp-2 text-sm"
                 >
-                  {line.product?.name}
+                  {line.snapshot?.name}
                 </Link>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  ${line.product?.price?.toFixed(2)} each
+                  ${line.snapshot?.price?.toFixed(2)} each
                 </p>
 
                 <div className="flex items-center justify-between mt-2">
-                  {/* Quantity controls */}
                   <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                     <button
-                      onClick={() => {
-                        if (line.quantity <= 1) {
-                          removeMutation.mutate(line.product_id)
-                        } else {
-                          addMutation.mutate({
-                            productId: line.product_id,
-                            quantity: line.quantity - 1,
-                          })
-                        }
-                      }}
-                      disabled={addMutation.isPending || removeMutation.isPending}
+                      onClick={() => store.setQuantity(line.product_id, line.quantity - 1)}
                       className="p-1.5 hover:bg-gray-100 transition-colors"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
-                    <span className="w-8 text-center text-sm font-medium">
-                      {line.quantity}
-                    </span>
+                    <span className="w-8 text-center text-sm font-medium">{line.quantity}</span>
                     <button
-                      onClick={() =>
-                        addMutation.mutate({
-                          productId: line.product_id,
-                          quantity: line.quantity + 1,
-                        })
-                      }
-                      disabled={addMutation.isPending}
+                      onClick={() => store.setQuantity(line.product_id, line.quantity + 1)}
                       className="p-1.5 hover:bg-gray-100 transition-colors"
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -128,11 +87,10 @@ export default function CartPage() {
 
                   <div className="flex items-center gap-3">
                     <span className="font-semibold text-gray-900">
-                      ${((line.product?.price || 0) * line.quantity).toFixed(2)}
+                      ${((line.snapshot?.price || 0) * line.quantity).toFixed(2)}
                     </span>
                     <button
-                      onClick={() => removeMutation.mutate(line.product_id)}
-                      disabled={removeMutation.isPending}
+                      onClick={() => handleRemove(line.product_id)}
                       className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -144,7 +102,6 @@ export default function CartPage() {
           ))}
         </div>
 
-        {/* Order Summary */}
         <div>
           <div className="bg-white rounded-xl border border-gray-100 p-5 sticky top-20">
             <h2 className="font-bold text-gray-900 mb-4">Order Summary</h2>
@@ -156,15 +113,11 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
-                <span className="text-green-600">
-                  {subtotal >= 50 ? 'Free' : '$5.99'}
-                </span>
+                <span className="text-green-600">{subtotal >= 50 ? 'Free' : '$5.99'}</span>
               </div>
               <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-gray-900 text-base">
                 <span>Total</span>
-                <span>
-                  ${(subtotal >= 50 ? subtotal : subtotal + 5.99).toFixed(2)}
-                </span>
+                <span>${(subtotal >= 50 ? subtotal : subtotal + 5.99).toFixed(2)}</span>
               </div>
             </div>
 
