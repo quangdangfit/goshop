@@ -1,0 +1,10 @@
+-- No schema change. Orders.status is a free-form VARCHAR; this file documents the new
+-- enum values introduced by the Stripe + reservation flow so reviewers don't grep for
+-- a missing migration:
+--
+--   pending_payment  - awaiting Stripe payment intent confirmation
+--   paid             - webhook payment_intent.succeeded received
+--   payment_failed   - webhook payment_intent.payment_failed received
+--
+-- The application enforces the state machine; see internal/order/model/order.go
+-- (CanTransitionTo) and internal/order/service/order.go.
