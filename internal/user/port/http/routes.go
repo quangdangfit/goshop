@@ -51,4 +51,6 @@ func Routes(r *gin.RouterGroup, sqlDB dbs.Database, validator validation.Validat
 		wishlistRoute.POST("", wishlistHandler.AddProduct)
 		wishlistRoute.DELETE("/:productId", wishlistHandler.RemoveProduct)
 	}
+
+	r.PUT("/me/cart-snapshot", authMiddleware, PutCartSnapshot)
 }
