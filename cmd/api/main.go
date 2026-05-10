@@ -21,6 +21,7 @@ import (
 	userModel "goshop/internal/user/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
+	"goshop/pkg/eventbus"
 	"goshop/pkg/notification"
 	"goshop/pkg/redis"
 )
@@ -63,6 +64,16 @@ func main() {
 	}
 
 	validator := validation.New()
+
+	// Wire the process-wide event bus and subscribe a logger sink for LowStock alerts.
+	// Replace with an admin email channel once the notification service learns to consume
+	// inventory events.
+	bus := eventbus.New()
+	eventbus.SetDefault(bus)
+	bus.Subscribe(eventbus.TopicLowStock, func(_ context.Context, ev eventbus.Event) {
+		ls := ev.(eventbus.LowStock)
+		logger.Warnf("low stock: product=%s available=%d threshold=%d", ls.ProductID, ls.Available, ls.Threshold)
+	})
 
 	cache := redis.New(redis.Config{
 		Address:  cfg.RedisURI,
