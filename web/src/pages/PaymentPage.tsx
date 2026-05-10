@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { CreditCard, Loader2 } from 'lucide-react'
+import { Clock, CreditCard, Loader2 } from 'lucide-react'
 
 import { paymentsApi } from '@/api/payments'
 import { ordersApi } from '@/api/orders'
@@ -132,29 +132,47 @@ export default function PaymentPage() {
 
   if (intentLoading) return <LoadingSpinner className="min-h-[400px]" size="lg" />
 
+  const deadlineMs = order?.created_at
+    ? new Date(order.created_at).getTime() + 15 * 60 * 1000
+    : null
+  const remainingMs = deadlineMs ? deadlineMs - now : null
+  const expired = remainingMs !== null && remainingMs <= 0
+  const warning = remainingMs !== null && remainingMs > 0 && remainingMs < 2 * 60 * 1000
+
+  let timerLabel = 'Reserved for 15 minutes'
+  if (remainingMs !== null) {
+    if (expired) {
+      timerLabel = 'Reservation expired — order will be cancelled shortly'
+    } else {
+      const m = Math.floor(remainingMs / 60000)
+      const s = Math.floor((remainingMs % 60000) / 1000)
+      timerLabel = `Reserved for ${m}:${String(s).padStart(2, '0')}`
+    }
+  }
+  const timerStyle = expired
+    ? 'bg-red-50 border-red-200 text-red-700'
+    : warning
+      ? 'bg-amber-50 border-amber-200 text-amber-700'
+      : 'bg-primary-50 border-primary-200 text-primary-700'
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
         <CreditCard className="h-6 w-6 text-primary-600" />
         Complete Payment
       </h1>
-      <p className="text-sm text-gray-500 mb-6">
-        Order #{orderId} — {(() => {
-          if (!order?.created_at) return 'reserved for 15 minutes.'
-          const deadline = new Date(order.created_at).getTime() + 15 * 60 * 1000
-          const remainingMs = deadline - now
-          if (remainingMs <= 0) return 'reservation expired — order will be cancelled shortly.'
-          const m = Math.floor(remainingMs / 60000)
-          const s = Math.floor((remainingMs % 60000) / 1000)
-          return `reserved for ${m}:${String(s).padStart(2, '0')}.`
-        })()}
-      </p>
+      <p className="text-sm text-gray-500 mb-4">Order #{orderId}</p>
+
+      <div className={`flex items-center gap-2 border rounded-lg px-4 py-3 mb-6 text-sm font-medium ${timerStyle}`}>
+        <Clock className="h-4 w-4" />
+        <span>{timerLabel}</span>
+      </div>
 
       <div className="card">
         <div id="payment-element" className="min-h-[200px]" />
         <button
           onClick={handlePay}
-          disabled={!stripe || submitting || order?.status === 'paid'}
+          disabled={!stripe || submitting || expired || order?.status === 'paid'}
           className="btn-primary w-full mt-6 py-3"
         >
           {submitting ? (

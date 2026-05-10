@@ -46,6 +46,7 @@ export interface Product {
   description: string
   price: number
   stock_quantity: number
+  reserved_quantity?: number
   images: string[]
   category_id: string
   category: Category

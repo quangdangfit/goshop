@@ -7,6 +7,7 @@ import { wishlistApi } from '@/api/wishlist'
 import { useAuth } from '@/context/AuthContext'
 import type { Product } from '@/types'
 import StarRating from './StarRating'
+import StockBadge, { availableStock } from './StockBadge'
 
 interface ProductCardProps {
   product: Product
@@ -23,6 +24,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   })
 
   const isWishlisted = wishlist?.some((w) => w.product_id === product.id)
+  const available = availableStock(product)
 
   const handleAddToCart_ = () => {
     cartStore.add(product, 1)
@@ -86,11 +88,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         >
           <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
         </button>
-        {product.stock_quantity === 0 && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
-            Out of Stock
-          </div>
-        )}
+        <div className="absolute bottom-2 left-2">
+          <StockBadge product={product} />
+        </div>
       </div>
 
       <div className="p-4">
@@ -116,7 +116,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </span>
           <button
             onClick={handleAddToCart}
-            disabled={product.stock_quantity === 0}
+            disabled={available === 0}
             className="flex items-center gap-1 px-3 py-1.5 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <ShoppingCart className="h-3.5 w-3.5" />

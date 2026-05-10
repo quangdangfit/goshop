@@ -361,15 +361,32 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {stockConflict && (
+      {stockConflict && (() => {
+        const offending = lines.find((l) => l.product_id === stockConflict.productId)
+        const name = offending?.snapshot?.name ?? `Product ${stockConflict.productId.slice(0, 8)}…`
+        const available = offending?.snapshot?.stock_quantity
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
             <h3 className="font-bold text-lg text-gray-900 mb-2">Stock unavailable</h3>
             <p className="text-sm text-gray-600 mb-4">{stockConflict.message}</p>
-            <p className="text-xs text-gray-500 mb-5">
-              Product {stockConflict.productId.slice(0, 8)}… — requested {stockConflict.requested}.
-              Reduce the quantity in your cart and try again.
-            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-5 flex gap-3 items-start">
+              {offending?.snapshot?.images?.[0] && (
+                <img
+                  src={offending.snapshot.images[0]}
+                  alt={name}
+                  className="w-12 h-12 rounded object-cover flex-shrink-0"
+                />
+              )}
+              <div className="text-xs text-amber-800">
+                <p className="font-semibold text-sm text-amber-900">{name}</p>
+                <p className="mt-0.5">Requested: <span className="font-medium">{stockConflict.requested}</span></p>
+                {available !== undefined && (
+                  <p>Available: <span className="font-medium">{available}</span></p>
+                )}
+                <p className="mt-1 text-amber-700">Reduce the quantity in your cart and try again.</p>
+              </div>
+            </div>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => {
@@ -392,7 +409,8 @@ export default function CheckoutPage() {
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
