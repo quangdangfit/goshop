@@ -14,6 +14,7 @@ import (
 	orderRepo "goshop/internal/order/repository"
 	"goshop/pkg/apperror"
 	"goshop/pkg/dbs"
+	"goshop/pkg/eventbus"
 	"goshop/pkg/notification"
 	"goshop/pkg/paging"
 	"goshop/pkg/utils"
@@ -23,6 +24,11 @@ import (
 // it and cancels the order. Tuned for an interactive checkout — long enough to clear payment,
 // short enough that abandoned carts don't starve other shoppers.
 const ReservationTTL = 15 * time.Minute
+
+// LowStockThreshold is the available-stock floor at or below which a LowStock event is
+// published after a commit. Matches the FE badge threshold so admin alerts and customer
+// "Low stock" badges fire on the same boundary.
+const LowStockThreshold = 5
 
 //go:generate mockery --name=OrderService
 type OrderService interface {
@@ -48,7 +54,13 @@ type orderService struct {
 	reservationRepo orderRepo.ReservationRepository
 	couponSvc       CouponService
 	notifier        notification.Notifier
+	bus             eventbus.Bus
 }
+
+// SetEventBus wires an optional event bus. When set, the service publishes domain
+// events (currently LowStock after commit) without coupling notification transports
+// into the order service itself. Safe to leave unset for tests.
+func (s *orderService) SetEventBus(bus eventbus.Bus) { s.bus = bus }
 
 func NewOrderService(
 	validator validation.Validation,
@@ -237,6 +249,7 @@ func (s *orderService) MarkOrderPaid(ctx context.Context, orderID string) (*mode
 		return nil, apperror.ErrInvalidStatus
 	}
 
+	var committedProductIDs []string
 	txErr := s.db.WithTransaction(func() error {
 		reservations, err := s.reservationRepo.FindActiveByOrderID(ctx, order.ID)
 		if err != nil {
@@ -246,6 +259,7 @@ func (s *orderService) MarkOrderPaid(ctx context.Context, orderID string) (*mode
 			if err := s.productRepo.CommitReservation(ctx, res.ProductID, res.Quantity); err != nil {
 				return fmt.Errorf("commit reservation %s: %w", res.ID, err)
 			}
+			committedProductIDs = append(committedProductIDs, res.ProductID)
 		}
 		ids := reservationIDs(reservations)
 		if err := s.reservationRepo.UpdateStatus(ctx, ids, model.ReservationStatusCommitted); err != nil {
@@ -257,7 +271,36 @@ func (s *orderService) MarkOrderPaid(ctx context.Context, orderID string) (*mode
 	if txErr != nil {
 		return nil, txErr
 	}
+	s.publishLowStock(ctx, committedProductIDs)
 	return order, nil
+}
+
+// publishLowStock fires a LowStock event for each product whose available stock is at
+// or below the threshold. Best-effort: a fetch failure is logged but does not fail the
+// commit, since payment has already cleared.
+func (s *orderService) publishLowStock(ctx context.Context, productIDs []string) {
+	if len(productIDs) == 0 {
+		return
+	}
+	bus := s.bus
+	if bus == nil {
+		bus = eventbus.Default()
+	}
+	for _, pid := range productIDs {
+		p, err := s.productRepo.GetProductByID(ctx, pid)
+		if err != nil {
+			logger.Error("low_stock check: get product failed", err)
+			continue
+		}
+		available := p.StockQuantity - p.ReservedQuantity
+		if available <= LowStockThreshold {
+			bus.Publish(ctx, eventbus.LowStock{
+				ProductID: pid,
+				Available: available,
+				Threshold: LowStockThreshold,
+			})
+		}
+	}
 }
 
 func (s *orderService) CancelOrder(ctx context.Context, orderID, userID string) (*model.Order, error) {
