@@ -20,6 +20,7 @@ import { cartStore } from '@/api/cart'
 import { wishlistApi } from '@/api/wishlist'
 import { useAuth } from '@/context/AuthContext'
 import StarRating from '@/components/StarRating'
+import StockBadge, { availableStock } from '@/components/StockBadge'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Pagination from '@/components/Pagination'
 import type { CreateReviewRequest } from '@/types'
@@ -129,6 +130,7 @@ export default function ProductDetailPage() {
   }
 
   const userReview = reviewsData?.items?.find((r) => r.user_id === user?.id)
+  const available = availableStock(product)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -205,20 +207,12 @@ export default function ProductDetailPage() {
             </p>
 
             <div className="flex items-center gap-2 mb-4">
-              <span
-                className={`badge ${
-                  product.stock_quantity > 0 ? 'badge-success' : 'badge-danger'
-                }`}
-              >
-                {product.stock_quantity > 0
-                  ? `${product.stock_quantity} in stock`
-                  : 'Out of stock'}
-              </span>
+              <StockBadge product={product} showCount />
               <span className="text-sm text-gray-500">SKU: {product.code}</span>
             </div>
 
             {/* Quantity + Add to Cart */}
-            {product.stock_quantity > 0 && (
+            {available > 0 && (
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
                   <button
@@ -230,7 +224,7 @@ export default function ProductDetailPage() {
                   <span className="w-10 text-center font-medium">{quantity}</span>
                   <button
                     onClick={() =>
-                      setQuantity((q) => Math.min(product.stock_quantity, q + 1))
+                      setQuantity((q) => Math.min(available, q + 1))
                     }
                     className="p-2 hover:bg-gray-100 transition-colors"
                   >
@@ -240,7 +234,7 @@ export default function ProductDetailPage() {
 
                 <button
                   onClick={handleAddToCart}
-                  disabled={!product || product.stock_quantity === 0}
+                  disabled={!product || available === 0}
                   className="flex-1 btn-primary"
                 >
                   <ShoppingCart className="h-4 w-4" />
