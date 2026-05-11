@@ -42,15 +42,34 @@ function read(): ClientCart {
 
 const subscribers = new Set<() => void>()
 
+// Cached snapshot for useSyncExternalStore: getSnapshot() must return a stable reference
+// while the underlying state hasn't changed, otherwise React enters an infinite render loop.
+// We re-read localStorage on every call (cheap), but only re-parse and produce a new object
+// when the raw bytes have actually changed.
+let cachedRaw: string | null = null
+let cachedSnapshot: ClientCart = emptyCart()
+
+function snapshot(): ClientCart {
+  const raw = (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null) ?? ''
+  if (raw !== cachedRaw) {
+    cachedRaw = raw
+    cachedSnapshot = read()
+  }
+  return cachedSnapshot
+}
+
 function write(cart: ClientCart) {
   cart.updated_at = new Date().toISOString()
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
+  const raw = JSON.stringify(cart)
+  localStorage.setItem(STORAGE_KEY, raw)
+  cachedRaw = raw
+  cachedSnapshot = cart
   subscribers.forEach((fn) => fn())
 }
 
 export const cartStore = {
   get(): ClientCart {
-    return read()
+    return snapshot()
   },
 
   subscribe(fn: () => void): () => void {
