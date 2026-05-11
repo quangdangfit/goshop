@@ -216,6 +216,53 @@ func (suite *ProductRepositoryTestSuite) TestListProducts() {
 	}
 }
 
+func (suite *ProductRepositoryTestSuite) TestAddStock() {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Success",
+			setup: func() {
+				gormDB, sqlMock := newProductSQLMockGormDB(suite.T())
+				sqlMock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 1))
+				suite.mockDB.On("GetDB").Return(gormDB).Times(1)
+			},
+		},
+		{
+			name: "Not found",
+			setup: func() {
+				gormDB, sqlMock := newProductSQLMockGormDB(suite.T())
+				sqlMock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
+				suite.mockDB.On("GetDB").Return(gormDB).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name: "DB error",
+			setup: func() {
+				gormDB, sqlMock := newProductSQLMockGormDB(suite.T())
+				sqlMock.ExpectExec(".*").WillReturnError(errors.New("db error"))
+				suite.mockDB.On("GetDB").Return(gormDB).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			err := suite.repo.AddStock(context.Background(), "productId1", 5)
+			if tc.wantErr {
+				suite.NotNil(err)
+			} else {
+				suite.Nil(err)
+			}
+		})
+	}
+}
+
 func (suite *ProductRepositoryTestSuite) TestDecrementStock() {
 	tests := []struct {
 		name    string
