@@ -294,7 +294,7 @@ func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
 	var res domain.Order
 	parseResponseResult(writer.Body.Bytes(), &res)
 	assert.Equal(t, http.StatusOK, writer.Code)
-	assert.Equal(t, "pending_payment", res.Status)
+	assert.Equal(t, "new", res.Status)
 	assert.Equal(t, 2, len(res.Lines))
 	assert.Equal(t, o.Lines[0].ProductID, res.Lines[0].Product.ID)
 	assert.Equal(t, o.Lines[0].Quantity, res.Lines[0].Quantity)
