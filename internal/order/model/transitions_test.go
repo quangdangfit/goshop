@@ -11,7 +11,7 @@ func TestCanTransitionTo(t *testing.T) {
 		from, to OrderStatus
 		ok       bool
 	}{
-		{OrderStatusNew, OrderStatusNew, true},                              // idempotent
+		{OrderStatusNew, OrderStatusNew, true}, // idempotent
 		{OrderStatusNew, OrderStatusInProgress, true},
 		{OrderStatusNew, OrderStatusCancelled, true},
 		{OrderStatusNew, OrderStatusPendingPayment, false},
