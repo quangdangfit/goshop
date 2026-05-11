@@ -20,7 +20,7 @@ import (
 	notifMocks "goshop/pkg/notification/mocks"
 )
 
-func newEdgeFixture(t *testing.T) (OrderService, *dbsMocks.Database, *orderMocks.OrderRepository, *orderMocks.ProductRepository, *orderMocks.UserRepository, *orderMocks.ReservationRepository, *notifMocks.Notifier) {
+func newEdgeFixture(t *testing.T) (OrderService, *orderMocks.OrderRepository, *orderMocks.ProductRepository, *orderMocks.UserRepository, *orderMocks.ReservationRepository, *notifMocks.Notifier) {
 	logger.Initialize(config.ProductionEnv)
 	db := dbsMocks.NewDatabase(t)
 	repo := orderMocks.NewOrderRepository(t)
@@ -31,11 +31,11 @@ func newEdgeFixture(t *testing.T) (OrderService, *dbsMocks.Database, *orderMocks
 	notifier := notifMocks.NewNotifier(t)
 	db.On("WithTransaction", mock.Anything).Return(func(fn func() error) error { return fn() }).Maybe()
 	svc := NewOrderService(validation.New(), db, repo, productRepo, userRepo, reservRepo, couponSvc, notifier)
-	return svc, db, repo, productRepo, userRepo, reservRepo, notifier
+	return svc, repo, productRepo, userRepo, reservRepo, notifier
 }
 
 func TestPlaceOrder_ReserveStockReturnsInsufficient(t *testing.T) {
-	svc, _, repo, productRepo, _, _, _ := newEdgeFixture(t)
+	svc, repo, productRepo, _, _, _ := newEdgeFixture(t)
 	productRepo.On("GetProductByID", mock.Anything, "p1").Return(&model.Product{Name: "p", Price: 1}, nil).Once()
 	repo.On("CreateOrder", mock.Anything, "u1", mock.Anything, "", float64(0)).
 		Return(&model.Order{ID: "o1", UserID: "u1", Lines: []*model.OrderLine{{ProductID: "p1", Quantity: 2}}}, nil).Once()
@@ -51,7 +51,7 @@ func TestPlaceOrder_ReserveStockReturnsInsufficient(t *testing.T) {
 }
 
 func TestPlaceOrder_CreateOrderError(t *testing.T) {
-	svc, _, repo, productRepo, _, _, _ := newEdgeFixture(t)
+	svc, repo, productRepo, _, _, _ := newEdgeFixture(t)
 	productRepo.On("GetProductByID", mock.Anything, "p1").Return(&model.Product{Name: "p", Price: 1}, nil).Once()
 	repo.On("CreateOrder", mock.Anything, "u1", mock.Anything, "", float64(0)).Return(nil, errors.New("db")).Once()
 
@@ -63,7 +63,7 @@ func TestPlaceOrder_CreateOrderError(t *testing.T) {
 }
 
 func TestPlaceOrder_CreateManyError(t *testing.T) {
-	svc, _, repo, productRepo, _, reservRepo, _ := newEdgeFixture(t)
+	svc, repo, productRepo, _, reservRepo, _ := newEdgeFixture(t)
 	productRepo.On("GetProductByID", mock.Anything, "p1").Return(&model.Product{Name: "p", Price: 1}, nil).Once()
 	repo.On("CreateOrder", mock.Anything, "u1", mock.Anything, "", float64(0)).
 		Return(&model.Order{ID: "o1", UserID: "u1", Lines: []*model.OrderLine{{ProductID: "p1", Quantity: 1}}}, nil).Once()
@@ -79,7 +79,7 @@ func TestPlaceOrder_CreateManyError(t *testing.T) {
 }
 
 func TestPlaceOrder_NotifyHappy(t *testing.T) {
-	svc, _, repo, productRepo, userRepo, reservRepo, notifier := newEdgeFixture(t)
+	svc, repo, productRepo, userRepo, reservRepo, notifier := newEdgeFixture(t)
 	productRepo.On("GetProductByID", mock.Anything, "p1").Return(&model.Product{Name: "p", Price: 1}, nil).Once()
 	repo.On("CreateOrder", mock.Anything, "u1", mock.Anything, "", float64(0)).
 		Return(&model.Order{ID: "o1", UserID: "u1", Lines: []*model.OrderLine{{ProductID: "p1", Quantity: 1}}}, nil).Once()
@@ -98,14 +98,14 @@ func TestPlaceOrder_NotifyHappy(t *testing.T) {
 }
 
 func TestUpdateOrderStatus_GetOrderError(t *testing.T) {
-	svc, _, repo, _, _, _, _ := newEdgeFixture(t)
+	svc, repo, _, _, _, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).Return(nil, errors.New("not found")).Once()
 	_, err := svc.UpdateOrderStatus(context.Background(), "o1", model.OrderStatusPaid)
 	require.Error(t, err)
 }
 
 func TestUpdateOrderStatus_InvalidStatus(t *testing.T) {
-	svc, _, repo, _, _, _, _ := newEdgeFixture(t)
+	svc, repo, _, _, _, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).
 		Return(&model.Order{ID: "o1", Status: model.OrderStatusNew}, nil).Once()
 	_, err := svc.UpdateOrderStatus(context.Background(), "o1", model.OrderStatus("bogus"))
@@ -113,7 +113,7 @@ func TestUpdateOrderStatus_InvalidStatus(t *testing.T) {
 }
 
 func TestUpdateOrderStatus_DisallowedTransition(t *testing.T) {
-	svc, _, repo, _, _, _, _ := newEdgeFixture(t)
+	svc, repo, _, _, _, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).
 		Return(&model.Order{ID: "o1", Status: model.OrderStatusDone}, nil).Once()
 	_, err := svc.UpdateOrderStatus(context.Background(), "o1", model.OrderStatusCancelled)
@@ -121,7 +121,7 @@ func TestUpdateOrderStatus_DisallowedTransition(t *testing.T) {
 }
 
 func TestUpdateOrderStatus_UpdateError(t *testing.T) {
-	svc, _, repo, _, _, _, _ := newEdgeFixture(t)
+	svc, repo, _, _, _, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).
 		Return(&model.Order{ID: "o1", Status: model.OrderStatusPaid}, nil).Once()
 	repo.On("UpdateOrder", mock.Anything, mock.Anything).Return(errors.New("db")).Once()
@@ -130,14 +130,14 @@ func TestUpdateOrderStatus_UpdateError(t *testing.T) {
 }
 
 func TestCancelOrder_GetError(t *testing.T) {
-	svc, _, repo, _, _, _, _ := newEdgeFixture(t)
+	svc, repo, _, _, _, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).Return(nil, errors.New("not found")).Once()
 	_, err := svc.CancelOrder(context.Background(), "o1", "u1")
 	require.Error(t, err)
 }
 
 func TestCancelOrder_Forbidden(t *testing.T) {
-	svc, _, repo, _, _, _, _ := newEdgeFixture(t)
+	svc, repo, _, _, _, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).
 		Return(&model.Order{ID: "o1", UserID: "owner"}, nil).Once()
 	_, err := svc.CancelOrder(context.Background(), "o1", "intruder")
@@ -146,7 +146,7 @@ func TestCancelOrder_Forbidden(t *testing.T) {
 
 func TestCancelOrder_TerminalStatus(t *testing.T) {
 	for _, st := range []model.OrderStatus{model.OrderStatusDone, model.OrderStatusCancelled, model.OrderStatusPaid} {
-		svc, _, repo, _, _, _, _ := newEdgeFixture(t)
+		svc, repo, _, _, _, _ := newEdgeFixture(t)
 		repo.On("GetOrderByID", mock.Anything, "o1", false).
 			Return(&model.Order{ID: "o1", UserID: "u1", Status: st}, nil).Once()
 		_, err := svc.CancelOrder(context.Background(), "o1", "u1")
@@ -155,7 +155,7 @@ func TestCancelOrder_TerminalStatus(t *testing.T) {
 }
 
 func TestCancelOrder_HappyPath(t *testing.T) {
-	svc, _, repo, productRepo, _, reservRepo, _ := newEdgeFixture(t)
+	svc, repo, productRepo, _, reservRepo, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).
 		Return(&model.Order{ID: "o1", UserID: "u1", Status: model.OrderStatusPendingPayment}, nil).Once()
 	reservRepo.On("FindActiveByOrderID", mock.Anything, "o1").
@@ -169,7 +169,7 @@ func TestCancelOrder_HappyPath(t *testing.T) {
 }
 
 func TestCancelOrder_ReleaseError(t *testing.T) {
-	svc, _, repo, productRepo, _, reservRepo, _ := newEdgeFixture(t)
+	svc, repo, productRepo, _, reservRepo, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).
 		Return(&model.Order{ID: "o1", UserID: "u1", Status: model.OrderStatusPendingPayment}, nil).Once()
 	reservRepo.On("FindActiveByOrderID", mock.Anything, "o1").
@@ -181,7 +181,7 @@ func TestCancelOrder_ReleaseError(t *testing.T) {
 }
 
 func TestCancelOrder_FindReservationsError(t *testing.T) {
-	svc, _, repo, _, _, reservRepo, _ := newEdgeFixture(t)
+	svc, repo, _, _, reservRepo, _ := newEdgeFixture(t)
 	repo.On("GetOrderByID", mock.Anything, "o1", false).
 		Return(&model.Order{ID: "o1", UserID: "u1", Status: model.OrderStatusPendingPayment}, nil).Once()
 	reservRepo.On("FindActiveByOrderID", mock.Anything, "o1").Return(nil, errors.New("db")).Once()

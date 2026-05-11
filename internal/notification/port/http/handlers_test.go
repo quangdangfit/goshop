@@ -29,7 +29,7 @@ func (s *stubPrefSvc) Set(ctx context.Context, u, e, c string, en bool) (*model.
 	return s.setFn(ctx, u, e, c, en)
 }
 
-func setupHandler(svc *stubPrefSvc) (*Handler, *gin.Engine) {
+func setupHandler(svc *stubPrefSvc) *gin.Engine {
 	logger.Initialize(config.ProductionEnv)
 	gin.SetMode(gin.TestMode)
 	h := NewHandler(svc)
@@ -37,7 +37,7 @@ func setupHandler(svc *stubPrefSvc) (*Handler, *gin.Engine) {
 	r.Use(func(c *gin.Context) { c.Set("userId", "u1") })
 	r.GET("/me/notification-preferences", h.ListPreferences)
 	r.PUT("/me/notification-preferences", h.SetPreference)
-	return h, r
+	return r
 }
 
 func TestListPreferences_OK(t *testing.T) {
@@ -45,7 +45,7 @@ func TestListPreferences_OK(t *testing.T) {
 		require.Equal(t, "u1", u)
 		return []*model.Preference{{ID: "p1"}}, nil
 	}}
-	_, r := setupHandler(svc)
+	r := setupHandler(svc)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/me/notification-preferences", nil)
@@ -57,7 +57,7 @@ func TestListPreferences_Error(t *testing.T) {
 	svc := &stubPrefSvc{listFn: func(_ context.Context, _ string) ([]*model.Preference, error) {
 		return nil, errors.New("db down")
 	}}
-	_, r := setupHandler(svc)
+	r := setupHandler(svc)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/me/notification-preferences", nil)
@@ -75,7 +75,7 @@ func TestSetPreference_OK(t *testing.T) {
 		require.True(t, en)
 		return &model.Preference{ID: "p1", Enabled: true}, nil
 	}}
-	_, r := setupHandler(svc)
+	r := setupHandler(svc)
 
 	body, _ := json.Marshal(map[string]any{"event_type": "OrderPaid", "channel": "email", "enabled": true})
 	w := httptest.NewRecorder()
@@ -88,7 +88,7 @@ func TestSetPreference_OK(t *testing.T) {
 
 func TestSetPreference_BadBody(t *testing.T) {
 	svc := &stubPrefSvc{}
-	_, r := setupHandler(svc)
+	r := setupHandler(svc)
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/me/notification-preferences", bytes.NewReader([]byte("not-json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -100,7 +100,7 @@ func TestSetPreference_ServiceError(t *testing.T) {
 	svc := &stubPrefSvc{setFn: func(_ context.Context, _, _, _ string, _ bool) (*model.Preference, error) {
 		return nil, errors.New("upsert failed")
 	}}
-	_, r := setupHandler(svc)
+	r := setupHandler(svc)
 	body, _ := json.Marshal(map[string]any{"event_type": "OrderPaid", "channel": "email", "enabled": false})
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/me/notification-preferences", bytes.NewReader(body))
