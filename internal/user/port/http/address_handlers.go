@@ -10,7 +10,6 @@ import (
 	"goshop/internal/user/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 )
 
 type AddressHandler struct {
@@ -33,12 +32,7 @@ func (h *AddressHandler) ListAddresses(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res []*domain.Address
-	if err := utils.Copy(&res, &addresses); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.AddressesFromModel(addresses))
 }
 
 func (h *AddressHandler) GetAddressByID(c *gin.Context) {
@@ -57,12 +51,7 @@ func (h *AddressHandler) GetAddressByID(c *gin.Context) {
 		apperror.Wrap(apperror.ErrNotFound, err).HTTPError(c)
 		return
 	}
-	var res domain.Address
-	if err := utils.Copy(&res, address); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.AddressFromModel(address))
 }
 
 func (h *AddressHandler) CreateAddress(c *gin.Context) {
@@ -82,12 +71,7 @@ func (h *AddressHandler) CreateAddress(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res domain.Address
-	if err := utils.Copy(&res, address); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.AddressFromModel(address))
 }
 
 func (h *AddressHandler) UpdateAddress(c *gin.Context) {
@@ -107,12 +91,7 @@ func (h *AddressHandler) UpdateAddress(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res domain.Address
-	if err := utils.Copy(&res, address); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.AddressFromModel(address))
 }
 
 func (h *AddressHandler) DeleteAddress(c *gin.Context) {

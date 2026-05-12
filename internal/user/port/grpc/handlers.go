@@ -8,7 +8,6 @@ import (
 	"goshop/internal/user/domain"
 	"goshop/internal/user/service"
 	"goshop/pkg/apperror"
-	"goshop/pkg/utils"
 	pb "goshop/proto/gen/go/user"
 )
 
@@ -34,13 +33,11 @@ func (h *UserHandler) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes
 		return nil, apperror.ToGRPCStatus(err)
 	}
 
-	var res pb.LoginRes
-	if err := utils.Copy(&res.User, &user); err != nil {
-		return nil, err
-	}
-	res.AccessToken = accessToken
-	res.RefreshToken = refreshToken
-	return &res, nil
+	return &pb.LoginRes{
+		User:         userInfoFromModel(user),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 func (h *UserHandler) Register(ctx context.Context, req *pb.RegisterReq) (*pb.RegisterRes, error) {
@@ -53,11 +50,7 @@ func (h *UserHandler) Register(ctx context.Context, req *pb.RegisterReq) (*pb.Re
 		return nil, apperror.ToGRPCStatus(err)
 	}
 
-	var res pb.RegisterRes
-	if err := utils.Copy(&res.User, &user); err != nil {
-		return nil, err
-	}
-	return &res, nil
+	return &pb.RegisterRes{User: userInfoFromModel(user)}, nil
 }
 
 func (h *UserHandler) GetMe(ctx context.Context, _ *pb.GetMeReq) (*pb.GetMeRes, error) {
@@ -72,11 +65,7 @@ func (h *UserHandler) GetMe(ctx context.Context, _ *pb.GetMeReq) (*pb.GetMeRes, 
 		return nil, apperror.ToGRPCStatus(err)
 	}
 
-	var res pb.GetMeRes
-	if err := utils.Copy(&res.User, &user); err != nil {
-		return nil, err
-	}
-	return &res, nil
+	return &pb.GetMeRes{User: userInfoFromModel(user)}, nil
 }
 
 func (h *UserHandler) RefreshToken(ctx context.Context, req *pb.RefreshTokenReq) (*pb.RefreshTokenRes, error) {

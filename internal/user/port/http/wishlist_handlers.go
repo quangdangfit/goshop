@@ -10,7 +10,6 @@ import (
 	"goshop/internal/user/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 )
 
 type WishlistHandler struct {
@@ -33,12 +32,7 @@ func (h *WishlistHandler) GetWishlist(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res []*domain.WishlistItem
-	if err := utils.Copy(&res, &items); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.WishlistItemsFromModel(items))
 }
 
 func (h *WishlistHandler) AddProduct(c *gin.Context) {

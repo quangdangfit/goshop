@@ -10,7 +10,6 @@ import (
 	"goshop/internal/user/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 )
 
 type UserHandler struct {
@@ -46,14 +45,11 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	var res domain.LoginRes
-	if err := utils.Copy(&res.User, &user); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	res.AccessToken = accessToken
-	res.RefreshToken = refreshToken
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.LoginRes{
+		User:         *domain.UserFromModel(user),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	})
 }
 
 // Register godoc
@@ -79,12 +75,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	var res domain.RegisterRes
-	if err := utils.Copy(&res.User, &user); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.RegisterRes{User: *domain.UserFromModel(user)})
 }
 
 // GetMe godoc
@@ -109,12 +100,7 @@ func (h *UserHandler) GetMe(c *gin.Context) {
 		return
 	}
 
-	var res domain.User
-	if err := utils.Copy(&res, &user); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.UserFromModel(user))
 }
 
 func (h *UserHandler) RefreshToken(c *gin.Context) {
