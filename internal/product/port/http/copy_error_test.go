@@ -20,7 +20,7 @@ import (
 	"goshop/pkg/paging"
 )
 
-var assertErr = errors.New("cache miss")
+var errCacheMiss = errors.New("cache miss")
 
 // nanProduct returns a Product whose Price is NaN; json.Marshal rejects NaN, which
 // is the only practical way to drive utils.Copy into its error branch in handler tests.
@@ -39,7 +39,7 @@ func newProductHandlerSuite(t *testing.T) *ProductHandlerTestSuite {
 
 func TestGetProductByID_CopyError(t *testing.T) {
 	s := newProductHandlerSuite(t)
-	s.mockRedis.On("Get", mock.Anything, mock.Anything).Return(assertErr).Once()
+	s.mockRedis.On("Get", mock.Anything, mock.Anything).Return(errCacheMiss).Once()
 	s.mockService.On("GetProductByID", mock.Anything, "p1").Return(nanProduct(), nil).Once()
 
 	ctx, w := s.prepareContext("/api/v1/products/p1", nil)
@@ -94,7 +94,7 @@ func TestAddStock_CopyError(t *testing.T) {
 
 func TestListProducts_CopyError(t *testing.T) {
 	s := newProductHandlerSuite(t)
-	s.mockRedis.On("Get", mock.Anything, mock.Anything).Return(assertErr).Once()
+	s.mockRedis.On("Get", mock.Anything, mock.Anything).Return(errCacheMiss).Once()
 	s.mockService.On("ListProducts", mock.Anything, mock.Anything).
 		Return([]*model.Product{nanProduct()}, &paging.Pagination{}, nil).Once()
 
