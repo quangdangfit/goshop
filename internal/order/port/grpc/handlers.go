@@ -8,7 +8,6 @@ import (
 	"goshop/internal/order/domain"
 	"goshop/internal/order/service"
 	"goshop/pkg/apperror"
-	"goshop/pkg/utils"
 	pb "goshop/proto/gen/go/order"
 )
 
@@ -47,11 +46,7 @@ func (h *OrderHandler) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReq) (*
 		return nil, apperror.ToGRPCStatus(err)
 	}
 
-	var res pb.PlaceOrderRes
-	if err := utils.Copy(&res.Order, &order); err != nil {
-		return nil, err
-	}
-	return &res, nil
+	return &pb.PlaceOrderRes{Order: orderInfoFromModel(order)}, nil
 }
 
 func (h *OrderHandler) GetOrderByID(ctx context.Context, req *pb.GetOrderByIDReq) (*pb.GetOrderByIDRes, error) {
@@ -70,11 +65,7 @@ func (h *OrderHandler) GetOrderByID(ctx context.Context, req *pb.GetOrderByIDReq
 		return nil, apperror.ToGRPCStatus(err)
 	}
 
-	var res pb.GetOrderByIDRes
-	if err := utils.Copy(&res.Order, &order); err != nil {
-		return nil, err
-	}
-	return &res, nil
+	return &pb.GetOrderByIDRes{Order: orderInfoFromModel(order)}, nil
 }
 
 func (h *OrderHandler) GetMyOrders(ctx context.Context, req *pb.GetMyOrdersReq) (*pb.GetMyOrdersRes, error) {
@@ -96,16 +87,13 @@ func (h *OrderHandler) GetMyOrders(ctx context.Context, req *pb.GetMyOrdersReq) 
 		return nil, apperror.ToGRPCStatus(err)
 	}
 
-	var res pb.GetMyOrdersRes
-	if err := utils.Copy(&res.Orders, &orders); err != nil {
-		return nil, err
-	}
+	res := &pb.GetMyOrdersRes{Orders: ordersInfoFromModel(orders)}
 	if pagination != nil {
 		res.Total = pagination.Total
 		res.CurrentPage = pagination.CurrentPage
 		res.Limit = pagination.Limit
 	}
-	return &res, nil
+	return res, nil
 }
 
 func (h *OrderHandler) CancelOrder(ctx context.Context, req *pb.CancelOrderReq) (*pb.CancelOrderRes, error) {
@@ -124,9 +112,5 @@ func (h *OrderHandler) CancelOrder(ctx context.Context, req *pb.CancelOrderReq) 
 		return nil, apperror.ToGRPCStatus(err)
 	}
 
-	var res pb.CancelOrderRes
-	if err := utils.Copy(&res.Order, &order); err != nil {
-		return nil, err
-	}
-	return &res, nil
+	return &pb.CancelOrderRes{Order: orderInfoFromModel(order)}, nil
 }

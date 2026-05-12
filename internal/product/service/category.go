@@ -8,7 +8,6 @@ import (
 	"goshop/internal/product/domain"
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository"
-	"goshop/pkg/utils"
 )
 
 //go:generate mockery --name=CategoryService
@@ -41,9 +40,10 @@ func (s *categorySvc) Create(ctx context.Context, req *domain.CreateCategoryReq)
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
-	var category model.Category
-	if err := utils.Copy(&category, req); err != nil {
-		return nil, err
+	category := model.Category{
+		Name:        req.Name,
+		Slug:        req.Slug,
+		Description: req.Description,
 	}
 	if err := s.repo.Create(ctx, &category); err != nil {
 		return nil, err
@@ -56,8 +56,14 @@ func (s *categorySvc) Update(ctx context.Context, id string, req *domain.UpdateC
 	if err != nil {
 		return nil, err
 	}
-	if err := utils.Copy(category, req); err != nil {
-		return nil, err
+	if req.Name != "" {
+		category.Name = req.Name
+	}
+	if req.Slug != "" {
+		category.Slug = req.Slug
+	}
+	if req.Description != "" {
+		category.Description = req.Description
 	}
 	if err := s.repo.Update(ctx, category); err != nil {
 		return nil, err

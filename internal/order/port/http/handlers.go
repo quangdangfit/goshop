@@ -12,7 +12,6 @@ import (
 	"goshop/internal/order/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 )
 
 type OrderHandler struct {
@@ -69,12 +68,7 @@ func (a *OrderHandler) PlaceOrder(c *gin.Context) {
 		return
 	}
 
-	var res domain.Order
-	if err := utils.Copy(&res, &order); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.OrderFromModel(order))
 }
 
 // GetOrders godoc
@@ -107,13 +101,10 @@ func (a *OrderHandler) GetOrders(c *gin.Context) {
 		return
 	}
 
-	var res domain.ListOrderRes
-	res.Pagination = pagination
-	if err := utils.Copy(&res.Orders, &orders); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.ListOrderRes{
+		Orders:     domain.OrdersFromModel(orders),
+		Pagination: pagination,
+	})
 }
 
 // GetOrderByID godoc
@@ -145,12 +136,7 @@ func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 		return
 	}
 
-	var res domain.Order
-	if err := utils.Copy(&res, &order); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.OrderFromModel(order))
 }
 
 // UpdateOrderStatus godoc
@@ -182,12 +168,7 @@ func (a *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 		return
 	}
 
-	var res domain.Order
-	if err := utils.Copy(&res, &order); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.OrderFromModel(order))
 }
 
 // CancelOrder godoc
@@ -218,10 +199,5 @@ func (a *OrderHandler) CancelOrder(c *gin.Context) {
 		return
 	}
 
-	var res domain.Order
-	if err := utils.Copy(&res, &order); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.OrderFromModel(order))
 }

@@ -10,7 +10,6 @@ import (
 	"goshop/internal/product/repository"
 	"goshop/pkg/apperror"
 	"goshop/pkg/paging"
-	"goshop/pkg/utils"
 )
 
 //go:generate mockery --name=ReviewService
@@ -43,12 +42,12 @@ func (s *reviewSvc) CreateReview(ctx context.Context, productID, userID string, 
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
-	var review model.Review
-	if err := utils.Copy(&review, req); err != nil {
-		return nil, err
+	review := model.Review{
+		ProductID: productID,
+		UserID:    userID,
+		Rating:    req.Rating,
+		Comment:   req.Comment,
 	}
-	review.ProductID = productID
-	review.UserID = userID
 	if err := s.repo.Create(ctx, &review); err != nil {
 		return nil, err
 	}
@@ -64,8 +63,11 @@ func (s *reviewSvc) UpdateReview(ctx context.Context, id, userID string, req *do
 	if review.UserID != userID {
 		return nil, apperror.ErrForbidden
 	}
-	if err := utils.Copy(review, req); err != nil {
-		return nil, err
+	if req.Rating != 0 {
+		review.Rating = req.Rating
+	}
+	if req.Comment != "" {
+		review.Comment = req.Comment
 	}
 	if err := s.repo.Update(ctx, review); err != nil {
 		return nil, err
