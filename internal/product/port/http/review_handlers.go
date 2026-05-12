@@ -11,7 +11,6 @@ import (
 	"goshop/internal/product/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 )
 
 type ReviewHandler struct {
@@ -33,13 +32,10 @@ func (h *ReviewHandler) ListReviews(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res domain.ListReviewRes
-	if err := utils.Copy(&res.Reviews, &reviews); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	res.Pagination = pagination
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.ListReviewRes{
+		Reviews:    domain.ReviewsFromModel(reviews),
+		Pagination: pagination,
+	})
 }
 
 func (h *ReviewHandler) CreateReview(c *gin.Context) {
@@ -59,12 +55,7 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res domain.Review
-	if err := utils.Copy(&res, review); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.ReviewFromModel(review))
 }
 
 func (h *ReviewHandler) UpdateReview(c *gin.Context) {
@@ -84,12 +75,7 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res domain.Review
-	if err := utils.Copy(&res, review); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.ReviewFromModel(review))
 }
 
 func (h *ReviewHandler) DeleteReview(c *gin.Context) {

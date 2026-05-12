@@ -10,7 +10,6 @@ import (
 	"goshop/internal/product/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 )
 
 type CategoryHandler struct {
@@ -28,12 +27,7 @@ func (h *CategoryHandler) ListCategories(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res []*domain.Category
-	if err := utils.Copy(&res, &categories); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.CategoriesFromModel(categories))
 }
 
 func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
@@ -47,12 +41,7 @@ func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 		apperror.Wrap(apperror.ErrNotFound, err).HTTPError(c)
 		return
 	}
-	var res domain.Category
-	if err := utils.Copy(&res, category); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.CategoryFromModel(category))
 }
 
 func (h *CategoryHandler) CreateCategory(c *gin.Context) {
@@ -67,12 +56,7 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res domain.Category
-	if err := utils.Copy(&res, category); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.CategoryFromModel(category))
 }
 
 func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
@@ -87,12 +71,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
-	var res domain.Category
-	if err := utils.Copy(&res, category); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.CategoryFromModel(category))
 }
 
 func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
