@@ -10,7 +10,6 @@ import (
 	"goshop/internal/order/service"
 	"goshop/pkg/apperror"
 	"goshop/pkg/response"
-	"goshop/pkg/utils"
 )
 
 type CouponHandler struct {
@@ -45,12 +44,7 @@ func (h *CouponHandler) CreateCoupon(c *gin.Context) {
 		return
 	}
 
-	var res domain.Coupon
-	if err := utils.Copy(&res, coupon); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.CouponFromModel(coupon))
 }
 
 // GetCouponByCode godoc
@@ -70,10 +64,5 @@ func (h *CouponHandler) GetCouponByCode(c *gin.Context) {
 		return
 	}
 
-	var res domain.Coupon
-	if err := utils.Copy(&res, coupon); err != nil {
-		apperror.ToHTTPError(c, err, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-	response.JSON(c, http.StatusOK, res)
+	response.JSON(c, http.StatusOK, domain.CouponFromModel(coupon))
 }

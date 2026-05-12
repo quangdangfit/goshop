@@ -17,7 +17,6 @@ import (
 	"goshop/pkg/eventbus"
 	"goshop/pkg/notification"
 	"goshop/pkg/paging"
-	"goshop/pkg/utils"
 )
 
 // ReservationTTL is how long a placed order holds reserved stock before the sweeper releases
@@ -89,9 +88,9 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *domain.PlaceOrderReq
 		return nil, err
 	}
 
-	var lines []*model.OrderLine
-	if err := utils.Copy(&lines, &req.Lines); err != nil {
-		return nil, err
+	lines := make([]*model.OrderLine, len(req.Lines))
+	for i, l := range req.Lines {
+		lines[i] = &model.OrderLine{ProductID: l.ProductID, Quantity: l.Quantity}
 	}
 
 	productMap := make(map[string]*model.Product)

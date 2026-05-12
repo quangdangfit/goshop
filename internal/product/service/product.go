@@ -11,7 +11,6 @@ import (
 	"goshop/internal/product/model"
 	"goshop/internal/product/repository"
 	"goshop/pkg/paging"
-	"goshop/pkg/utils"
 )
 
 var errInvalidStockQty = errors.New("stock quantity must be positive")
@@ -63,13 +62,19 @@ func (p *productSvc) Create(ctx context.Context, req *domain.CreateProductReq) (
 		return nil, err
 	}
 
-	var product model.Product
-	if err := utils.Copy(&product, req); err != nil {
-		return nil, err
+	product := model.Product{
+		Name:          req.Name,
+		Description:   req.Description,
+		Price:         req.Price,
+		StockQuantity: req.StockQuantity,
+		Images:        req.Images,
+	}
+	if req.CategoryID != "" {
+		cid := req.CategoryID
+		product.CategoryID = &cid
 	}
 
-	err := p.repo.Create(ctx, &product)
-	if err != nil {
+	if err := p.repo.Create(ctx, &product); err != nil {
 		logger.Errorf("Create fail, error: %s", err)
 		return nil, err
 	}
@@ -102,8 +107,24 @@ func (p *productSvc) Update(ctx context.Context, id string, req *domain.UpdatePr
 		return nil, err
 	}
 
-	if err := utils.Copy(product, req); err != nil {
-		return nil, err
+	if req.Name != "" {
+		product.Name = req.Name
+	}
+	if req.Description != "" {
+		product.Description = req.Description
+	}
+	if req.Price != 0 {
+		product.Price = req.Price
+	}
+	if req.StockQuantity != nil {
+		product.StockQuantity = *req.StockQuantity
+	}
+	if req.Images != nil {
+		product.Images = req.Images
+	}
+	if req.CategoryID != "" {
+		cid := req.CategoryID
+		product.CategoryID = &cid
 	}
 	err = p.repo.Update(ctx, product)
 	if err != nil {

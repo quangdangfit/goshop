@@ -10,7 +10,6 @@ import (
 	"goshop/internal/order/model"
 	"goshop/internal/order/repository"
 	"goshop/pkg/apperror"
-	"goshop/pkg/utils"
 )
 
 //go:generate mockery --name=CouponService
@@ -38,9 +37,13 @@ func (s *couponSvc) Create(ctx context.Context, req *domain.CreateCouponReq) (*m
 	if err := s.validator.ValidateStruct(req); err != nil {
 		return nil, err
 	}
-	var coupon model.Coupon
-	if err := utils.Copy(&coupon, req); err != nil {
-		return nil, err
+	coupon := model.Coupon{
+		Code:           req.Code,
+		DiscountType:   model.DiscountType(req.DiscountType),
+		DiscountValue:  req.DiscountValue,
+		MinOrderAmount: req.MinOrderAmount,
+		MaxUsage:       req.MaxUsage,
+		ExpiresAt:      req.ExpiresAt,
 	}
 	if err := s.repo.Create(ctx, &coupon); err != nil {
 		return nil, err
