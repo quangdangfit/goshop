@@ -78,10 +78,10 @@ Docker Compose for local dependencies: [docker-compose-template](https://github.
 ```bash
 git clone https://github.com/quangdangfit/goshop.git
 cd goshop
-cp pkg/config/config.sample.yaml pkg/config/config.yaml
+cp config.sample.yaml config.yaml
 ```
 
-Edit `pkg/config/config.yaml`:
+Edit `config.yaml` (lives at the repo root and is loaded from the working directory; override with `CONFIG_FILE=/path/to/config.yaml`):
 
 ```yaml
 environment: production
@@ -92,6 +92,16 @@ database_uri: postgres://username:password@localhost:5432/goshop
 redis_uri: localhost:6379
 redis_password:
 redis_db: 0
+
+# Stripe (payments)
+stripe_secret_key: sk_test_xxx
+stripe_webhook_secret: whsec_xxx
+stripe_publishable_key: pk_test_xxx
+
+# SMTP (notifications — point at MailHog locally: host=localhost, port=1025)
+smtp_host:
+smtp_port: 25
+email_from: no-reply@goshop.local
 ```
 
 **2. Run the backend**
@@ -184,6 +194,19 @@ Swagger UI: [http://localhost:8888/swagger/index.html](http://localhost:8888/swa
 |--------|----------|-------------|
 | POST | `/api/v1/coupons` | Create coupon (auth) |
 | GET | `/api/v1/coupons/:code` | Get coupon by code |
+
+### Payments
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/orders/:id/payment-intent` | Create Stripe PaymentIntent for order |
+| POST | `/api/v1/webhooks/stripe` | Stripe webhook (signature-verified, no JWT) |
+| GET | `/api/v1/config/public` | Public client config (Stripe publishable key) |
+
+### Notifications
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/me/notification-preferences` | Get my notification preferences |
+| PUT | `/api/v1/me/notification-preferences` | Update notification preferences |
 
 ### Cart
 | Method | Endpoint | Description |

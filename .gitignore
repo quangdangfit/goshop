@@ -89,7 +89,7 @@ fabric.properties
 
 .history
 
-pkg/config/config.yaml
+./config.yaml
 vendor/
 
 /web/node_modules/*
