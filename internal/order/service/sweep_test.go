@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 
 	"goshop/internal/order/model"
+	orderRepo "goshop/internal/order/repository"
 	orderMocks "goshop/internal/order/repository/mocks"
 	serviceMocks "goshop/internal/order/service/mocks"
 	"goshop/pkg/config"
@@ -122,6 +123,28 @@ func TestSweep_OrphanedReservation_StillReleasesAndDoesNotError(t *testing.T) {
 	f.productRepo.On("ReleaseReservation", mock.Anything, "p1", 2).Return(nil).Once()
 	f.reservRepo.On("UpdateStatus", mock.Anything, []string{"r1"}, model.ReservationStatusReleased).Return(nil).Once()
 	// And NOT call UpdateOrder, since there is no order row to update.
+
+	n, err := f.svc.SweepExpiredReservations(context.Background(), 100)
+	require.NoError(t, err)
+	require.Equal(t, 1, n)
+	time.Sleep(20 * time.Millisecond)
+}
+
+func TestSweep_ReservationAlreadyReleased_IsTolerated(t *testing.T) {
+	f := newSweepFixture(t)
+	expired := []*model.StockReservation{
+		{ID: "r1", OrderID: "o1", ProductID: "p1", Quantity: 1},
+	}
+	f.reservRepo.On("FindExpired", mock.Anything, mock.Anything, 100).Return(expired, nil).Once()
+	f.repo.On("GetOrderByID", mock.Anything, "o1", false).
+		Return(&model.Order{ID: "o1", Status: model.OrderStatusPendingPayment, UserID: "u1"}, nil)
+	// The product's counter is already drained (drift). Sweeper should still
+	// mark the reservation released and cancel the order.
+	f.productRepo.On("ReleaseReservation", mock.Anything, "p1", 1).
+		Return(orderRepo.ErrReservationAlreadyReleased).Once()
+	f.reservRepo.On("UpdateStatus", mock.Anything, []string{"r1"}, model.ReservationStatusReleased).Return(nil).Once()
+	f.repo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Once()
+	f.userRepo.On("GetUserByID", mock.Anything, "u1").Return(nil, nil).Maybe()
 
 	n, err := f.svc.SweepExpiredReservations(context.Background(), 100)
 	require.NoError(t, err)

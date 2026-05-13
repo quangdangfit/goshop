@@ -371,7 +371,13 @@ func (s *orderService) SweepExpiredReservations(ctx context.Context, batchSize i
 			}
 			for _, r := range group {
 				if err := s.productRepo.ReleaseReservation(ctx, r.ProductID, r.Quantity); err != nil {
-					return fmt.Errorf("release reservation %s: %w", r.ID, err)
+					// Drift recovery: if the counter is already drained (re-seed, prior
+					// half-completed sweep, etc.) treat the release as done so we can still
+					// mark the reservation row 'released' and stop the error loop.
+					if !errors.Is(err, orderRepo.ErrReservationAlreadyReleased) {
+						return fmt.Errorf("release reservation %s: %w", r.ID, err)
+					}
+					logger.Warnf("sweep order %s: product %s reserved_quantity already drained, skipping release", orderID, r.ProductID)
 				}
 			}
 			ids := reservationIDs(group)
