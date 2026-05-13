@@ -8,6 +8,7 @@ import (
 
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
+	"gorm.io/gorm"
 
 	"goshop/internal/order/domain"
 	"goshop/internal/order/model"
@@ -351,14 +352,21 @@ func (s *orderService) SweepExpiredReservations(ctx context.Context, batchSize i
 
 	released := 0
 	for orderID, group := range byOrder {
+		orderMissing := false
 		txErr := s.db.WithTransaction(func() error {
 			order, err := s.repo.GetOrderByID(ctx, orderID, false)
 			if err != nil {
-				return err
-			}
-			// Skip if the order has already advanced past pending — a paid order's
-			// reservations should have been committed, not released.
-			if order.Status != model.OrderStatusPendingPayment && order.Status != model.OrderStatusNew {
+				// Orphaned reservation: the order row was deleted (or soft-deleted) but the
+				// reservation lived on. Still release the held stock and mark the rows so
+				// they don't keep showing up in the sweep — there's just no order to cancel.
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					orderMissing = true
+				} else {
+					return err
+				}
+			} else if order.Status != model.OrderStatusPendingPayment && order.Status != model.OrderStatusNew {
+				// Paid / fulfilled order's reservations should have been committed already,
+				// not released. Skip without touching stock.
 				return nil
 			}
 			for _, r := range group {
@@ -370,11 +378,19 @@ func (s *orderService) SweepExpiredReservations(ctx context.Context, batchSize i
 			if err := s.reservationRepo.UpdateStatus(ctx, ids, model.ReservationStatusReleased); err != nil {
 				return err
 			}
+			if orderMissing {
+				return nil
+			}
 			order.Status = model.OrderStatusCancelled
 			return s.repo.UpdateOrder(ctx, order)
 		})
 		if txErr != nil {
 			logger.Errorf("sweep order %s: %s", orderID, txErr)
+			continue
+		}
+		if orderMissing {
+			logger.Warnf("sweep order %s: order row missing, released %d orphaned reservation(s)", orderID, len(group))
+			released += len(group)
 			continue
 		}
 		released += len(group)
