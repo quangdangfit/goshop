@@ -19,7 +19,14 @@ type OrderLine struct {
 	Price     float64 `json:"price"`
 }
 
+// BeforeCreate generates a UUID only when one isn't already set. Unconditional
+// assignment was a subtle bug: GORM's Save(parentOrder) upserts the has-many
+// Lines slice as INSERT…ON CONFLICT, which fires BeforeCreate; overwriting the
+// ID gave each insert a fresh PK so the conflict never hit and we ended up with
+// duplicate rows on every Save of the parent order.
 func (line *OrderLine) BeforeCreate(tx *gorm.DB) error {
-	line.ID = uuid.New().String()
+	if line.ID == "" {
+		line.ID = uuid.New().String()
+	}
 	return nil
 }
