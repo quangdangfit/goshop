@@ -43,7 +43,7 @@ go vet ./... && golangci-lint run && go test ./... && go mod tidy
 | [code-review](/.claude/rules/code-review.md) | always | Quality checklist, PR discipline |
 | [git-workflow](/.claude/rules/git-workflow.md) | always | Commit conventions, branch strategy |
 | [commands](/.claude/rules/commands.md) | always | Build, test, and dev commands |
-| [configuration](/.claude/rules/configuration.md) | `pkg/config/**` | Environment variables, config files |
+| [configuration](/.claude/rules/configuration.md) | `pkg/config/**`, `config.yaml` | Env vars + root-level `config.yaml` (override via `CONFIG_FILE`) |
 | [grpc-proto](/.claude/rules/grpc-proto.md) | `proto/**` | Proto generation, plugin versions |
 | [shared-packages](/.claude/rules/shared-packages.md) | `pkg/**` | dbs, redis, jtoken, middleware, utils |
 

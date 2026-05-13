@@ -2,8 +2,7 @@ package config
 
 import (
 	"log"
-	"path/filepath"
-	"runtime"
+	"os"
 	"time"
 
 	"github.com/caarlos0/env"
@@ -52,12 +51,17 @@ var (
 	cfg Schema
 )
 
-func LoadConfig() *Schema {
-	_, filename, _, _ := runtime.Caller(0)
-	currentDir := filepath.Dir(filename)
+// ConfigFile is the path (relative to working dir or absolute) to load before
+// env-var parsing. Override by setting CONFIG_FILE in the environment.
+var ConfigFile = "config.yaml"
 
-	err := godotenv.Load(filepath.Join(currentDir, "config.yaml"))
-	if err != nil {
+func LoadConfig() *Schema {
+	path := ConfigFile
+	if v := os.Getenv("CONFIG_FILE"); v != "" {
+		path = v
+	}
+
+	if err := godotenv.Load(path); err != nil {
 		log.Printf("Error on load configuration file, error: %v", err)
 	}
 
