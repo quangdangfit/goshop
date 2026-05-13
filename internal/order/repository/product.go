@@ -92,6 +92,12 @@ func (r *productRepo) CommitReservation(ctx context.Context, id string, qty int)
 	return nil
 }
 
+// ErrReservationAlreadyReleased indicates the product's reserved_quantity is already below
+// the amount this release claims to hold — the reservation was either released previously or
+// the counters drifted (e.g. seed reset). Callers (like the sweeper) can treat this as a
+// terminal state and still mark the reservation row as 'released'.
+var ErrReservationAlreadyReleased = errors.New("release reservation: counter already drained")
+
 func (r *productRepo) ReleaseReservation(ctx context.Context, id string, qty int) error {
 	result := r.db.GetDB().WithContext(ctx).Model(&model.Product{}).
 		Where("id = ? AND reserved_quantity >= ?", id, qty).
@@ -100,7 +106,7 @@ func (r *productRepo) ReleaseReservation(ctx context.Context, id string, qty int
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
-		return errors.New("release reservation: row not in expected state")
+		return ErrReservationAlreadyReleased
 	}
 	return nil
 }

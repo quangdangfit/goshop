@@ -86,12 +86,13 @@ func TestReleaseReservation_Success(t *testing.T) {
 	require.NoError(t, NewProductRepository(dbm).ReleaseReservation(context.Background(), "p1", 1))
 }
 
-func TestReleaseReservation_NoRowError(t *testing.T) {
+func TestReleaseReservation_NoRowReturnsSentinel(t *testing.T) {
 	g, m := newProductSQLMockDB(t)
 	dbm := dbsMocks.NewDatabase(t)
 	dbm.On("GetDB").Return(g)
 	m.ExpectExec(`UPDATE "products"`).WillReturnResult(sqlmock.NewResult(0, 0))
-	require.Error(t, NewProductRepository(dbm).ReleaseReservation(context.Background(), "p1", 1))
+	err := NewProductRepository(dbm).ReleaseReservation(context.Background(), "p1", 1)
+	require.ErrorIs(t, err, ErrReservationAlreadyReleased)
 }
 
 func TestReleaseReservation_DBError(t *testing.T) {
