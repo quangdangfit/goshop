@@ -98,7 +98,8 @@ func (r *orderRepo) GetMyOrders(ctx context.Context, req *domain.ListOrderReq) (
 		query = append(query, dbs.NewQuery("status = ?", req.Status))
 	}
 
-	order := "created_at"
+	// Default newest-first so a freshly-placed order shows up at the top of page 1.
+	order := "created_at DESC"
 	if req.OrderBy != "" {
 		order = req.OrderBy
 		if req.OrderDesc {

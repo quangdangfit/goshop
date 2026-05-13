@@ -35,6 +35,8 @@ func OrderFromModel(m *model.Order) *Order {
 		CouponCode:     m.CouponCode,
 		Status:         string(m.Status),
 		Lines:          OrderLinesFromModel(m.Lines),
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
 	}
 }
 

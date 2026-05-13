@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Clock, CreditCard, Loader2 } from 'lucide-react'
 
@@ -46,6 +46,7 @@ async function loadStripeJS(): Promise<void> {
 export default function PaymentPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [stripe, setStripe] = useState<StripeLike | null>(null)
   const [elements, setElements] = useState<StripeElementsLike | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -105,9 +106,11 @@ export default function PaymentPage() {
   useEffect(() => {
     if (order?.status === 'paid') {
       toast.success('Payment confirmed')
+      // Drop any stale list cache so the orders page reflects the new paid order on next mount.
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
       navigate(`/orders/${orderId}`, { replace: true })
     }
-  }, [order?.status, orderId, navigate])
+  }, [order?.status, orderId, navigate, queryClient])
 
   const handlePay = async () => {
     if (!stripe || !elements) return
