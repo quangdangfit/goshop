@@ -1,0 +1,30 @@
+environment: production
+http_port: 8888
+grpc_port: 8889
+auth_secret: ######
+
+database_uri: postgres://username:password@host:5432/database
+
+redis_uri: localhost:6379
+redis_password:
+redis_db: 0
+
+# CORS / rate limiting (optional — defaults: "*", 100 req / 60s)
+cors_allowed_origins: "*"
+rate_limit_requests: 100
+rate_limit_window_seconds: 60
+
+# Stripe — required for payments. webhook_secret is given by `stripe listen`
+# or the dashboard; api_base is only set in tests to point at stripe-mock.
+stripe_secret_key: sk_test_xxx
+stripe_webhook_secret: whsec_xxx
+stripe_publishable_key: pk_test_xxx
+stripe_api_base:
+
+# SMTP — required for transactional email (order receipts, etc.).
+# In dev, point at MailHog: smtp_host=localhost, smtp_port=1025.
+smtp_host:
+smtp_port: 25
+smtp_user:
+smtp_password:
+email_from: no-reply@goshop.local
