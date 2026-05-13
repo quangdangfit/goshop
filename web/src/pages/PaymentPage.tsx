@@ -49,6 +49,8 @@ export default function PaymentPage() {
   const [stripe, setStripe] = useState<StripeLike | null>(null)
   const [elements, setElements] = useState<StripeElementsLike | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [awaitingWebhook, setAwaitingWebhook] = useState(false)
+  const [webhookWaitStart, setWebhookWaitStart] = useState<number | null>(null)
 
   const { data: cfg } = useQuery({
     queryKey: ['publicConfig'],
@@ -128,7 +130,15 @@ export default function PaymentPage() {
     }
     // PaymentIntent typically returns "succeeded" or "processing"; webhook confirms server-side.
     toast.success('Payment submitted, waiting for confirmation…')
+    setSubmitting(false)
+    setAwaitingWebhook(true)
+    setWebhookWaitStart(Date.now())
   }
+
+  // If we've been waiting on the webhook for too long, the most common cause locally is
+  // that `stripe listen --forward-to localhost:8888/api/v1/webhooks/stripe` isn't running.
+  const webhookSlow =
+    awaitingWebhook && webhookWaitStart !== null && now - webhookWaitStart > 20_000
 
   if (intentLoading) return <LoadingSpinner className="min-h-[400px]" size="lg" />
 
@@ -172,7 +182,7 @@ export default function PaymentPage() {
         <div id="payment-element" className="min-h-[200px]" />
         <button
           onClick={handlePay}
-          disabled={!stripe || submitting || expired || order?.status === 'paid'}
+          disabled={!stripe || submitting || awaitingWebhook || expired || order?.status === 'paid'}
           className="btn-primary w-full mt-6 py-3"
         >
           {submitting ? (
@@ -180,11 +190,24 @@ export default function PaymentPage() {
               <Loader2 className="h-4 w-4 animate-spin" />
               Processing…
             </>
+          ) : awaitingWebhook ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Waiting for confirmation…
+            </>
           ) : (
             <>Pay ${((intent?.amount ?? 0) / 100).toFixed(2)}</>
           )}
         </button>
       </div>
+
+      {webhookSlow && order?.status !== 'paid' && (
+        <p className="mt-4 text-sm text-amber-700">
+          Still waiting for Stripe to confirm the payment. In local dev, make sure
+          <code className="mx-1 px-1 py-0.5 bg-amber-100 rounded">stripe listen --forward-to localhost:8888/api/v1/webhooks/stripe</code>
+          is running so webhooks reach the backend.
+        </p>
+      )}
 
       {order?.status === 'payment_failed' && (
         <p className="mt-4 text-sm text-red-600">
