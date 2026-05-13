@@ -78,3 +78,58 @@ func TestBuildDefault_NoSMTP_LoggerOnly(t *testing.T) {
 	// Logger notifier returns nil — exercising the path keeps coverage and ensures the type exists.
 	require.NoError(t, n.SendOrderPlaced(context.Background(), "ord", "u@e.com"))
 }
+
+func TestBuildDefault_WithSMTP_WrapsMulti(t *testing.T) {
+	n := BuildDefault(Settings{
+		SMTPHost:  "localhost",
+		SMTPPort:  1025,
+		EmailFrom: "from@x",
+	})
+	require.NotNil(t, n)
+	_, ok := n.(*MultiNotifier)
+	require.True(t, ok, "with SMTP set, BuildDefault should return a MultiNotifier")
+}
+
+type recordingDLQForFactory struct{ calls int }
+
+func (d *recordingDLQForFactory) Record(_ context.Context, _, _, _ string, _ error) error {
+	d.calls++
+	return nil
+}
+
+func TestBuildDefault_WithDLQ_WrapsRetrying(t *testing.T) {
+	n := BuildDefault(Settings{DLQ: &recordingDLQForFactory{}})
+	require.NotNil(t, n)
+	_, ok := n.(*RetryingNotifier)
+	require.True(t, ok, "with a DLQ, BuildDefault should wrap in RetryingNotifier")
+}
+
+type alwaysFailingNotifier struct{ calls int }
+
+func (a *alwaysFailingNotifier) SendOrderPlaced(_ context.Context, _, _ string) error {
+	a.calls++
+	return errors.New("boom")
+}
+
+func (a *alwaysFailingNotifier) SendOrderStatusChanged(_ context.Context, _, _, _ string) error {
+	a.calls++
+	return errors.New("boom")
+}
+
+func TestMultiNotifier_StatusChanged_LogsButDoesNotShortCircuit(t *testing.T) {
+	bad := &alwaysFailingNotifier{}
+	good := &fakeSender{}
+	m := NewMultiNotifier(bad, NewEmailNotifier(good, AlwaysOnPreferences{}))
+	require.NoError(t, m.SendOrderStatusChanged(context.Background(), "o", "u@e.com", "paid"))
+	require.Equal(t, 1, bad.calls)
+	require.Equal(t, 1, good.called)
+}
+
+func TestMultiNotifier_OrderPlaced_LogsButDoesNotShortCircuit(t *testing.T) {
+	bad := &alwaysFailingNotifier{}
+	good := &fakeSender{}
+	m := NewMultiNotifier(bad, NewEmailNotifier(good, AlwaysOnPreferences{}))
+	require.NoError(t, m.SendOrderPlaced(context.Background(), "o", "u@e.com"))
+	require.Equal(t, 1, bad.calls)
+	require.Equal(t, 1, good.called)
+}
