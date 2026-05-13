@@ -42,6 +42,23 @@ func TestOrderLine_BeforeCreate(t *testing.T) {
 	assert.NotEmpty(t, line.ID)
 }
 
+// Regression: BeforeCreate must NOT overwrite an existing ID, otherwise GORM's
+// Save(parentOrder) cascade re-INSERTs the same line under a fresh PK and the
+// order ends up with duplicate lines on every Save.
+func TestOrderLine_BeforeCreate_PreservesExistingID(t *testing.T) {
+	line := &OrderLine{ID: "stable-id"}
+	assert.NoError(t, line.BeforeCreate(nil))
+	assert.Equal(t, "stable-id", line.ID)
+}
+
+func TestOrder_BeforeCreate_PreservesExistingIDAndCode(t *testing.T) {
+	o := &Order{ID: "stable-id", Code: "SO123", Status: OrderStatusPendingPayment}
+	assert.NoError(t, o.BeforeCreate(nil))
+	assert.Equal(t, "stable-id", o.ID)
+	assert.Equal(t, "SO123", o.Code)
+	assert.Equal(t, OrderStatusPendingPayment, o.Status)
+}
+
 func TestOrderStatus_IsValid(t *testing.T) {
 	tests := []struct {
 		name   string

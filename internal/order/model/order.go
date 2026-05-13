@@ -75,12 +75,14 @@ type Order struct {
 }
 
 func (order *Order) BeforeCreate(tx *gorm.DB) error {
-	order.ID = uuid.New().String()
-	order.Code = utils.GenerateCode("SO")
-
+	if order.ID == "" {
+		order.ID = uuid.New().String()
+	}
+	if order.Code == "" {
+		order.Code = utils.GenerateCode("SO")
+	}
 	if order.Status == "" {
 		order.Status = OrderStatusNew
 	}
-
 	return nil
 }
