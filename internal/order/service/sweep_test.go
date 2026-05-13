@@ -10,6 +10,7 @@ import (
 	"github.com/quangdangfit/gocommon/validation"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 
 	"goshop/internal/order/model"
 	orderMocks "goshop/internal/order/repository/mocks"
@@ -107,6 +108,25 @@ func TestSweep_TxErrorIsLoggedNotReturned(t *testing.T) {
 	n, err := f.svc.SweepExpiredReservations(context.Background(), 100)
 	require.NoError(t, err)
 	require.Zero(t, n)
+}
+
+func TestSweep_OrphanedReservation_StillReleasesAndDoesNotError(t *testing.T) {
+	f := newSweepFixture(t)
+	expired := []*model.StockReservation{
+		{ID: "r1", OrderID: "ghost", ProductID: "p1", Quantity: 2},
+	}
+	f.reservRepo.On("FindExpired", mock.Anything, mock.Anything, 100).Return(expired, nil).Once()
+	// Order row is missing — GetOrderByID returns ErrRecordNotFound.
+	f.repo.On("GetOrderByID", mock.Anything, "ghost", false).Return(nil, gorm.ErrRecordNotFound).Once()
+	// Sweeper should still release the held stock and mark the reservation released.
+	f.productRepo.On("ReleaseReservation", mock.Anything, "p1", 2).Return(nil).Once()
+	f.reservRepo.On("UpdateStatus", mock.Anything, []string{"r1"}, model.ReservationStatusReleased).Return(nil).Once()
+	// And NOT call UpdateOrder, since there is no order row to update.
+
+	n, err := f.svc.SweepExpiredReservations(context.Background(), 100)
+	require.NoError(t, err)
+	require.Equal(t, 1, n)
+	time.Sleep(20 * time.Millisecond)
 }
 
 func TestInsufficientStockErrorMessage(t *testing.T) {
