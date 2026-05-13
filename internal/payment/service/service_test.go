@@ -84,7 +84,7 @@ func TestCreateIntent_OrderNotPending(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestCreateIntent_ReusesExistingPending(t *testing.T) {
+func TestCreateIntent_ExistingRow_ReplaysProviderForFreshClientSecret(t *testing.T) {
 	osvc := newOrderSvcMock(t)
 	q := &stubOrderQuery{getFn: func(_ context.Context, _ string) (*orderModel.Order, error) {
 		return &orderModel.Order{ID: "o1", Status: orderModel.OrderStatusPendingPayment, FinalPrice: 10}, nil
@@ -92,10 +92,17 @@ func TestCreateIntent_ReusesExistingPending(t *testing.T) {
 	repo := &stubRepo{getFn: func(_ context.Context, _ string) (*model.Payment, error) {
 		return &model.Payment{ProviderIntentID: "pi_1", Status: model.PaymentStatusPending, Amount: 1000, Currency: "usd"}, nil
 	}}
-	svc := NewPaymentService(&stubProvider{}, repo, q, osvc)
+	prov := &stubProvider{createFn: func(_ context.Context, p payment.CreateIntentParams) (*payment.Intent, error) {
+		require.Equal(t, "order_o1", p.IdempotencyKey)
+		// Stripe's idempotency replay returns the same intent with a fresh client_secret.
+		return &payment.Intent{ID: "pi_1", ClientSecret: "pi_1_secret_replay", Amount: 1000, Currency: "usd"}, nil
+	}}
+	svc := NewPaymentService(prov, repo, q, osvc)
 	intent, err := svc.CreateIntentForOrder(context.Background(), "o1")
 	require.NoError(t, err)
 	require.Equal(t, "pi_1", intent.ID)
+	require.Equal(t, "pi_1_secret_replay", intent.ClientSecret, "must return a non-empty client_secret on repeat calls")
+	require.Equal(t, 0, repo.createCall, "must not write a second payment row on replay")
 }
 
 func TestCreateIntent_GetPaymentErrorPropagates(t *testing.T) {

@@ -64,18 +64,13 @@ func (s *paymentService) CreateIntentForOrder(ctx context.Context, orderID strin
 		return nil, fmt.Errorf("order %s is not pending payment (status=%s)", orderID, order.Status)
 	}
 
-	// Reuse any existing pending payment row to keep the intent idempotent per order.
+	// Look up any existing payment row for this order. We deliberately do NOT short-circuit
+	// on the stored row alone — the row doesn't (and shouldn't) persist client_secret, so the
+	// FE needs us to re-issue the intent on every call. Stripe's idempotency key replays the
+	// same intent (with its client_secret) for 24h, so a duplicate POST is safe.
 	existing, err := s.repo.GetByOrderID(ctx, orderID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
-	}
-	if existing != nil && existing.Status == model.PaymentStatusPending {
-		return &payment.Intent{
-			ID:       existing.ProviderIntentID,
-			Status:   string(existing.Status),
-			Amount:   existing.Amount,
-			Currency: existing.Currency,
-		}, nil
 	}
 
 	amount := int64(order.FinalPrice * 100) // assume USD-style minor units
@@ -90,16 +85,21 @@ func (s *paymentService) CreateIntentForOrder(ctx context.Context, orderID strin
 		return nil, err
 	}
 
-	rec := &model.Payment{
-		OrderID:          order.ID,
-		Provider:         s.providerName,
-		ProviderIntentID: intent.ID,
-		Amount:           amount,
-		Currency:         currency,
-		Status:           model.PaymentStatusPending,
-	}
-	if err := s.repo.Create(ctx, rec); err != nil {
-		return nil, err
+	// First time for this order — persist a payment row so webhooks can look it up.
+	// On subsequent calls the row already exists and Stripe returned the same intent
+	// via idempotency replay, so there's nothing to write.
+	if existing == nil {
+		rec := &model.Payment{
+			OrderID:          order.ID,
+			Provider:         s.providerName,
+			ProviderIntentID: intent.ID,
+			Amount:           amount,
+			Currency:         currency,
+			Status:           model.PaymentStatusPending,
+		}
+		if err := s.repo.Create(ctx, rec); err != nil {
+			return nil, err
+		}
 	}
 	return intent, nil
 }
