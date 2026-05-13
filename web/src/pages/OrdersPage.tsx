@@ -10,10 +10,13 @@ import type { OrdersQueryParams } from '@/types'
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'badge-warning',
+  pending_payment: 'badge-warning',
+  paid: 'badge-info',
   processing: 'badge-info',
   shipped: 'badge-info',
   delivered: 'badge-success',
   cancelled: 'badge-danger',
+  payment_failed: 'badge-danger',
 }
 
 export default function OrdersPage() {
