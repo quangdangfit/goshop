@@ -177,3 +177,83 @@ VALUES
    'cat-beauty', NOW(), NOW())
 
 ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- Users
+-- Passwords are bcrypt(cost=10). Both accounts use the same plain-text
+-- password "password123" / "admin123" for local dev only — DO NOT use in prod.
+-- ============================================================
+INSERT INTO users (id, email, password, role, created_at, updated_at)
+VALUES
+  ('user-customer', 'customer@goshop.local',
+   '$2a$10$1IHKAaa2QA7sBwVfMtWwm.5pLTeWrxnkFSSj.nLGV.BDCzSAw5EjC', -- password123
+   'customer', NOW(), NOW()),
+  ('user-admin',    'admin@goshop.local',
+   '$2a$10$31sruWVh64GtIJ9pQj..LuqBtTVqDEmkUNBHelX3/JhXSM9XqItYy', -- admin123
+   'admin',    NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- Addresses (one default for the customer)
+-- ============================================================
+INSERT INTO addresses (id, user_id, name, phone, street, city, country, is_default, created_at, updated_at)
+VALUES
+  ('addr-001', 'user-customer', 'Test Customer', '+84-900-000-001',
+   '123 Đường Lê Lợi', 'Hồ Chí Minh', 'VN', true, NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- Wishlist
+-- ============================================================
+INSERT INTO wishlists (id, user_id, product_id, created_at)
+VALUES
+  ('wish-001', 'user-customer', 'prod-001', NOW()),
+  ('wish-002', 'user-customer', 'prod-020', NOW())
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- Coupon
+-- ============================================================
+INSERT INTO coupons (id, code, discount_type, discount_value, min_order_amount, max_usage, used_count, expires_at, created_at, updated_at)
+VALUES
+  ('coupon-welcome10', 'WELCOME10', 'percent', 10, 0, 1000, 0,
+   NOW() + INTERVAL '30 days', NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- Sample order in pending_payment (with reserved stock)
+-- Demonstrates the full Stripe + reservation flow.
+-- ============================================================
+INSERT INTO orders (id, code, user_id, total_price, final_price, discount_amount, status, created_at, updated_at)
+VALUES
+  ('order-demo-1', 'SO20260513001', 'user-customer', 1349.98, 1349.98, 0, 'pending_payment', NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+INSERT INTO order_lines (id, order_id, product_id, quantity, price, created_at, updated_at)
+VALUES
+  ('ol-demo-1a', 'order-demo-1', 'prod-001', 1, 999.99, NOW(), NOW()),
+  ('ol-demo-1b', 'order-demo-1', 'prod-004', 1, 349.99, NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+-- Reserve stock for the pending order. Bump products.reserved_quantity to match.
+INSERT INTO stock_reservations (id, order_id, product_id, quantity, status, expires_at, created_at, updated_at)
+VALUES
+  ('res-demo-1a', 'order-demo-1', 'prod-001', 1, 'active', NOW() + INTERVAL '15 minutes', NOW(), NOW()),
+  ('res-demo-1b', 'order-demo-1', 'prod-004', 1, 'active', NOW() + INTERVAL '15 minutes', NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+UPDATE products SET reserved_quantity = reserved_quantity + 1 WHERE id IN ('prod-001', 'prod-004');
+
+-- Stripe payment record (pending — webhook will flip status to 'succeeded')
+INSERT INTO payments (id, order_id, provider, provider_intent_id, amount, currency, status, created_at, updated_at)
+VALUES
+  ('pay-demo-1', 'order-demo-1', 'stripe', 'pi_demo_seed_1', 134998, 'usd', 'pending', NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- Notification preferences (customer opts out of order_status_changed email)
+-- ============================================================
+INSERT INTO notification_preferences (id, user_id, event_type, channel, enabled, created_at, updated_at)
+VALUES
+  ('pref-001', 'user-customer', 'order_status_changed', 'email', false, NOW(), NOW())
+ON CONFLICT DO NOTHING;
