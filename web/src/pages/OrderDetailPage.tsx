@@ -7,10 +7,13 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'badge-warning',
+  pending_payment: 'badge-warning',
+  paid: 'badge-info',
   processing: 'badge-info',
   shipped: 'badge-info',
   delivered: 'badge-success',
   cancelled: 'badge-danger',
+  payment_failed: 'badge-danger',
 }
 
 const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered']
