@@ -41,6 +41,48 @@ func TestPublishWithNoSubscribersIsNoop(t *testing.T) {
 	bus.Publish(context.Background(), LowStock{ProductID: "x"})
 }
 
+func TestDefault_LazilyInitializesSingleton(t *testing.T) {
+	SetDefault(nil)
+	t.Cleanup(func() { SetDefault(nil) })
+
+	a := Default()
+	b := Default()
+	if a == nil {
+		t.Fatal("Default returned nil")
+	}
+	if a != b {
+		t.Fatal("Default should return the same instance on repeated calls")
+	}
+}
+
+func TestSetDefault_OverridesSingleton(t *testing.T) {
+	SetDefault(nil)
+	t.Cleanup(func() { SetDefault(nil) })
+
+	custom := New()
+	SetDefault(custom)
+	if Default() != custom {
+		t.Fatal("SetDefault did not install the supplied bus")
+	}
+}
+
+func TestEventTopics(t *testing.T) {
+	cases := []struct {
+		ev   Event
+		want string
+	}{
+		{OrderCreated{}, TopicOrderCreated},
+		{OrderPaid{}, TopicOrderPaid},
+		{OrderCancelled{}, TopicOrderCancelled},
+		{LowStock{}, TopicLowStock},
+	}
+	for _, c := range cases {
+		if got := c.ev.Topic(); got != c.want {
+			t.Errorf("%T.Topic() = %q, want %q", c.ev, got, c.want)
+		}
+	}
+}
+
 func TestSlowSubscriberDoesNotBlockPublisher(t *testing.T) {
 	bus := New()
 	bus.Subscribe(TopicOrderPaid, func(_ context.Context, _ Event) {

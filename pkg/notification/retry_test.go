@@ -57,6 +57,46 @@ func TestRetryingNotifier_SucceedsAfterRetries(t *testing.T) {
 	}
 }
 
+func TestRetryConfig_WithDefaults(t *testing.T) {
+	got := RetryConfig{}.withDefaults()
+	if got.MaxAttempts != 3 || got.InitialDelay != 100*time.Millisecond {
+		t.Fatalf("zero-value defaults wrong: %+v", got)
+	}
+	custom := RetryConfig{MaxAttempts: 5, InitialDelay: 7 * time.Millisecond}.withDefaults()
+	if custom.MaxAttempts != 5 || custom.InitialDelay != 7*time.Millisecond {
+		t.Fatalf("custom values overridden: %+v", custom)
+	}
+}
+
+func TestRetryingNotifier_NilDLQ_DoesNotPanic(t *testing.T) {
+	inner := &stubNotifier{failFor: 5}
+	n := NewRetryingNotifier(inner, RetryConfig{MaxAttempts: 2, InitialDelay: time.Millisecond}, nil)
+	if err := n.SendOrderPlaced(context.Background(), "o", "u@x"); err == nil {
+		t.Fatal("expected exhaustion error")
+	}
+}
+
+func TestRetryingNotifier_ContextCancelled_StopsEarly(t *testing.T) {
+	inner := &stubNotifier{failFor: 100}
+	dlq := &recordingDLQ{}
+	n := NewRetryingNotifier(inner, RetryConfig{MaxAttempts: 10, InitialDelay: 50 * time.Millisecond}, dlq)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		cancel()
+	}()
+	err := n.SendOrderPlaced(ctx, "o", "u@x")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if inner.calls >= 10 {
+		t.Fatalf("ctx cancellation should stop retries early, got %d calls", inner.calls)
+	}
+	if len(dlq.records) != 1 {
+		t.Fatalf("DLQ should still record on early termination, got %d", len(dlq.records))
+	}
+}
+
 func TestRetryingNotifier_DLQOnExhaustion(t *testing.T) {
 	inner := &stubNotifier{failFor: 5} // always fail within 3 attempts
 	dlq := &recordingDLQ{}
