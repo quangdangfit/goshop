@@ -14,7 +14,7 @@ The application runs two servers concurrently (backend) plus a React web fronten
 - **HTTP (REST)** — Gin framework, port `8888`
 - **gRPC** — port `8889`, with JWT auth interceptor
 
-Each domain (`user`, `product`, `order`, `cart`) follows a ports-and-adapters layout:
+Each domain (`user`, `product`, `order`, `payment`, `notification`) follows a ports-and-adapters layout:
 
 ```
 internal/{domain}/
@@ -32,7 +32,8 @@ internal/{domain}/
 | user | ✓ | ✓ |
 | product | ✓ | ✓ |
 | order | ✓ | ✓ |
-| cart | ✓ | ✓ |
+| payment | ✓ | — |
+| notification | ✓ | — |
 
 ## Tech Stack
 
@@ -208,12 +209,8 @@ Swagger UI: [http://localhost:8888/swagger/index.html](http://localhost:8888/swa
 | GET | `/api/v1/me/notification-preferences` | Get my notification preferences |
 | PUT | `/api/v1/me/notification-preferences` | Update notification preferences |
 
-### Cart
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/cart` | Get my cart |
-| POST | `/api/v1/cart` | Add / update product in cart |
-| DELETE | `/api/v1/cart/:productId` | Remove product from cart |
+> Cart is client-side only (persisted in the browser). Order creation accepts the full
+> line items and the server re-validates products, prices, and stock.
 
 ## Development
 
