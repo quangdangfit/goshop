@@ -12,7 +12,7 @@ The app runs **two servers concurrently** from `cmd/api/main.go`: an HTTP server
 
 ## Domain structure
 
-Each domain (`user`, `product`, `order`, `cart`) follows this layout:
+Each domain (`user`, `product`, `order`, `payment`, `notification`) follows this layout:
 
 ```
 internal/{domain}/
@@ -28,7 +28,10 @@ internal/{domain}/
 ## Which domains expose which transport
 
 - Both HTTP and gRPC: `user`, `product`, `order`
-- gRPC only: `cart`
+- HTTP only: `payment`, `notification`
+
+The cart domain has been removed — carts are now client-side only. Order creation
+accepts the full line items and the server re-validates products, prices, and stock.
 
 ## Interface naming convention
 
