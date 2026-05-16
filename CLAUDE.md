@@ -79,8 +79,40 @@ as a map of where each lives so future work can extend the right package.
 - Order/payment services publish `OrderCreated`/`OrderPaid`/`OrderCancelled` events.
 
 ## Cross-cutting test infrastructure ✅
-- `internal/testutil/postgres.go` spins up Postgres testcontainers with migrations.
-- Integration tests are tagged `*_integration_test.go` and live alongside the package under test.
+- `internal/testutil/postgres.go` exposes `StartPostgres(ctx, t)` — boots a fresh `postgres:16-alpine` testcontainer per test, cleans up via `t.Cleanup`. No shared state.
+- Integration tests live alongside the package under test as `*_integration_test.go` and are gated by the `//go:build integration` build tag — invisible to `make unittest`/`go test ./...`.
+- Run locally with: `go test -tags=integration ./... -v` (requires a running Docker daemon).
+- Suites:
+  - `internal/order/repository/reservation_integration_test.go` — N goroutines race for the last unit, asserts exactly stock-many succeed (oversell impossible).
+  - `internal/order/service/sweeper_integration_test.go` — TTL reservation release + order cancellation.
+  - `internal/order/port/http/order_integration_test.go`, `internal/user/port/http/user_integration_test.go`, `internal/product/port/http/product_integration_test.go` — HTTP end-to-end.
+  - `internal/payment/service/service_integration_test.go` — Stripe + DB flow.
+  - `pkg/notification/email_integration_test.go` — MailHog SMTP container.
+- Gap: CI workflow (`.github/workflows/ci.yml`) only runs `make unittest`; integration tests are not yet wired into CI and there is no `make integration` target.
+
+## Planned: dedicated `tests/` directory
+
+Future refactor — integration + end-to-end tests will move out of the domain packages
+into a top-level `tests/` tree. Intent:
+
+```
+tests/
+  integration/     — moved from internal/**/...integration_test.go
+    order/
+    payment/
+    product/
+    user/
+    notification/
+  e2e/             — new full-stack flows (API + Stripe webhook + MailHog)
+  testutil/        — moved from internal/testutil (Postgres, MailHog, stripe-mock helpers)
+```
+
+When implementing:
+- Each subdir gets its own `package tests_<name>` and keeps the `//go:build integration` (or `e2e`) tag.
+- Replace `goshop/internal/testutil` imports with `goshop/tests/testutil` project-wide.
+- Add Makefile targets: `make integration` (`go test -tags=integration ./tests/integration/...`), `make e2e` (`-tags=e2e ./tests/e2e/...`).
+- Add a CI job that runs both with Docker available (testcontainers needs the daemon).
+- Keep unit tests in-package — only move suites that currently have `//go:build integration`.
 
 ## Commit Convention
 
