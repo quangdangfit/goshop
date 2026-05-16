@@ -129,6 +129,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=sha,format=short,prefix=${{ github.ref_name }}-
+            type=sha,prefix=master-,format=short
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
