@@ -1,8 +1,8 @@
-name: CD - Build & Push Docker image
+name: "CD: Build & Push Docker image"
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["CI: Build, Lint & Test"]
     types: [completed]
     branches: [master]
   push:
@@ -39,7 +39,7 @@ jobs:
             suffix: '-web'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
