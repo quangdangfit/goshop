@@ -25,80 +25,68 @@ func newProductSQLMockDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	return g, m
 }
 
-func TestReserveStock_Success(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products" SET "reserved_quantity"`).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	require.NoError(t, NewProductRepository(dbm).ReserveStock(context.Background(), "p1", 2))
-}
+// TestProductReservation exercises the three single-statement UPDATEs that drive the
+// inventory state machine. Each method has the same outcome matrix: zero rows affected
+// is a sentinel error, a DB error propagates, otherwise success.
+func TestProductReservation(t *testing.T) {
+	const sqlPattern = `UPDATE "products"`
 
-func TestReserveStock_InsufficientStock(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products" SET "reserved_quantity"`).
-		WillReturnResult(sqlmock.NewResult(0, 0))
-	err := NewProductRepository(dbm).ReserveStock(context.Background(), "p1", 2)
-	require.ErrorIs(t, err, ErrInsufficientStock)
-}
+	type outcome struct {
+		rowsAffected int64
+		dbErr        error
+		wantErrIs    error // assert errors.Is on this; nil means require.NoError
+		wantAnyErr   bool  // when wantErrIs is nil but we still expect *some* error
+	}
+	type call func(repo ProductRepository) error
 
-func TestReserveStock_DBError(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products"`).WillReturnError(errors.New("boom"))
-	require.Error(t, NewProductRepository(dbm).ReserveStock(context.Background(), "p1", 2))
-}
+	reserve := func(repo ProductRepository) error {
+		return repo.ReserveStock(context.Background(), "p1", 2)
+	}
+	commit := func(repo ProductRepository) error {
+		return repo.CommitReservation(context.Background(), "p1", 1)
+	}
+	release := func(repo ProductRepository) error {
+		return repo.ReleaseReservation(context.Background(), "p1", 1)
+	}
 
-func TestCommitReservation_Success(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products" SET "reserved_quantity"=.+,"stock_quantity"=`).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	require.NoError(t, NewProductRepository(dbm).CommitReservation(context.Background(), "p1", 1))
-}
+	tests := []struct {
+		name    string
+		fn      call
+		outcome outcome
+	}{
+		{"reserve_success", reserve, outcome{rowsAffected: 1}},
+		{"reserve_insufficient_stock", reserve, outcome{rowsAffected: 0, wantErrIs: ErrInsufficientStock}},
+		{"reserve_db_error", reserve, outcome{dbErr: errors.New("boom"), wantAnyErr: true}},
 
-func TestCommitReservation_NoRowError(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products"`).WillReturnResult(sqlmock.NewResult(0, 0))
-	require.Error(t, NewProductRepository(dbm).CommitReservation(context.Background(), "p1", 1))
-}
+		{"commit_success", commit, outcome{rowsAffected: 1}},
+		{"commit_no_rows", commit, outcome{rowsAffected: 0, wantAnyErr: true}},
+		{"commit_db_error", commit, outcome{dbErr: errors.New("boom"), wantAnyErr: true}},
 
-func TestCommitReservation_DBError(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products"`).WillReturnError(errors.New("boom"))
-	require.Error(t, NewProductRepository(dbm).CommitReservation(context.Background(), "p1", 1))
-}
+		{"release_success", release, outcome{rowsAffected: 1}},
+		{"release_no_rows_sentinel", release, outcome{rowsAffected: 0, wantErrIs: ErrReservationAlreadyReleased}},
+		{"release_db_error", release, outcome{dbErr: errors.New("boom"), wantAnyErr: true}},
+	}
 
-func TestReleaseReservation_Success(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products" SET "reserved_quantity"`).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	require.NoError(t, NewProductRepository(dbm).ReleaseReservation(context.Background(), "p1", 1))
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g, m := newProductSQLMockDB(t)
+			dbm := dbsMocks.NewDatabase(t)
+			dbm.On("GetDB").Return(g)
+			if tt.outcome.dbErr != nil {
+				m.ExpectExec(sqlPattern).WillReturnError(tt.outcome.dbErr)
+			} else {
+				m.ExpectExec(sqlPattern).WillReturnResult(sqlmock.NewResult(0, tt.outcome.rowsAffected))
+			}
 
-func TestReleaseReservation_NoRowReturnsSentinel(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products"`).WillReturnResult(sqlmock.NewResult(0, 0))
-	err := NewProductRepository(dbm).ReleaseReservation(context.Background(), "p1", 1)
-	require.ErrorIs(t, err, ErrReservationAlreadyReleased)
-}
-
-func TestReleaseReservation_DBError(t *testing.T) {
-	g, m := newProductSQLMockDB(t)
-	dbm := dbsMocks.NewDatabase(t)
-	dbm.On("GetDB").Return(g)
-	m.ExpectExec(`UPDATE "products"`).WillReturnError(errors.New("boom"))
-	require.Error(t, NewProductRepository(dbm).ReleaseReservation(context.Background(), "p1", 1))
+			err := tt.fn(NewProductRepository(dbm))
+			switch {
+			case tt.outcome.wantErrIs != nil:
+				require.ErrorIs(t, err, tt.outcome.wantErrIs)
+			case tt.outcome.wantAnyErr:
+				require.Error(t, err)
+			default:
+				require.NoError(t, err)
+			}
+		})
+	}
 }

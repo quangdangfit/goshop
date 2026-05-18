@@ -231,84 +231,82 @@ func newWebhookSvc(t *testing.T, evt payment.EventType) (PaymentService, *stubRe
 	return NewPaymentService(prov, repo, &stubOrderQuery{}, osvc), repo, osvc
 }
 
-func TestHandleWebhook_Succeeded(t *testing.T) {
-	svc, repo, osvc := newWebhookSvc(t, payment.EventPaymentSucceeded)
-	osvc.On("MarkOrderPaid", mock.Anything, "o1").Return(&orderModel.Order{}, nil).Once()
-	require.NoError(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-	require.Equal(t, 1, repo.updateCall)
-}
+// TestHandleWebhook_PerEventType covers the per-event-type dispatch matrix in
+// HandleWebhook: for each provider event we exercise the happy path, the
+// repo.Update failure, and (where applicable) the downstream orderService
+// failure. The flow inside the handler is always repo.Update → orderService,
+// so an Update failure short-circuits before any orderService call.
+func TestHandleWebhook_PerEventType(t *testing.T) {
+	const (
+		osvcMarkPaid = "MarkOrderPaid"
+		osvcUpdate   = "UpdateOrderStatus"
+	)
+	type osvcCall struct {
+		method    string
+		newStatus orderModel.OrderStatus
+		returnErr bool
+	}
+	tests := []struct {
+		name      string
+		event     payment.EventType
+		updateErr bool
+		osvc      *osvcCall
+		wantErr   bool
+	}{
+		{"succeeded_happy", payment.EventPaymentSucceeded, false, &osvcCall{method: osvcMarkPaid}, false},
+		{"succeeded_update_error", payment.EventPaymentSucceeded, true, nil, true},
+		{"succeeded_mark_paid_error", payment.EventPaymentSucceeded, false, &osvcCall{method: osvcMarkPaid, returnErr: true}, true},
 
-func TestHandleWebhook_Succeeded_UpdateError(t *testing.T) {
-	svc, repo, _ := newWebhookSvc(t, payment.EventPaymentSucceeded)
-	repo.updateFn = func(_ context.Context, _ *model.Payment) error { return errors.New("db") }
-	require.Error(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
+		{"failed_happy", payment.EventPaymentFailed, false, &osvcCall{method: osvcUpdate, newStatus: orderModel.OrderStatusPaymentFailed}, false},
+		{"failed_update_error", payment.EventPaymentFailed, true, nil, true},
+		{"failed_order_update_error", payment.EventPaymentFailed, false, &osvcCall{method: osvcUpdate, newStatus: orderModel.OrderStatusPaymentFailed, returnErr: true}, true},
 
-func TestHandleWebhook_Succeeded_MarkPaidError(t *testing.T) {
-	svc, _, osvc := newWebhookSvc(t, payment.EventPaymentSucceeded)
-	osvc.On("MarkOrderPaid", mock.Anything, "o1").Return(nil, errors.New("commit failed")).Once()
-	require.Error(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
+		{"canceled_happy", payment.EventPaymentCanceled, false, &osvcCall{method: osvcUpdate, newStatus: orderModel.OrderStatusCancelled}, false},
+		{"canceled_update_error", payment.EventPaymentCanceled, true, nil, true},
+		{"canceled_order_update_error", payment.EventPaymentCanceled, false, &osvcCall{method: osvcUpdate, newStatus: orderModel.OrderStatusCancelled, returnErr: true}, true},
 
-func TestHandleWebhook_Failed(t *testing.T) {
-	svc, _, osvc := newWebhookSvc(t, payment.EventPaymentFailed)
-	osvc.On("UpdateOrderStatus", mock.Anything, "o1", orderModel.OrderStatusPaymentFailed).Return(&orderModel.Order{}, nil).Once()
-	require.NoError(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
+		{"processing_happy", payment.EventPaymentProcessing, false, nil, false},
+		{"processing_update_error", payment.EventPaymentProcessing, true, nil, true},
 
-func TestHandleWebhook_Failed_UpdateError(t *testing.T) {
-	svc, repo, _ := newWebhookSvc(t, payment.EventPaymentFailed)
-	repo.updateFn = func(_ context.Context, _ *model.Payment) error { return errors.New("db") }
-	require.Error(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
+		{"requires_action_happy", payment.EventPaymentRequiresAction, false, nil, false},
+		{"requires_action_update_error", payment.EventPaymentRequiresAction, true, nil, true},
 
-func TestHandleWebhook_Failed_OrderUpdateError(t *testing.T) {
-	svc, _, osvc := newWebhookSvc(t, payment.EventPaymentFailed)
-	osvc.On("UpdateOrderStatus", mock.Anything, "o1", orderModel.OrderStatusPaymentFailed).Return(nil, errors.New("nope")).Once()
-	require.Error(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
+		{"unknown_event_ignored", payment.EventType("unknown.weird"), false, nil, false},
+	}
 
-func TestHandleWebhook_Canceled(t *testing.T) {
-	svc, _, osvc := newWebhookSvc(t, payment.EventPaymentCanceled)
-	osvc.On("UpdateOrderStatus", mock.Anything, "o1", orderModel.OrderStatusCancelled).Return(&orderModel.Order{}, nil).Once()
-	require.NoError(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, repo, osvc := newWebhookSvc(t, tt.event)
+			if tt.updateErr {
+				repo.updateFn = func(_ context.Context, _ *model.Payment) error { return errors.New("db") }
+			}
+			if tt.osvc != nil {
+				var (
+					retOrder *orderModel.Order
+					retErr   error
+				)
+				if tt.osvc.returnErr {
+					retErr = errors.New("downstream order svc failed")
+				} else {
+					retOrder = &orderModel.Order{}
+				}
+				switch tt.osvc.method {
+				case osvcMarkPaid:
+					osvc.On("MarkOrderPaid", mock.Anything, "o1").Return(retOrder, retErr).Once()
+				case osvcUpdate:
+					osvc.On("UpdateOrderStatus", mock.Anything, "o1", tt.osvc.newStatus).Return(retOrder, retErr).Once()
+				}
+			}
 
-func TestHandleWebhook_Canceled_UpdateError(t *testing.T) {
-	svc, repo, _ := newWebhookSvc(t, payment.EventPaymentCanceled)
-	repo.updateFn = func(_ context.Context, _ *model.Payment) error { return errors.New("db") }
-	require.Error(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
-
-func TestHandleWebhook_Canceled_OrderUpdateError(t *testing.T) {
-	svc, _, osvc := newWebhookSvc(t, payment.EventPaymentCanceled)
-	osvc.On("UpdateOrderStatus", mock.Anything, "o1", orderModel.OrderStatusCancelled).Return(nil, errors.New("nope")).Once()
-	require.Error(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
-
-func TestHandleWebhook_Processing(t *testing.T) {
-	svc, _, _ := newWebhookSvc(t, payment.EventPaymentProcessing)
-	require.NoError(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
-
-func TestHandleWebhook_Processing_UpdateError(t *testing.T) {
-	svc, repo, _ := newWebhookSvc(t, payment.EventPaymentProcessing)
-	repo.updateFn = func(_ context.Context, _ *model.Payment) error { return errors.New("db") }
-	require.Error(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
-
-func TestHandleWebhook_RequiresAction(t *testing.T) {
-	svc, _, _ := newWebhookSvc(t, payment.EventPaymentRequiresAction)
-	require.NoError(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
-
-func TestHandleWebhook_RequiresAction_UpdateError(t *testing.T) {
-	svc, repo, _ := newWebhookSvc(t, payment.EventPaymentRequiresAction)
-	repo.updateFn = func(_ context.Context, _ *model.Payment) error { return errors.New("db") }
-	require.Error(t, svc.HandleWebhook(context.Background(), nil, "sig"))
-}
-
-func TestHandleWebhook_UnknownEventTypeIgnored(t *testing.T) {
-	svc, _, _ := newWebhookSvc(t, payment.EventType("unknown.weird"))
-	require.NoError(t, svc.HandleWebhook(context.Background(), nil, "sig"))
+			err := svc.HandleWebhook(context.Background(), nil, "sig")
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				if tt.event == payment.EventPaymentSucceeded {
+					require.Equal(t, 1, repo.updateCall)
+				}
+			}
+		})
+	}
 }
