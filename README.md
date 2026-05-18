@@ -214,7 +214,7 @@ Swagger UI: [http://localhost:8888/swagger/index.html](http://localhost:8888/swa
 
 ## Development
 
-**Run all tests with coverage**
+**Run all unit tests with coverage**
 
 ```bash
 make unittest
@@ -231,6 +231,24 @@ go test ./internal/product/service/... -v -run TestProductServiceTestSuite
 ```bash
 go test ./internal/product/service/... -v -run TestProductServiceTestSuite/TestCreateSuccess
 ```
+
+**Run integration tests**
+
+Integration suites live under `tests/integration/` (per-domain: `order`,
+`payment`, `user`, `product`, `notification`), are gated by the
+`//go:build integration` tag, and use [testcontainers](https://golang.testcontainers.org/)
+to spin up real Postgres / Redis / MailHog. They are invisible to `make
+unittest` / `go test ./...`.
+
+```bash
+make integration
+# = go test -tags=integration -timeout 9000s -v -coverprofile=coverage.integration.out ./tests/integration/...
+```
+
+Requirements: a running Docker daemon. The shared helpers (`StartPostgres`,
+`StartRedis`, `NewHTTPEnv`) live in `tests/testutil/`. CI runs the
+integration job in parallel with the unit job; both upload coverage to
+Codecov under the `unittest` / `integration` flags.
 
 **Regenerate mocks**
 
