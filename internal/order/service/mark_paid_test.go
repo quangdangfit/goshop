@@ -74,72 +74,73 @@ func (f *markPaidFixture) waitForEvents(t *testing.T, n int) {
 	t.Fatalf("expected %d LowStock events, got %d", n, len(f.captured))
 }
 
-func TestMarkOrderPaid_PublishesLowStockBelowThreshold(t *testing.T) {
-	f := newMarkPaidFixture(t)
-	order := &model.Order{ID: "o1", Status: model.OrderStatusPendingPayment}
-	reservations := []*model.StockReservation{{ID: "r1", OrderID: "o1", ProductID: "p1", Quantity: 1}}
+// TestMarkOrderPaid_LowStockEvent table-drives the post-commit LowStock-event
+// behavior: the happy commit path is identical across cases; only the final
+// GetProductByID outcome (stock value or error) varies.
+func TestMarkOrderPaid_LowStockEvent(t *testing.T) {
+	tests := []struct {
+		name             string
+		productResult    *model.Product
+		productErr       error
+		wantEvents       int
+		wantAvailable    int // only checked when wantEvents > 0
+		wantOrderSuccess bool
+	}{
+		{
+			name:             "publishes_event_when_below_threshold",
+			productResult:    &model.Product{ID: "p1", StockQuantity: 4, ReservedQuantity: 1},
+			wantEvents:       1,
+			wantAvailable:    3,
+			wantOrderSuccess: true,
+		},
+		{
+			name:             "no_event_when_above_threshold",
+			productResult:    &model.Product{ID: "p1", StockQuantity: 100, ReservedQuantity: 1},
+			wantEvents:       0,
+			wantOrderSuccess: true,
+		},
+		{
+			name:             "lookup_error_is_non_fatal",
+			productErr:       errors.New("db down"),
+			wantEvents:       0,
+			wantOrderSuccess: true,
+		},
+	}
 
-	f.repo.On("GetOrderByID", mock.Anything, "o1", true).Return(order, nil).Once()
-	f.reservRepo.On("FindActiveByOrderID", mock.Anything, "o1").Return(reservations, nil).Once()
-	f.productRepo.On("CommitReservation", mock.Anything, "p1", 1).Return(nil).Once()
-	f.reservRepo.On("UpdateStatus", mock.Anything, []string{"r1"}, model.ReservationStatusCommitted).Return(nil).Once()
-	f.repo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Once()
-	f.productRepo.On("GetProductByID", mock.Anything, "p1").
-		Return(&model.Product{ID: "p1", StockQuantity: 4, ReservedQuantity: 1}, nil).Once()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newMarkPaidFixture(t)
+			order := &model.Order{ID: "o1", Status: model.OrderStatusPendingPayment}
+			reservations := []*model.StockReservation{{ID: "r1", OrderID: "o1", ProductID: "p1", Quantity: 1}}
 
-	got, err := f.svc.MarkOrderPaid(context.Background(), "o1")
-	require.NoError(t, err)
-	require.Equal(t, model.OrderStatusPaid, got.Status)
+			f.repo.On("GetOrderByID", mock.Anything, "o1", true).Return(order, nil).Once()
+			f.reservRepo.On("FindActiveByOrderID", mock.Anything, "o1").Return(reservations, nil).Once()
+			f.productRepo.On("CommitReservation", mock.Anything, "p1", 1).Return(nil).Once()
+			f.reservRepo.On("UpdateStatus", mock.Anything, []string{"r1"}, model.ReservationStatusCommitted).Return(nil).Once()
+			f.repo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Once()
+			f.productRepo.On("GetProductByID", mock.Anything, "p1").Return(tt.productResult, tt.productErr).Once()
 
-	f.waitForEvents(t, 1)
-	require.Equal(t, "p1", f.captured[0].ProductID)
-	require.Equal(t, 3, f.captured[0].Available)
-	require.Equal(t, LowStockThreshold, f.captured[0].Threshold)
-}
+			got, err := f.svc.MarkOrderPaid(context.Background(), "o1")
+			if tt.wantOrderSuccess {
+				require.NoError(t, err)
+				require.Equal(t, model.OrderStatusPaid, got.Status)
+			} else {
+				require.Error(t, err)
+			}
 
-func TestMarkOrderPaid_NoEventAboveThreshold(t *testing.T) {
-	f := newMarkPaidFixture(t)
-	order := &model.Order{ID: "o1", Status: model.OrderStatusPendingPayment}
-	reservations := []*model.StockReservation{{ID: "r1", OrderID: "o1", ProductID: "p1", Quantity: 1}}
-
-	f.repo.On("GetOrderByID", mock.Anything, "o1", true).Return(order, nil).Once()
-	f.reservRepo.On("FindActiveByOrderID", mock.Anything, "o1").Return(reservations, nil).Once()
-	f.productRepo.On("CommitReservation", mock.Anything, "p1", 1).Return(nil).Once()
-	f.reservRepo.On("UpdateStatus", mock.Anything, []string{"r1"}, model.ReservationStatusCommitted).Return(nil).Once()
-	f.repo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Once()
-	f.productRepo.On("GetProductByID", mock.Anything, "p1").
-		Return(&model.Product{ID: "p1", StockQuantity: 100, ReservedQuantity: 1}, nil).Once()
-
-	_, err := f.svc.MarkOrderPaid(context.Background(), "o1")
-	require.NoError(t, err)
-
-	time.Sleep(50 * time.Millisecond)
-	f.capturedLock.Lock()
-	defer f.capturedLock.Unlock()
-	require.Empty(t, f.captured)
-}
-
-func TestMarkOrderPaid_LowStockFetchErrorIsNonFatal(t *testing.T) {
-	f := newMarkPaidFixture(t)
-	order := &model.Order{ID: "o1", Status: model.OrderStatusPendingPayment}
-	reservations := []*model.StockReservation{{ID: "r1", OrderID: "o1", ProductID: "p1", Quantity: 1}}
-
-	f.repo.On("GetOrderByID", mock.Anything, "o1", true).Return(order, nil).Once()
-	f.reservRepo.On("FindActiveByOrderID", mock.Anything, "o1").Return(reservations, nil).Once()
-	f.productRepo.On("CommitReservation", mock.Anything, "p1", 1).Return(nil).Once()
-	f.reservRepo.On("UpdateStatus", mock.Anything, []string{"r1"}, model.ReservationStatusCommitted).Return(nil).Once()
-	f.repo.On("UpdateOrder", mock.Anything, mock.Anything).Return(nil).Once()
-	f.productRepo.On("GetProductByID", mock.Anything, "p1").
-		Return(nil, errors.New("db down")).Once()
-
-	got, err := f.svc.MarkOrderPaid(context.Background(), "o1")
-	require.NoError(t, err)
-	require.Equal(t, model.OrderStatusPaid, got.Status)
-
-	time.Sleep(50 * time.Millisecond)
-	f.capturedLock.Lock()
-	defer f.capturedLock.Unlock()
-	require.Empty(t, f.captured)
+			if tt.wantEvents > 0 {
+				f.waitForEvents(t, tt.wantEvents)
+				require.Equal(t, "p1", f.captured[0].ProductID)
+				require.Equal(t, tt.wantAvailable, f.captured[0].Available)
+				require.Equal(t, LowStockThreshold, f.captured[0].Threshold)
+			} else {
+				time.Sleep(50 * time.Millisecond)
+				f.capturedLock.Lock()
+				defer f.capturedLock.Unlock()
+				require.Empty(t, f.captured)
+			}
+		})
+	}
 }
 
 func TestMarkOrderPaid_IdempotentOnAlreadyPaid(t *testing.T) {
@@ -153,13 +154,22 @@ func TestMarkOrderPaid_IdempotentOnAlreadyPaid(t *testing.T) {
 }
 
 func TestMarkOrderPaid_RejectsCancelledOrFailed(t *testing.T) {
-	for _, status := range []model.OrderStatus{model.OrderStatusCancelled, model.OrderStatusPaymentFailed} {
-		f := newMarkPaidFixture(t)
-		order := &model.Order{ID: "o1", Status: status}
-		f.repo.On("GetOrderByID", mock.Anything, "o1", true).Return(order, nil).Once()
+	tests := []struct {
+		name   string
+		status model.OrderStatus
+	}{
+		{"cancelled", model.OrderStatusCancelled},
+		{"payment_failed", model.OrderStatusPaymentFailed},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newMarkPaidFixture(t)
+			order := &model.Order{ID: "o1", Status: tt.status}
+			f.repo.On("GetOrderByID", mock.Anything, "o1", true).Return(order, nil).Once()
 
-		_, err := f.svc.MarkOrderPaid(context.Background(), "o1")
-		require.Error(t, err)
+			_, err := f.svc.MarkOrderPaid(context.Background(), "o1")
+			require.Error(t, err)
+		})
 	}
 }
 

@@ -73,25 +73,29 @@ func TestVerifyWebhook_BadBodyAfterValidSignature(t *testing.T) {
 	assert.Contains(t, err.Error(), "decode body")
 }
 
-func TestParseStripeSignature_BadTimestamp(t *testing.T) {
-	_, _, err := parseStripeSignature("t=notanumber,v1=abc")
-	assert.ErrorIs(t, err, payment.ErrInvalidSignature)
-}
-
-func TestParseStripeSignature_MissingTimestamp(t *testing.T) {
-	_, _, err := parseStripeSignature("v1=abc")
-	assert.ErrorIs(t, err, payment.ErrInvalidSignature)
-}
-
-func TestParseStripeSignature_MissingV1(t *testing.T) {
-	_, _, err := parseStripeSignature("t=1700000000")
-	assert.ErrorIs(t, err, payment.ErrInvalidSignature)
-}
-
-func TestParseStripeSignature_IgnoresMalformedParts(t *testing.T) {
-	now := int64(1700000000)
-	ts, sigs, err := parseStripeSignature("t=1700000000,foo,v1=abc")
-	require.NoError(t, err)
-	assert.Equal(t, now, ts)
-	assert.Equal(t, []string{"abc"}, sigs)
+func TestParseStripeSignature(t *testing.T) {
+	tests := []struct {
+		name     string
+		header   string
+		wantErr  error
+		wantTS   int64
+		wantSigs []string
+	}{
+		{name: "bad_timestamp", header: "t=notanumber,v1=abc", wantErr: payment.ErrInvalidSignature},
+		{name: "missing_timestamp", header: "v1=abc", wantErr: payment.ErrInvalidSignature},
+		{name: "missing_v1", header: "t=1700000000", wantErr: payment.ErrInvalidSignature},
+		{name: "ignores_malformed_parts", header: "t=1700000000,foo,v1=abc", wantTS: 1700000000, wantSigs: []string{"abc"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts, sigs, err := parseStripeSignature(tt.header)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantTS, ts)
+			assert.Equal(t, tt.wantSigs, sigs)
+		})
+	}
 }

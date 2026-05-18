@@ -19,3 +19,5 @@ ignore:
   - "vendor/"
   - "proto/"
   - "internal/server"
+  - "tests"
+  - "web"
