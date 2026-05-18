@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -847,6 +848,8 @@ func TestOrderAPI_ListOrdersWithPagination(t *testing.T) {
 		Status: model.OrderStatusDone,
 	}
 	_ = dbTest.Create(context.Background(), &o1)
+	// Ensure o2 lands in a later timestamp tick so newest-first sort is deterministic.
+	time.Sleep(2 * time.Millisecond)
 
 	o2 := model.Order{
 		UserID: u.ID,
@@ -869,8 +872,9 @@ func TestOrderAPI_ListOrdersWithPagination(t *testing.T) {
 	assert.Equal(t, int64(2), res.Pagination.TotalPage)
 	assert.Equal(t, int64(1), res.Pagination.Limit)
 	assert.Equal(t, 1, len(res.Orders))
-	assert.Equal(t, o2.Lines[0].ProductID, res.Orders[0].Lines[0].Product.ID)
-	assert.Equal(t, o2.Lines[0].Quantity, res.Orders[0].Lines[0].Quantity)
+	// Default sort is created_at DESC, so page 2 (limit 1) returns the older order (o1).
+	assert.Equal(t, o1.Lines[0].ProductID, res.Orders[0].Lines[0].Product.ID)
+	assert.Equal(t, o1.Lines[0].Quantity, res.Orders[0].Lines[0].Quantity)
 }
 
 func TestOrderAPI_ListOrdersWithOrder(t *testing.T) {
@@ -907,6 +911,7 @@ func TestOrderAPI_ListOrdersWithOrder(t *testing.T) {
 		Status: model.OrderStatusDone,
 	}
 	_ = dbTest.Create(context.Background(), &o1)
+	time.Sleep(2 * time.Millisecond)
 
 	o2 := model.Order{
 		UserID: u.ID,
