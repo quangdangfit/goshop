@@ -555,11 +555,16 @@ func TestOrderAPI_ListOrdersSuccess(t *testing.T) {
 	assert.Equal(t, int64(1), res.Pagination.TotalPage)
 	assert.Equal(t, int64(20), res.Pagination.Limit)
 	assert.Equal(t, 2, len(res.Orders))
-	assert.Equal(t, o1.Lines[0].ProductID, res.Orders[0].Lines[0].Product.ID)
-	assert.Equal(t, o1.Lines[0].Quantity, res.Orders[0].Lines[0].Quantity)
 
-	assert.Equal(t, o2.Lines[0].ProductID, res.Orders[1].Lines[0].Product.ID)
-	assert.Equal(t, o2.Lines[0].Quantity, res.Orders[1].Lines[0].Quantity)
+	// Repo orders newest-first by created_at; when both inserts land in the same
+	// timestamp tick (testcontainers Postgres on local socket), the tiebreaker is
+	// undefined. Assert set-equivalence instead of positional ordering.
+	got := map[string]uint{}
+	for _, o := range res.Orders {
+		got[o.Lines[0].Product.ID] = o.Lines[0].Quantity
+	}
+	assert.Equal(t, o1.Lines[0].Quantity, got[o1.Lines[0].ProductID])
+	assert.Equal(t, o2.Lines[0].Quantity, got[o2.Lines[0].ProductID])
 }
 
 func TestOrderAPI_ListOrdersNotFound(t *testing.T) {
