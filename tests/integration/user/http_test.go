@@ -1,4 +1,6 @@
-package http_test
+//go:build integration
+
+package tests_user
 
 import (
 	"context"
@@ -17,7 +19,6 @@ import (
 // =================================================================================================
 
 func TestUserAPI_LoginSuccess(t *testing.T) {
-	requireIntegration(t)
 	_ = dbTest.Create(context.Background(), &model.User{
 		Email:    "login@test.com",
 		Password: "test123456",
@@ -32,7 +33,6 @@ func TestUserAPI_LoginSuccess(t *testing.T) {
 }
 
 func TestUserAPI_LoginInvalidFieldType(t *testing.T) {
-	requireIntegration(t)
 	user := map[string]interface{}{
 		"email":    1,
 		"password": "test123456",
@@ -45,7 +45,6 @@ func TestUserAPI_LoginInvalidFieldType(t *testing.T) {
 }
 
 func TestUserAPI_LoginInvalidEmailFormat(t *testing.T) {
-	requireIntegration(t)
 	user := &domain.LoginReq{
 		Email:    "invalid",
 		Password: "test123456",
@@ -58,7 +57,6 @@ func TestUserAPI_LoginInvalidEmailFormat(t *testing.T) {
 }
 
 func TestUserAPI_LoginInvalidPassword(t *testing.T) {
-	requireIntegration(t)
 	user := &domain.LoginReq{
 		Email:    "test@test.com",
 		Password: "test",
@@ -71,7 +69,6 @@ func TestUserAPI_LoginInvalidPassword(t *testing.T) {
 }
 
 func TestUserAPI_LoginUserNotFound(t *testing.T) {
-	requireIntegration(t)
 	user := &domain.LoginReq{
 		Email:    "notfound@test.com",
 		Password: "test123456",
@@ -84,7 +81,6 @@ func TestUserAPI_LoginUserNotFound(t *testing.T) {
 }
 
 func TestUserAPI_LoginUserWrongPassword(t *testing.T) {
-	requireIntegration(t)
 	user := &domain.LoginReq{
 		Email:    "test@test.com",
 		Password: "test1234567",
@@ -100,7 +96,6 @@ func TestUserAPI_LoginUserWrongPassword(t *testing.T) {
 // =================================================================================================
 
 func TestUserAPI_RegisterSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	user := &domain.RegisterReq{
@@ -112,7 +107,6 @@ func TestUserAPI_RegisterSuccess(t *testing.T) {
 }
 
 func TestUserAPI_RegisterInvalidFieldType(t *testing.T) {
-	requireIntegration(t)
 	user := map[string]interface{}{
 		"email":    1,
 		"password": "test123456",
@@ -125,7 +119,6 @@ func TestUserAPI_RegisterInvalidFieldType(t *testing.T) {
 }
 
 func TestUserAPI_RegisterInvalidEmail(t *testing.T) {
-	requireIntegration(t)
 	user := map[string]interface{}{
 		"email":    "invalid",
 		"password": "test123456",
@@ -138,7 +131,6 @@ func TestUserAPI_RegisterInvalidEmail(t *testing.T) {
 }
 
 func TestUserAPI_RegisterInvalidPassword(t *testing.T) {
-	requireIntegration(t)
 	user := map[string]interface{}{
 		"email":    "register@test.com",
 		"password": "test",
@@ -151,7 +143,6 @@ func TestUserAPI_RegisterInvalidPassword(t *testing.T) {
 }
 
 func TestUserAPI_RegisterEmailExist(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	_ = dbTest.Create(context.Background(), &model.User{
@@ -174,7 +165,6 @@ func TestUserAPI_RegisterEmailExist(t *testing.T) {
 // =================================================================================================
 
 func TestUserAPI_GetMeSuccess(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("GET", "/api/v1/auth/me", nil, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -184,13 +174,11 @@ func TestUserAPI_GetMeSuccess(t *testing.T) {
 }
 
 func TestUserAPI_GetMeUnauthorized(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("GET", "/api/v1/auth/me", nil, "")
 	assert.Equal(t, http.StatusUnauthorized, writer.Code)
 }
 
 func TestUserAPI_GetMeUserNotFound(t *testing.T) {
-	requireIntegration(t)
 	token := jtoken.GenerateAccessToken(map[string]interface{}{
 		"id": "user-not-found",
 	})
@@ -203,7 +191,6 @@ func TestUserAPI_GetMeUserNotFound(t *testing.T) {
 }
 
 func TestUserAPI_GetMeInvalidTokenType(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("GET", "/api/v1/auth/me", nil, refreshToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -214,7 +201,6 @@ func TestUserAPI_GetMeInvalidTokenType(t *testing.T) {
 // =================================================================================================
 
 func TestUserAPI_RefreshTokenSuccess(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("POST", "/api/v1/auth/refresh", nil, refreshToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -223,7 +209,6 @@ func TestUserAPI_RefreshTokenSuccess(t *testing.T) {
 }
 
 func TestUserAPI_RefreshTokenUnauthorized(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("POST", "/api/v1/auth/refresh", nil, "")
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -231,7 +216,6 @@ func TestUserAPI_RefreshTokenUnauthorized(t *testing.T) {
 }
 
 func TestUserAPI_RefreshTokenInvalidTokenType(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("POST", "/api/v1/auth/refresh", nil, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -239,7 +223,6 @@ func TestUserAPI_RefreshTokenInvalidTokenType(t *testing.T) {
 }
 
 func TestUserAPI_RefreshTokenUserNotFound(t *testing.T) {
-	requireIntegration(t)
 	token := jtoken.GenerateRefreshToken(map[string]interface{}{
 		"id": "user-not-found",
 	})
@@ -255,7 +238,6 @@ func TestUserAPI_RefreshTokenUserNotFound(t *testing.T) {
 // =================================================================================================
 
 func TestUserAPI_ChangePasswordSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	user := model.User{Email: "changepassword1@gmail.com", Password: "123456"}
@@ -275,7 +257,6 @@ func TestUserAPI_ChangePasswordSuccess(t *testing.T) {
 }
 
 func TestUserAPI_ChangePasswordUnauthorized(t *testing.T) {
-	requireIntegration(t)
 	req := &domain.ChangePasswordReq{
 		Password:    "123456",
 		NewPassword: "new123456",
@@ -286,7 +267,6 @@ func TestUserAPI_ChangePasswordUnauthorized(t *testing.T) {
 }
 
 func TestUserAPI_ChangePasswordIsWrong(t *testing.T) {
-	requireIntegration(t)
 	req := &domain.ChangePasswordReq{
 		Password:    "wrong123456",
 		NewPassword: "new123456",
@@ -300,7 +280,6 @@ func TestUserAPI_ChangePasswordIsWrong(t *testing.T) {
 }
 
 func TestUserAPI_ChangePasswordInvalidNewPassword(t *testing.T) {
-	requireIntegration(t)
 	req := &domain.ChangePasswordReq{
 		Password:    "test123456",
 		NewPassword: "new",
@@ -314,7 +293,6 @@ func TestUserAPI_ChangePasswordInvalidNewPassword(t *testing.T) {
 }
 
 func TestUserAPI_ChangePasswordInvalidFieldType(t *testing.T) {
-	requireIntegration(t)
 	req := map[string]interface{}{
 		"password":     1,
 		"new_password": "new",

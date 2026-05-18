@@ -1,4 +1,6 @@
-package http_test
+//go:build integration
+
+package tests_product
 
 import (
 	"context"
@@ -17,7 +19,6 @@ import (
 // =================================================================================================
 
 func TestProductAPI_GetProductByIDSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -37,7 +38,6 @@ func TestProductAPI_GetProductByIDSuccess(t *testing.T) {
 }
 
 func TestProductAPI_GetProductByIDSuccessFromCache(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -64,7 +64,6 @@ func TestProductAPI_GetProductByIDSuccessFromCache(t *testing.T) {
 }
 
 func TestProductAPI_GetProductByIDNotFound(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 	writer := makeRequest("GET", "/api/v1/products/notfound", nil, accessToken())
 	var response map[string]map[string]string
@@ -77,7 +76,6 @@ func TestProductAPI_GetProductByIDNotFound(t *testing.T) {
 // =================================================================================================
 
 func TestProductAPI_ListProductsSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -102,7 +100,6 @@ func TestProductAPI_ListProductsSuccess(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsSuccessFromCache(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -139,7 +136,6 @@ func TestProductAPI_ListProductsSuccessFromCache(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsNotFound(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 	writer := makeRequest("GET", "/api/v1/products", nil, accessToken())
 	var res domain.ListProductRes
@@ -149,7 +145,6 @@ func TestProductAPI_ListProductsNotFound(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsInvalidFieldType(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 	writer := makeRequest("GET", "/api/v1/products?page=a", nil, accessToken())
 	var response map[string]map[string]string
@@ -159,7 +154,6 @@ func TestProductAPI_ListProductsInvalidFieldType(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsFindByNameSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -184,7 +178,6 @@ func TestProductAPI_ListProductsFindByNameSuccess(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsFindByNameNotFound(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -202,7 +195,6 @@ func TestProductAPI_ListProductsFindByNameNotFound(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsFindByCodeSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -227,7 +219,6 @@ func TestProductAPI_ListProductsFindByCodeSuccess(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsFindByCodeNotFound(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -245,7 +236,6 @@ func TestProductAPI_ListProductsFindByCodeNotFound(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsWithPagination(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p1 := model.Product{
@@ -284,7 +274,6 @@ func TestProductAPI_ListProductsWithPagination(t *testing.T) {
 }
 
 func TestProductAPI_ListProductsWithOrder(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p1 := model.Product{
@@ -326,7 +315,6 @@ func TestProductAPI_ListProductsWithOrder(t *testing.T) {
 // =================================================================================================
 
 func TestProductAPI_CreateProductSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := &domain.CreateProductReq{
@@ -344,7 +332,6 @@ func TestProductAPI_CreateProductSuccess(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductInvalidFieldType(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := map[string]interface{}{
@@ -360,7 +347,6 @@ func TestProductAPI_CreateProductInvalidFieldType(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductMissingName(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := &domain.CreateProductReq{
@@ -375,7 +361,6 @@ func TestProductAPI_CreateProductMissingName(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductMissingDescription(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := &domain.CreateProductReq{
@@ -390,7 +375,6 @@ func TestProductAPI_CreateProductMissingDescription(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductPriceLessThanZero(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := &domain.CreateProductReq{
@@ -406,7 +390,6 @@ func TestProductAPI_CreateProductPriceLessThanZero(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductPriceEqualZero(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := &domain.CreateProductReq{
@@ -422,7 +405,6 @@ func TestProductAPI_CreateProductPriceEqualZero(t *testing.T) {
 }
 
 func TestProductAPI_CreateProductDuplicateName(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -443,7 +425,6 @@ func TestProductAPI_CreateProductDuplicateName(t *testing.T) {
 // =================================================================================================
 
 func TestProductAPI_UpdateProductSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -466,7 +447,6 @@ func TestProductAPI_UpdateProductSuccess(t *testing.T) {
 }
 
 func TestProductAPI_UpdateProductInvalidFieldType(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -487,7 +467,6 @@ func TestProductAPI_UpdateProductInvalidFieldType(t *testing.T) {
 }
 
 func TestProductAPI_UpdateProductPriceLessThanZero(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p := model.Product{
@@ -508,7 +487,6 @@ func TestProductAPI_UpdateProductPriceLessThanZero(t *testing.T) {
 }
 
 func TestProductAPI_UpdateProductNotFound(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 	update := &domain.UpdateProductReq{
 		Price: 1,

@@ -1,4 +1,6 @@
-package http_test
+//go:build integration
+
+package tests_order
 
 import (
 	"context"
@@ -20,7 +22,6 @@ import (
 // =================================================================================================
 
 func TestOrderAPI_PlaceOrderSuccess(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p1 := productModel.Product{
@@ -68,7 +69,6 @@ func TestOrderAPI_PlaceOrderSuccess(t *testing.T) {
 }
 
 func TestOrderAPI_PlaceOrderInvalidFieldType(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p1 := productModel.Product{
@@ -105,7 +105,6 @@ func TestOrderAPI_PlaceOrderInvalidFieldType(t *testing.T) {
 }
 
 func TestOrderAPI_PlaceOrderInvalidMissProductID(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p1 := productModel.Product{
@@ -141,7 +140,6 @@ func TestOrderAPI_PlaceOrderInvalidMissProductID(t *testing.T) {
 }
 
 func TestOrderAPI_PlaceOrderInvalidMissQuantity(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p1 := productModel.Product{
@@ -177,7 +175,6 @@ func TestOrderAPI_PlaceOrderInvalidMissQuantity(t *testing.T) {
 }
 
 func TestOrderAPI_PlaceOrderInvalidProductNotFound(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p1 := productModel.Product{
@@ -214,7 +211,6 @@ func TestOrderAPI_PlaceOrderInvalidProductNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_PlaceOrderUnauthorized(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	p1 := productModel.Product{
@@ -252,7 +248,6 @@ func TestOrderAPI_PlaceOrderUnauthorized(t *testing.T) {
 // =================================================================================================
 
 func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@gmail.com",
 		Password: "test123456",
@@ -304,7 +299,6 @@ func TestOrderAPI_GetOrderByIDSuccess(t *testing.T) {
 }
 
 func TestOrderAPI_GetOrderByIDNotFound(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("GET", "/api/v1/orders/notfound", nil, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -316,7 +310,6 @@ func TestOrderAPI_GetOrderByIDNotFound(t *testing.T) {
 // =================================================================================================
 
 func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -359,7 +352,6 @@ func TestOrderAPI_CancelOrderSuccess(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderNotFound(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("PUT", "/api/v1/orders/notfound/cancel", nil, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -368,7 +360,6 @@ func TestOrderAPI_CancelOrderNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -415,7 +406,6 @@ func TestOrderAPI_CancelOrderStatusDone(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -462,7 +452,6 @@ func TestOrderAPI_CancelOrderStatusCancelled(t *testing.T) {
 }
 
 func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -511,7 +500,6 @@ func TestOrderAPI_CancelOrderNotMine(t *testing.T) {
 // =================================================================================================
 
 func TestOrderAPI_ListOrdersSuccess(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -575,7 +563,6 @@ func TestOrderAPI_ListOrdersSuccess(t *testing.T) {
 }
 
 func TestOrderAPI_ListOrdersNotFound(t *testing.T) {
-	requireIntegration(t)
 	defer cleanData()
 
 	writer := makeRequest("GET", "/api/v1/orders", nil, accessToken())
@@ -586,7 +573,6 @@ func TestOrderAPI_ListOrdersNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_ListOrdersInvalidFieldType(t *testing.T) {
-	requireIntegration(t)
 	writer := makeRequest("GET", "/api/v1/orders?page=a", nil, accessToken())
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)
@@ -595,7 +581,6 @@ func TestOrderAPI_ListOrdersInvalidFieldType(t *testing.T) {
 }
 
 func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -656,7 +641,6 @@ func TestOrderAPI_ListMyOrdersFindByStatusSuccess(t *testing.T) {
 }
 
 func TestOrderAPI_ListOrdersFindByStatusNotFound(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -711,7 +695,6 @@ func TestOrderAPI_ListOrdersFindByStatusNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_ListOrdersFindByCodeSuccess(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -772,7 +755,6 @@ func TestOrderAPI_ListOrdersFindByCodeSuccess(t *testing.T) {
 }
 
 func TestOrderAPI_ListOrdersFindByCodeNotFound(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -827,7 +809,6 @@ func TestOrderAPI_ListOrdersFindByCodeNotFound(t *testing.T) {
 }
 
 func TestOrderAPI_ListOrdersWithPagination(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -888,7 +869,6 @@ func TestOrderAPI_ListOrdersWithPagination(t *testing.T) {
 }
 
 func TestOrderAPI_ListOrdersWithOrder(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",
@@ -952,7 +932,6 @@ func TestOrderAPI_ListOrdersWithOrder(t *testing.T) {
 }
 
 func TestOrderAPI_GetMyOrdersNotMine(t *testing.T) {
-	requireIntegration(t)
 	u := userModel.User{
 		Email:    "test1@test.com",
 		Password: "test123456",

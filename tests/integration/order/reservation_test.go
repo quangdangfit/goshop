@@ -1,6 +1,6 @@
 //go:build integration
 
-package repository_test
+package tests_order
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	orderModel "goshop/internal/order/model"
 	"goshop/internal/order/repository"
 	productModel "goshop/internal/product/model"
-	"goshop/internal/testutil"
+	"goshop/tests/testutil"
 )
 
 // TestReserveStock_Concurrency is the headline correctness test for the inventory flow:
@@ -44,15 +44,15 @@ func TestReserveStock_Concurrency(t *testing.T) {
 	repo := repository.NewProductRepository(db)
 
 	var (
-		wg          sync.WaitGroup
-		ok, failed  atomic.Int64
-		start       = make(chan struct{})
+		wg         sync.WaitGroup
+		ok, failed atomic.Int64
+		start      = make(chan struct{})
 	)
 	for i := 0; i < racers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			<-start // unblock all goroutines simultaneously
+			<-start
 			err := repo.ReserveStock(ctx, product.ID, 1)
 			switch {
 			case err == nil:
