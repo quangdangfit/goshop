@@ -79,40 +79,31 @@ as a map of where each lives so future work can extend the right package.
 - Order/payment services publish `OrderCreated`/`OrderPaid`/`OrderCancelled` events.
 
 ## Cross-cutting test infrastructure ✅
-- `internal/testutil/postgres.go` exposes `StartPostgres(ctx, t)` — boots a fresh `postgres:16-alpine` testcontainer per test, cleans up via `t.Cleanup`. No shared state.
-- Integration tests live alongside the package under test as `*_integration_test.go` and are gated by the `//go:build integration` build tag — invisible to `make unittest`/`go test ./...`.
-- Run locally with: `go test -tags=integration ./... -v` (requires a running Docker daemon).
-- Suites:
-  - `internal/order/repository/reservation_integration_test.go` — N goroutines race for the last unit, asserts exactly stock-many succeed (oversell impossible).
-  - `internal/order/service/sweeper_integration_test.go` — TTL reservation release + order cancellation.
-  - `internal/order/port/http/order_integration_test.go`, `internal/user/port/http/user_integration_test.go`, `internal/product/port/http/product_integration_test.go` — HTTP end-to-end.
-  - `internal/payment/service/service_integration_test.go` — Stripe + DB flow.
-  - `pkg/notification/email_integration_test.go` — MailHog SMTP container.
-- Gap: CI workflow (`.github/workflows/ci.yml`) only runs `make unittest`; integration tests are not yet wired into CI and there is no `make integration` target.
 
-## Planned: dedicated `tests/` directory
+All integration tests live under the top-level `tests/` tree (one package per domain,
+`//go:build integration` tag) and use testcontainers for Postgres / Redis / MailHog.
 
-Future refactor — integration + end-to-end tests will move out of the domain packages
-into a top-level `tests/` tree. Intent:
+- `tests/testutil/` — shared container helpers:
+  - `StartPostgres(ctx, t)` / `StartPostgresM(ctx)` — fresh `postgres:16-alpine` per call.
+  - `StartRedis(ctx, t)` / `StartRedisM(ctx)` — fresh `redis:alpine` per call.
+  - `NewHTTPEnv(ctx)` — TestMain-friendly: Postgres + Redis + full Gin router (matches `cmd/api` wiring). Returns `*HTTPTestEnv{Engine, DB, Cache, Cleanup}`.
+- Suites (`tests/integration/<domain>/`, each `package tests_<domain>`):
+  - `order/reservation_test.go` — N goroutines race for the last unit, asserts no oversell.
+  - `order/sweeper_test.go` — TTL reservation release + order cancellation.
+  - `order/http_test.go` + `setup_test.go` — order HTTP end-to-end.
+  - `payment/service_test.go` — Stripe + DB flow.
+  - `payment/http_test.go` — Stripe HTTP route, real JWT, fake Stripe server.
+  - `user/http_test.go` + `setup_test.go` — auth + user HTTP end-to-end.
+  - `product/http_test.go` + `setup_test.go` — product HTTP end-to-end.
+  - `notification/email_test.go` — MailHog SMTP container.
+- Run locally: `make integration` (= `go test -tags=integration ./tests/integration/...`). Requires Docker daemon.
+- CI: dedicated `integration` job in `.github/workflows/ci.yml` runs `make integration` (ubuntu-latest runners include Docker, testcontainers manages its own containers — no `services:` block needed).
+- `make unittest` is unchanged and never sees these files (build tag excludes them from `./...`).
 
-```
-tests/
-  integration/     — moved from internal/**/...integration_test.go
-    order/
-    payment/
-    product/
-    user/
-    notification/
-  e2e/             — new full-stack flows (API + Stripe webhook + MailHog)
-  testutil/        — moved from internal/testutil (Postgres, MailHog, stripe-mock helpers)
-```
+## Planned: `tests/e2e/` (not yet started)
 
-When implementing:
-- Each subdir gets its own `package tests_<name>` and keeps the `//go:build integration` (or `e2e`) tag.
-- Replace `goshop/internal/testutil` imports with `goshop/tests/testutil` project-wide.
-- Add Makefile targets: `make integration` (`go test -tags=integration ./tests/integration/...`), `make e2e` (`-tags=e2e ./tests/e2e/...`).
-- Add a CI job that runs both with Docker available (testcontainers needs the daemon).
-- Keep unit tests in-package — only move suites that currently have `//go:build integration`.
+Reserved subtree for full-stack flows (API + Stripe webhook + MailHog) under
+`//go:build e2e`. Add a `make e2e` target when the first suite lands.
 
 ## Commit Convention
 

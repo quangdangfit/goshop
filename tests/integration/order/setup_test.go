@@ -1,112 +1,58 @@
-package http_test
+//go:build integration
+
+package tests_order
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"net"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/quangdangfit/gocommon/logger"
-	"github.com/quangdangfit/gocommon/validation"
 
 	orderModel "goshop/internal/order/model"
 	productModel "goshop/internal/product/model"
-	httpServer "goshop/internal/server/http"
-	domain "goshop/internal/user/domain"
+	userDomain "goshop/internal/user/domain"
 	userModel "goshop/internal/user/model"
-	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/redis"
 	"goshop/pkg/utils"
+	"goshop/tests/testutil"
 )
 
 var (
-	testRouter       *gin.Engine
-	dbTest           dbs.Database
-	testCache        redis.Redis
-	integrationReady bool
+	testRouter *gin.Engine
+	dbTest     dbs.Database
+	testCache  redis.Redis
 )
 
 func TestMain(m *testing.M) {
-	gin.SetMode(gin.TestMode)
-	integrationReady = setup()
-	exitCode := m.Run()
-	if integrationReady {
-		teardown()
-	}
-	os.Exit(exitCode)
-}
-
-func setup() bool {
-	cfg := config.LoadConfig()
-	logger.Initialize(config.ProductionEnv)
-
-	var err error
-	dbTest, err = dbs.NewDatabase(cfg.DatabaseURI)
+	env, err := testutil.NewHTTPEnv(context.Background())
 	if err != nil {
-		return false
+		fmt.Fprintf(os.Stderr, "integration setup failed: %v\n", err)
+		os.Exit(1)
 	}
-
-	err = dbTest.AutoMigrate(
-		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
-		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
-		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{},
-	)
-	if err != nil {
-		return false
-	}
-
-	conn, dialErr := net.DialTimeout("tcp", cfg.RedisURI, 2*time.Second)
-	if dialErr != nil {
-		return false
-	}
-	_ = conn.Close()
-
-	validator := validation.New()
-	testCache = redis.New(redis.Config{
-		Address:  cfg.RedisURI,
-		Password: cfg.RedisPassword,
-		Database: cfg.RedisDB,
-	})
-
-	server := httpServer.NewServer(validator, dbTest, testCache)
-	_ = server.MapRoutes()
-	testRouter = server.GetEngine()
+	testRouter = env.Engine
+	dbTest = env.DB
+	testCache = env.Cache
 
 	_ = dbTest.Create(context.Background(), &userModel.User{
 		Email:    "test@test.com",
 		Password: "test123456",
 	})
-
 	_ = dbTest.Create(context.Background(), &userModel.User{
 		Email:    "admin@test.com",
 		Password: "admin123456",
 		Role:     userModel.UserRoleAdmin,
 	})
 
-	return true
-}
-
-func teardown() {
-	migrator := dbTest.GetDB().Migrator()
-	_ = migrator.DropTable(
-		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
-		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
-		&orderModel.Coupon{}, &orderModel.Order{}, &orderModel.OrderLine{},
-	)
-}
-
-func requireIntegration(t *testing.T) {
-	t.Helper()
-	if !integrationReady {
-		t.Skip("integration test skipped: DB/Redis not available")
-	}
+	code := m.Run()
+	env.Cleanup()
+	os.Exit(code)
 }
 
 func makeRequest(method, url string, body interface{}, token string) *httptest.ResponseRecorder {
@@ -121,11 +67,10 @@ func makeRequest(method, url string, body interface{}, token string) *httptest.R
 }
 
 func accessToken() string {
-	user := domain.LoginReq{
+	user := userDomain.LoginReq{
 		Email:    "test@test.com",
 		Password: "test123456",
 	}
-
 	writer := makeRequest("POST", "/api/v1/auth/login", user, "")
 	var response map[string]map[string]string
 	_ = json.Unmarshal(writer.Body.Bytes(), &response)

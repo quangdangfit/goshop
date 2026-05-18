@@ -1,6 +1,6 @@
 //go:build integration
 
-package service_test
+package tests_order
 
 import (
 	"context"
@@ -14,9 +14,9 @@ import (
 	orderRepo "goshop/internal/order/repository"
 	orderSvc "goshop/internal/order/service"
 	productModel "goshop/internal/product/model"
-	"goshop/internal/testutil"
 	userModel "goshop/internal/user/model"
 	"goshop/pkg/notification"
+	"goshop/tests/testutil"
 )
 
 // TestSweepExpiredReservations_ReleasesAndCancels: a pending_payment order whose reservation
@@ -43,7 +43,6 @@ func TestSweepExpiredReservations_ReleasesAndCancels(t *testing.T) {
 	cSvc := orderSvc.NewCouponService(validation.New(), orderRepo.NewCouponRepository(db))
 	svc := orderSvc.NewOrderService(validation.New(), db, oRepo, pRepo, uRepo, rRepo, cSvc, notification.NewLoggerNotifier())
 
-	// Create order in pending_payment + an active reservation already expired.
 	order, err := oRepo.CreateOrder(ctx, user.ID, []*orderModel.OrderLine{{
 		ProductID: product.ID, Quantity: 2, Price: 10,
 	}}, "", 0)
@@ -56,14 +55,13 @@ func TestSweepExpiredReservations_ReleasesAndCancels(t *testing.T) {
 		ProductID: product.ID,
 		Quantity:  2,
 		Status:    orderModel.ReservationStatusActive,
-		ExpiresAt: time.Now().Add(-1 * time.Minute), // already expired
+		ExpiresAt: time.Now().Add(-1 * time.Minute),
 	}}))
 
 	released, err := svc.SweepExpiredReservations(ctx, 100)
 	require.NoError(t, err)
 	require.Equal(t, 1, released)
 
-	// Order cancelled, stock fully released.
 	var fresh orderModel.Order
 	require.NoError(t, db.GetDB().First(&fresh, "id = ?", order.ID).Error)
 	require.Equal(t, orderModel.OrderStatusCancelled, fresh.Status)
@@ -73,7 +71,6 @@ func TestSweepExpiredReservations_ReleasesAndCancels(t *testing.T) {
 	require.Equal(t, 4, freshProd.StockQuantity, "stock untouched on release")
 	require.Equal(t, 0, freshProd.ReservedQuantity, "reserved fully released")
 
-	// Sweeping again is a no-op (no expired reservations remain).
 	again, err := svc.SweepExpiredReservations(ctx, 100)
 	require.NoError(t, err)
 	require.Equal(t, 0, again)

@@ -1,6 +1,6 @@
 //go:build integration
 
-package service_test
+package tests_payment
 
 import (
 	"context"
@@ -26,7 +26,7 @@ import (
 	paymentRepo "goshop/internal/payment/repository"
 	paymentSvc "goshop/internal/payment/service"
 	productModel "goshop/internal/product/model"
-	"goshop/internal/testutil"
+	"goshop/tests/testutil"
 	userModel "goshop/internal/user/model"
 	"goshop/pkg/payment"
 	"goshop/pkg/payment/stripe"

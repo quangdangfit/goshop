@@ -15,7 +15,6 @@ import (
 
 // StartPostgres boots a throwaway Postgres 16 container, waits for it to accept connections,
 // and returns a wired dbs.Database. The caller is responsible for cleaning up via t.Cleanup.
-// Tests that run without a Docker daemon should call SkipIfNoDocker first.
 func StartPostgres(ctx context.Context, t *testing.T) dbs.Database {
 	t.Helper()
 
@@ -42,18 +41,55 @@ func StartPostgres(ctx context.Context, t *testing.T) dbs.Database {
 		t.Fatalf("postgres dsn: %v", err)
 	}
 
-	// Wait for psql readiness on top of testcontainers' wait-for-log to handle initdb races.
+	db, err := connectPostgres(dsn)
+	if err != nil {
+		t.Fatalf("connect to postgres: %v", err)
+	}
+	return db
+}
+
+// StartPostgresM is the TestMain-friendly variant. The returned cleanup must be invoked
+// before os.Exit.
+func StartPostgresM(ctx context.Context) (dbs.Database, func(), error) {
+	container, err := tcpostgres.Run(ctx,
+		"postgres:16-alpine",
+		tcpostgres.WithDatabase("goshop_test"),
+		tcpostgres.WithUsername("test"),
+		tcpostgres.WithPassword("test"),
+		tcpostgres.BasicWaitStrategies(),
+		tcpostgres.WithSQLDriver("pgx"),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	cleanup := func() {
+		shutdown, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = container.Terminate(shutdown)
+	}
+	dsn, err := container.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	db, err := connectPostgres(dsn)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	return db, cleanup, nil
+}
+
+func connectPostgres(dsn string) (dbs.Database, error) {
 	deadline := time.Now().Add(15 * time.Second)
-	var db dbs.Database
 	for {
-		db, err = dbs.NewDatabase(dsn)
+		db, err := dbs.NewDatabase(dsn)
 		if err == nil {
-			break
+			return db, nil
 		}
 		if time.Now().After(deadline) {
-			t.Fatalf("connect to postgres: %v", err)
+			return nil, err
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
-	return db
 }

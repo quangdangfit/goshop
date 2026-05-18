@@ -1,6 +1,6 @@
 //go:build integration
 
-package notification_test
+package tests_notification
 
 import (
 	"context"
