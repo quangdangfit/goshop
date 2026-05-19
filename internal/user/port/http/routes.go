@@ -36,24 +36,24 @@ func Routes(r *gin.RouterGroup, sqlDB dbs.Database, validator validation.Validat
 	authMiddleware = middleware.JWTAuth()
 	refreshAuthMiddleware = middleware.JWTRefresh()
 
-	// /auth/refresh, /auth/me and /auth/change-password are mounted in both
-	// modes so the FE can refresh tokens and load the profile regardless of
-	// how the user signed in.
+	// Password-based endpoints are always mounted — both auth modes accept
+	// email/password sign-in and self-service registration. OIDC mode adds
+	// SSO on top of that rather than replacing it.
+	authRoute.POST("/register", userHandler.Register)
+	authRoute.POST("/login", userHandler.Login)
 	authRoute.POST("/refresh", refreshAuthMiddleware, userHandler.RefreshToken)
 	authRoute.GET("/me", authMiddleware, userHandler.GetMe)
+	authRoute.PUT("/change-password", authMiddleware, userHandler.ChangePassword)
 
 	if cfg.AuthMode == config.AuthModeOIDC {
-		// OIDC mode: Authentik owns credentials, so password-based endpoints
-		// are disabled. /auth/login redirects to Authentik; /auth/callback
-		// trades the code for tokens and bounces the browser back to the FE.
+		// OIDC mode additionally exposes GET /auth/login (redirects to
+		// Authentik with an optional ?provider hint) and /auth/callback
+		// (exchanges the code, upserts the user, mints a GoShop JWT pair,
+		// then bounces the browser to the FE). The POST /auth/login route
+		// above coexists thanks to method-based routing.
 		oidcHandler := NewOIDCHandler(userSvc, cfg)
 		authRoute.GET("/login", oidcHandler.Login)
 		authRoute.GET("/callback", oidcHandler.Callback)
-	} else {
-		// Legacy JWT mode: email + bcrypt password.
-		authRoute.POST("/register", userHandler.Register)
-		authRoute.POST("/login", userHandler.Login)
-		authRoute.PUT("/change-password", authMiddleware, userHandler.ChangePassword)
 	}
 
 	addressRoute := r.Group("/addresses", authMiddleware)

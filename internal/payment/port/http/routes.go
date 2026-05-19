@@ -66,10 +66,13 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	// /webhooks/stripe — public, signature-verified.
 	r.POST("/webhooks/stripe", handler.StripeWebhook)
 
-	// /config/public — exposes the Stripe publishable key to the FE.
+	// /config/public — exposes non-secret config that the FE needs at boot
+	// (Stripe publishable key, auth mode so the login UI can decide whether
+	// to render the password form or SSO buttons).
 	r.GET("/config/public", func(c *gin.Context) {
 		response.JSON(c, http.StatusOK, gin.H{
 			"stripe_publishable_key": cfg.StripePublishableKey,
+			"auth_mode":              string(cfg.AuthMode),
 		})
 	})
 

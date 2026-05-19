@@ -1,10 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import { Eye, EyeOff, Store } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
+import { paymentsApi } from '@/api/payments'
+import SSOButtons from '@/components/SSOButtons'
 import { useAuth } from '@/context/AuthContext'
 
 const schema = z.object({
@@ -23,6 +26,14 @@ export default function RegisterPage() {
   const { register: registerUser } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
+
+  // In OIDC mode account creation happens at Authentik, not here.
+  const { data: cfg } = useQuery({
+    queryKey: ['publicConfig'],
+    queryFn: paymentsApi.publicConfig,
+    staleTime: Infinity,
+  })
+  const isOIDC = cfg?.auth_mode === 'oidc'
 
   const {
     register,
@@ -127,6 +138,19 @@ export default function RegisterPage() {
               {isSubmitting ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
+
+          {isOIDC && (
+            <>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400 uppercase">or sign up with</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+              <div className="mt-4">
+                <SSOButtons />
+              </div>
+            </>
+          )}
 
           <div className="mt-5 text-center text-sm text-gray-500">
             Already have an account?{' '}

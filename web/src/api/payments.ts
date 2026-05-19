@@ -10,6 +10,7 @@ export interface PaymentIntent {
 
 export interface PublicConfig {
   stripe_publishable_key: string
+  auth_mode: 'jwt' | 'oidc'
 }
 
 export const paymentsApi = {

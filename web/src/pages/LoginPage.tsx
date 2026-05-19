@@ -1,30 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import { Eye, EyeOff, Store } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
+import { paymentsApi } from '@/api/payments'
+import SSOButtons from '@/components/SSOButtons'
 import { useAuth } from '@/context/AuthContext'
-
-type SSOProvider = 'google' | 'facebook' | 'apple'
-
-/**
- * SSOButton kicks off the OIDC authorization-code flow. The browser hits the
- * GoShop API, which 302s to Authentik with the right upstream-IdP hint;
- * Authentik in turn redirects to Google / Facebook / Apple. On success the
- * API redirects back to /auth/callback with the GoShop JWT pair.
- */
-function SSOButton({ provider, label }: { provider: SSOProvider; label: string }) {
-  return (
-    <a
-      href={`/api/v1/auth/login?provider=${provider}`}
-      className="flex items-center justify-center gap-2 py-2 px-3 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-50"
-    >
-      {label}
-    </a>
-  )
-}
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -39,6 +23,15 @@ export default function LoginPage() {
   const location = useLocation()
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/'
   const [showPassword, setShowPassword] = useState(false)
+
+  // Server-driven flag: in OIDC mode the API has no /auth/login POST, so we
+  // hide the password form and only render SSO buttons.
+  const { data: cfg } = useQuery({
+    queryKey: ['publicConfig'],
+    queryFn: paymentsApi.publicConfig,
+    staleTime: Infinity,
+  })
+  const isOIDC = cfg?.auth_mode === 'oidc'
 
   const {
     register,
@@ -59,7 +52,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full">
-        {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 font-bold text-2xl text-primary-600 mb-4">
             <Store className="h-7 w-7" />
@@ -71,72 +63,66 @@ export default function LoginPage() {
 
         <div className="card">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div>
-              <label className="label">Email</label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                {...register('email')}
-                className="input"
-              />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="label">Password</label>
-              <div className="relative">
+              <div>
+                <label className="label">Email</label>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  {...register('password')}
-                  className="input pr-10"
+                  type="email"
+                  placeholder="you@example.com"
+                  {...register('email')}
+                  className="input"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
-              )}
-            </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-primary w-full py-2.5"
-            >
-              {isSubmitting ? 'Signing in...' : 'Sign In'}
+              <div>
+                <label className="label">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    {...register('password')}
+                    className="input pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn-primary w-full py-2.5"
+              >
+                {isSubmitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-          <div className="mt-6 flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 uppercase">or continue with</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <SSOButton provider="google" label="Google" />
-            <SSOButton provider="facebook" label="Facebook" />
-            <SSOButton provider="apple" label="Apple" />
-          </div>
-
-          <a
-            href="/api/v1/auth/login"
-            className="mt-3 block text-center text-sm text-primary-600 hover:text-primary-700"
-          >
-            Sign in with SSO
-          </a>
+          {isOIDC && (
+            <>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400 uppercase">or continue with</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+              <div className="mt-4">
+                <SSOButtons />
+              </div>
+            </>
+          )}
 
           <div className="mt-5 text-center text-sm text-gray-500">
             Don't have an account?{' '}
