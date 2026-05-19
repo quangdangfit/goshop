@@ -14,8 +14,7 @@ func Routes(r *gin.RouterGroup, db dbs.Database) {
 	svc := service.NewPreferenceService(repo)
 	h := NewHandler(svc)
 
-	authMiddleware := middleware.JWTAuth()
-	g := r.Group("/me/notification-preferences", authMiddleware)
+	g := r.Group("/me/notification-preferences", middleware.JWTAuth())
 	g.GET("", h.ListPreferences)
 	g.PUT("", h.SetPreference)
 }

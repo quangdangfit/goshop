@@ -14,6 +14,19 @@ cors_allowed_origins: "*"
 rate_limit_requests: 100
 rate_limit_window_seconds: 60
 
+# Auth mode: "jwt" (default) or "oidc"
+auth_mode: jwt
+
+# OIDC / Authentik — only required when auth_mode = oidc
+oidc_issuer: https://auth.cunghoclaptrinh.online/application/o/goshop-api/
+oidc_client_id: goshop-api-client
+oidc_client_secret: ######
+oidc_redirect_url: https://goshop.cunghoclaptrinh.online/api/v1/auth/callback
+oidc_jwks_url: https://auth.cunghoclaptrinh.online/application/o/goshop-api/jwks/
+oidc_scopes: openid,email,profile
+# Where the OIDC callback redirects the browser after minting GoShop tokens.
+frontend_base_url: https://goshop.cunghoclaptrinh.online
+
 # Stripe — required for payments. webhook_secret is given by `stripe listen`
 # or the dashboard; api_base is only set in tests to point at stripe-mock.
 stripe_secret_key: sk_test_xxx

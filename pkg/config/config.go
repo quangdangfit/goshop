@@ -16,6 +16,14 @@ const (
 	ProductCachingTime = 1 * time.Minute
 )
 
+// AuthMode selects which authentication scheme the server runs in.
+type AuthMode string
+
+const (
+	AuthModeJWT  AuthMode = "jwt"  // legacy email + bcrypt + HS256 JWT
+	AuthModeOIDC AuthMode = "oidc" // OIDC via Authentik
+)
+
 var AuthIgnoreMethods = []string{
 	"/user.UserService/Login",
 	"/user.UserService/Register",
@@ -45,6 +53,20 @@ type Schema struct {
 	SMTPUser     string `env:"smtp_user"`
 	SMTPPassword string `env:"smtp_password"`
 	EmailFrom    string `env:"email_from"`
+
+	// OIDC / Authentik
+	AuthMode         AuthMode `env:"auth_mode" envDefault:"jwt"`
+	OIDCIssuer       string   `env:"oidc_issuer"`
+	OIDCClientID     string   `env:"oidc_client_id"`
+	OIDCClientSecret string   `env:"oidc_client_secret"`
+	OIDCRedirectURL  string   `env:"oidc_redirect_url"`
+	OIDCJWKSURL      string   `env:"oidc_jwks_url"`
+	OIDCScopes       string   `env:"oidc_scopes" envDefault:"openid,email,profile"`
+	// FrontendBaseURL is where the OIDC callback redirects the browser to after
+	// minting the GoShop JWT pair (e.g. https://goshop.example.com). The FE must
+	// expose a /auth/callback route that reads access_token + refresh_token
+	// from the query string.
+	FrontendBaseURL string `env:"frontend_base_url" envDefault:"http://localhost:5173"`
 }
 
 var (

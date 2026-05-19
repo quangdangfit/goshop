@@ -15,6 +15,7 @@ import (
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/middleware"
+	"goshop/pkg/oidc"
 	"goshop/pkg/redis"
 )
 
@@ -27,17 +28,29 @@ type Server struct {
 }
 
 func NewServer(validator validation.Validation, db dbs.Database, cache redis.Redis) *Server {
-	interceptor := middleware.NewAuthInterceptor(config.AuthIgnoreMethods)
+	cfg := config.GetConfig()
+	var interceptor grpc.UnaryServerInterceptor
+
+	switch cfg.AuthMode {
+	case config.AuthModeOIDC:
+		oidcValidator, err := oidc.NewValidator(cfg.OIDCIssuer, cfg.OIDCClientID, cfg.OIDCClientSecret, cfg.OIDCRedirectURL)
+		if err != nil {
+			logger.Fatalf("Failed to create OIDC validator: %v", err)
+		}
+		interceptor = middleware.NewOIDCInterceptor(oidcValidator, config.AuthIgnoreMethods).Unary()
+	default:
+		interceptor = middleware.NewAuthInterceptor(config.AuthIgnoreMethods).Unary()
+	}
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			interceptor.Unary(),
+			interceptor,
 		),
 	)
 
 	return &Server{
 		engine:    grpcServer,
-		cfg:       config.GetConfig(),
+		cfg:       cfg,
 		validator: validator,
 		db:        db,
 		cache:     cache,

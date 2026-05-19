@@ -22,13 +22,17 @@ type User struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at" gorm:"index"`
 	Email     string     `json:"email" gorm:"unique;not null;index:idx_user_email"`
-	Password  string     `json:"password"`
+	Password  string     `json:"password"` // nullable — empty for OIDC-provisioned users
 	Role      UserRole   `json:"role"`
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) error {
-	user.ID = uuid.New().String()
-	user.Password = utils.HashAndSalt([]byte(user.Password))
+	if user.ID == "" {
+		user.ID = uuid.New().String()
+	}
+	if user.Password != "" {
+		user.Password = utils.HashAndSalt([]byte(user.Password))
+	}
 	if user.Role == "" {
 		user.Role = UserRoleCustomer
 	}

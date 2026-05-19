@@ -60,10 +60,8 @@ func Routes(r *gin.RouterGroup, db dbs.Database, validator validation.Validation
 	paymentSvc := service.NewPaymentService(provider, paymentRepo, orderSvc, orderSvc)
 	handler := NewHandler(paymentSvc)
 
-	authMiddleware := middleware.JWTAuth()
-
 	// /orders/:id/payment-intent — authenticated, used by the customer to start checkout.
-	r.POST("/orders/:id/payment-intent", authMiddleware, handler.CreatePaymentIntent)
+	r.POST("/orders/:id/payment-intent", middleware.JWTAuth(), handler.CreatePaymentIntent)
 
 	// /webhooks/stripe — public, signature-verified.
 	r.POST("/webhooks/stripe", handler.StripeWebhook)

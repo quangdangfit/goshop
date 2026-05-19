@@ -22,6 +22,7 @@ type UserService interface {
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
 	RefreshToken(ctx context.Context, userID string) (string, error)
 	ChangePassword(ctx context.Context, id string, req *domain.ChangePasswordReq) error
+	UpsertUserFromOIDC(ctx context.Context, subject, email, name string) (*model.User, error)
 }
 
 type userService struct {
@@ -129,4 +130,42 @@ func (s *userService) ChangePassword(ctx context.Context, id string, req *domain
 	}
 
 	return nil
+}
+
+// UpsertUserFromOIDC creates or updates a local user record from the claims
+// of an Authentik-issued ID token. The OIDC subject (sub) is used as the
+// primary key so the link stays stable even if the user later changes their
+// email address.
+func (s *userService) UpsertUserFromOIDC(ctx context.Context, subject, email, name string) (*model.User, error) {
+	// 1. Lookup by OIDC subject (our primary key for OIDC-provisioned users).
+	user, err := s.repo.GetUserByID(ctx, subject)
+	if err == nil {
+		if user.Email != email {
+			user.Email = email
+			if err := s.repo.Update(ctx, user); err != nil {
+				logger.Errorf("UpsertUserFromOIDC.Update fail, id: %s, error: %s", subject, err)
+				return nil, err
+			}
+		}
+		return user, nil
+	}
+
+	// 2. Fallback: a legacy JWT-era user with the same email exists. Keep the
+	//    old ID and password hash so the user can still log in via either
+	//    flow during the migration window.
+	if userByEmail, err := s.repo.GetUserByEmail(ctx, email); err == nil {
+		return userByEmail, nil
+	}
+
+	// 3. Brand-new user — provision with no password (Authentik owns credentials).
+	newUser := &model.User{
+		ID:    subject,
+		Email: email,
+		Role:  model.UserRoleCustomer,
+	}
+	if err := s.repo.Create(ctx, newUser); err != nil {
+		logger.Errorf("UpsertUserFromOIDC.Create fail, email: %s, error: %s", email, err)
+		return nil, err
+	}
+	return newUser, nil
 }

@@ -383,3 +383,48 @@ func (_c *UserService_Register_Call) RunAndReturn(run func(ctx context.Context, 
 	_c.Call.Return(run)
 	return _c
 }
+
+func (_mock *UserService) UpsertUserFromOIDC(ctx context.Context, subject string, email string, name string) (*model.User, error) {
+	ret := _mock.Called(ctx, subject, email, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertUserFromOIDC")
+	}
+
+	var r0 *model.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*model.User, error)); ok {
+		return returnFunc(ctx, subject, email, name)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *model.User); ok {
+		r0 = returnFunc(ctx, subject, email, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = returnFunc(ctx, subject, email, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+type UserService_UpsertUserFromOIDC_Call struct {
+	*mock.Call
+}
+
+func (_e *UserService_Expecter) UpsertUserFromOIDC(ctx interface{}, subject interface{}, email interface{}, name interface{}) *UserService_UpsertUserFromOIDC_Call {
+	return &UserService_UpsertUserFromOIDC_Call{Call: _e.mock.On("UpsertUserFromOIDC", ctx, subject, email, name)}
+}
+
+func (_c *UserService_UpsertUserFromOIDC_Call) Return(user *model.User, err error) *UserService_UpsertUserFromOIDC_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *UserService_UpsertUserFromOIDC_Call) RunAndReturn(run func(ctx context.Context, subject string, email string, name string) (*model.User, error)) *UserService_UpsertUserFromOIDC_Call {
+	_c.Call.Return(run)
+	return _c
+}

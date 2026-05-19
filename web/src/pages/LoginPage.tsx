@@ -7,6 +7,25 @@ import toast from 'react-hot-toast'
 import { z } from 'zod'
 import { useAuth } from '@/context/AuthContext'
 
+type SSOProvider = 'google' | 'facebook' | 'apple'
+
+/**
+ * SSOButton kicks off the OIDC authorization-code flow. The browser hits the
+ * GoShop API, which 302s to Authentik with the right upstream-IdP hint;
+ * Authentik in turn redirects to Google / Facebook / Apple. On success the
+ * API redirects back to /auth/callback with the GoShop JWT pair.
+ */
+function SSOButton({ provider, label }: { provider: SSOProvider; label: string }) {
+  return (
+    <a
+      href={`/api/v1/auth/login?provider=${provider}`}
+      className="flex items-center justify-center gap-2 py-2 px-3 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+    >
+      {label}
+    </a>
+  )
+}
+
 const schema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
@@ -99,6 +118,25 @@ export default function LoginPage() {
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          <div className="mt-6 flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400 uppercase">or continue with</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <SSOButton provider="google" label="Google" />
+            <SSOButton provider="facebook" label="Facebook" />
+            <SSOButton provider="apple" label="Apple" />
+          </div>
+
+          <a
+            href="/api/v1/auth/login"
+            className="mt-3 block text-center text-sm text-primary-600 hover:text-primary-700"
+          >
+            Sign in with SSO
+          </a>
 
           <div className="mt-5 text-center text-sm text-gray-500">
             Don't have an account?{' '}
