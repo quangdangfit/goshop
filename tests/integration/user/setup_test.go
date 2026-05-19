@@ -5,6 +5,8 @@ package tests_user
 import (
 	"bytes"
 	"context"
+	cryptoRand "crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -73,6 +75,16 @@ func loginTokens() map[string]string {
 
 func accessToken() string  { return loginTokens()["access_token"] }
 func refreshToken() string { return loginTokens()["refresh_token"] }
+
+// randSuffix produces a short unique suffix so tests that create users /
+// coupons in parallel don't collide on unique indexes. Crypto-grade random
+// is overkill here — time-based monotonic IDs would do — but rand keeps the
+// helper self-contained.
+func randSuffix() string {
+	var b [6]byte
+	_, _ = cryptoRand.Read(b[:])
+	return hex.EncodeToString(b[:])
+}
 
 func cleanData(records ...interface{}) {
 	dbTest.GetDB().Where("1 = 1").Delete(&orderModel.OrderLine{})

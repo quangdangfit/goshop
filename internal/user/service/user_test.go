@@ -300,3 +300,99 @@ func (suite *UserServiceTestSuite) TestChangePassword() {
 		})
 	}
 }
+
+func (suite *UserServiceTestSuite) TestUpsertUserFromOIDC() {
+	const (
+		sub   = "auth0|abc-123"
+		email = "user@example.com"
+		name  = "Test User"
+	)
+
+	tests := []struct {
+		name    string
+		setup   func()
+		wantID  string
+		wantErr bool
+	}{
+		{
+			name: "existing subject — returns user without write when email unchanged",
+			setup: func() {
+				suite.mockRepo.On("GetUserByID", mock.Anything, sub).
+					Return(&model.User{ID: sub, Email: email, Role: model.UserRoleCustomer}, nil).Times(1)
+			},
+			wantID: sub,
+		},
+		{
+			name: "existing subject — email changed triggers Update",
+			setup: func() {
+				suite.mockRepo.On("GetUserByID", mock.Anything, sub).
+					Return(&model.User{ID: sub, Email: "old@example.com", Role: model.UserRoleCustomer}, nil).Times(1)
+				suite.mockRepo.On("Update", mock.Anything, mock.MatchedBy(func(u *model.User) bool {
+					return u.ID == sub && u.Email == email
+				})).Return(nil).Times(1)
+			},
+			wantID: sub,
+		},
+		{
+			name: "legacy JWT user with matching email — reused, no Create",
+			setup: func() {
+				suite.mockRepo.On("GetUserByID", mock.Anything, sub).
+					Return(nil, errors.New("not found")).Times(1)
+				suite.mockRepo.On("GetUserByEmail", mock.Anything, email).
+					Return(&model.User{ID: "legacy-uuid", Email: email, Role: model.UserRoleCustomer}, nil).Times(1)
+			},
+			wantID: "legacy-uuid",
+		},
+		{
+			name: "new user — provisioned with subject as ID and no password",
+			setup: func() {
+				suite.mockRepo.On("GetUserByID", mock.Anything, sub).
+					Return(nil, errors.New("not found")).Times(1)
+				suite.mockRepo.On("GetUserByEmail", mock.Anything, email).
+					Return(nil, errors.New("not found")).Times(1)
+				suite.mockRepo.On("Create", mock.Anything, mock.MatchedBy(func(u *model.User) bool {
+					return u.ID == sub && u.Email == email && u.Password == "" && u.Role == model.UserRoleCustomer
+				})).Return(nil).Times(1)
+			},
+			wantID: sub,
+		},
+		{
+			name: "Update failure surfaces error",
+			setup: func() {
+				suite.mockRepo.On("GetUserByID", mock.Anything, sub).
+					Return(&model.User{ID: sub, Email: "old@example.com"}, nil).Times(1)
+				suite.mockRepo.On("Update", mock.Anything, mock.Anything).
+					Return(errors.New("db down")).Times(1)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Create failure surfaces error",
+			setup: func() {
+				suite.mockRepo.On("GetUserByID", mock.Anything, sub).
+					Return(nil, errors.New("not found")).Times(1)
+				suite.mockRepo.On("GetUserByEmail", mock.Anything, email).
+					Return(nil, errors.New("not found")).Times(1)
+				suite.mockRepo.On("Create", mock.Anything, mock.Anything).
+					Return(errors.New("db down")).Times(1)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			tc.setup()
+			user, err := suite.service.UpsertUserFromOIDC(context.Background(), sub, email, name)
+			if tc.wantErr {
+				suite.Error(err)
+				suite.Nil(user)
+				return
+			}
+			suite.NoError(err)
+			suite.NotNil(user)
+			suite.Equal(tc.wantID, user.ID)
+		})
+	}
+}
