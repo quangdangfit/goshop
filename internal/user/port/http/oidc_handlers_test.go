@@ -109,6 +109,19 @@ func (s *OIDCHandlerTestSuite) TestLogin_UnsupportedProvider_Returns400() {
 	s.Equal(http.StatusBadRequest, w.Code)
 }
 
+// Reaches the url.Parse error branch by feeding Login an AuthCodeURL with
+// an unescaped '%' — net/url rejects that as an invalid escape. In
+// production this branch is unreachable (oauth2 always produces a valid
+// URL), but the defensive check still warrants coverage.
+func (s *OIDCHandlerTestSuite) TestLogin_MalformedAuthCodeURL_Returns500() {
+	h := newOIDCHandlerWith(s.svc, s.cfg, &fakeOIDC{authURL: "http://%"})
+
+	c, w := s.newGet("/auth/login?provider=google")
+	h.Login(c)
+
+	s.Equal(http.StatusInternalServerError, w.Code, "body=%s", w.Body.String())
+}
+
 func (s *OIDCHandlerTestSuite) TestLogin_ProviderHint_IsCaseInsensitive() {
 	h := newOIDCHandlerWith(s.svc, s.cfg, &fakeOIDC{authURL: "https://auth.example.com/a"})
 
@@ -118,6 +131,33 @@ func (s *OIDCHandlerTestSuite) TestLogin_ProviderHint_IsCaseInsensitive() {
 	s.Equal(http.StatusFound, w.Code)
 	loc, _ := url.Parse(w.Header().Get("Location"))
 	s.Equal("google", loc.Query().Get("idp"))
+}
+
+// NewOIDCHandler init-failure
+// =================================================================================================
+
+// When the OIDC provider can't be discovered (e.g. issuer URL unreachable),
+// NewOIDCHandler delegates to onValidatorInitError. Production uses
+// logger.Fatalf; here we swap in a capturing hook so the branch is covered
+// without killing the test process.
+func (s *OIDCHandlerTestSuite) TestNewOIDCHandler_ValidatorInitFailure_InvokesHook() {
+	var captured error
+	original := onValidatorInitError
+	onValidatorInitError = func(err error) { captured = err }
+	s.T().Cleanup(func() { onValidatorInitError = original })
+
+	cfg := &config.Schema{
+		// 127.0.0.1:1 is reliably refused; provider discovery fails fast.
+		OIDCIssuer:       "http://127.0.0.1:1",
+		OIDCClientID:     "x",
+		OIDCClientSecret: "y",
+		OIDCRedirectURL:  "http://localhost/cb",
+	}
+	h := NewOIDCHandler(s.svc, cfg)
+
+	s.Nil(h, "handler must be nil when validator init fails")
+	s.Require().Error(captured)
+	s.Contains(captured.Error(), "discover OIDC provider")
 }
 
 // Callback

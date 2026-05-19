@@ -46,9 +46,17 @@ type OIDCHandler struct {
 	oidc    oidcClient
 }
 
+// onValidatorInitError is the failure hook for NewOIDCHandler. In production
+// it terminates the process — running the API in OIDC mode without a
+// reachable Authentik is a misconfig the operator must fix. Tests override
+// the hook to capture the call instead.
+var onValidatorInitError = func(err error) {
+	logger.Fatalf("failed to create OIDC validator: %v", err)
+}
+
 // NewOIDCHandler builds the handler and eagerly initialises the OIDC
-// validator. The process exits if the provider cannot be reached at boot —
-// running the server in OIDC mode without a reachable Authentik is a misconfig.
+// validator. Init failure delegates to onValidatorInitError, which exits the
+// process in production.
 func NewOIDCHandler(svc service.UserService, cfg *config.Schema) *OIDCHandler {
 	v, err := oidc.NewValidator(
 		cfg.OIDCIssuer,
@@ -57,7 +65,8 @@ func NewOIDCHandler(svc service.UserService, cfg *config.Schema) *OIDCHandler {
 		cfg.OIDCRedirectURL,
 	)
 	if err != nil {
-		logger.Fatalf("failed to create OIDC validator: %v", err)
+		onValidatorInitError(err)
+		return nil
 	}
 	return &OIDCHandler{service: svc, cfg: cfg, oidc: v}
 }

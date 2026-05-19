@@ -204,10 +204,11 @@ func (s *OIDCCallbackIntegrationTestSuite) TestCallback_VerifyFailure_Returns401
 	s.Equal(http.StatusUnauthorized, w.Code, "body=%s", w.Body.String())
 }
 
-// Claims-unmarshal branch: sub is a number, so decoding into the handler's
-// `struct { Sub string … }` fails.
+// Claims-unmarshal branch: go-oidc's Verify only parses the standard claims
+// (sub/aud/iss/exp/iat), so a non-string `email` slips past Verify and only
+// blows up when our handler decodes the payload into its own struct.
 func (s *OIDCCallbackIntegrationTestSuite) TestCallback_ClaimsUnmarshalFailure_Returns401() {
-	h, _ := s.buildHandler(map[string]any{"sub": 123, "email": "n@example.com"})
+	h, _ := s.buildHandler(map[string]any{"sub": "sub-c", "email": 123, "name": "n"})
 
 	w := s.doCallback(h)
 
