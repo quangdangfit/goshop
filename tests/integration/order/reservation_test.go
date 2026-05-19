@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	orderModel "goshop/internal/order/model"
 	"goshop/internal/order/repository"
 	productModel "goshop/internal/product/model"
 	"goshop/tests/testutil"
@@ -27,7 +26,7 @@ import (
 func TestReserveStock_Concurrency(t *testing.T) {
 	ctx := context.Background()
 	db := testutil.StartPostgres(ctx, t)
-	require.NoError(t, db.AutoMigrate(&productModel.Product{}, &orderModel.StockReservation{}))
+	require.NoError(t, testutil.ApplyMigrations(db))
 
 	const initialStock = 7
 	const racers = 50
@@ -81,7 +80,7 @@ func TestReserveStock_Concurrency(t *testing.T) {
 func TestReserveCommitRelease(t *testing.T) {
 	ctx := context.Background()
 	db := testutil.StartPostgres(ctx, t)
-	require.NoError(t, db.AutoMigrate(&productModel.Product{}, &orderModel.StockReservation{}))
+	require.NoError(t, testutil.ApplyMigrations(db))
 
 	product := &productModel.Product{
 		Name: "lifecycle", Code: "LC-1", Price: 1, StockQuantity: 10, Active: true,

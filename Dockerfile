@@ -24,6 +24,10 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /out/goshop /app/goshop
 COPY config.sample.yaml /app/config.yaml
+# Migrations bundled for operators / init-containers; the app does NOT run them on startup.
+# Apply via the golang-migrate CLI (sidecar or k8s Job):
+#   migrate -path /app/migrations -database "$DATABASE_URI" up
+COPY migrations /app/migrations
 
 EXPOSE 8888
 ENTRYPOINT ["/app/goshop"]

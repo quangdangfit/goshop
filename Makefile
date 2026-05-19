@@ -14,3 +14,23 @@ lint:
 
 mock:
 	go generate ./...
+
+# Migrations
+# Requires golang-migrate CLI: brew install golang-migrate
+# (or: go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest)
+# Reads DSN from DATABASE_URI (falls back to the value in config.yaml is the caller's job).
+DATABASE_URI ?= postgres://postgres:test@localhost:5432/goshop?sslmode=disable
+
+migrate-up:
+	migrate -path migrations -database "$(DATABASE_URI)" up
+
+migrate-down:
+	migrate -path migrations -database "$(DATABASE_URI)" down 1
+
+migrate-status:
+	migrate -path migrations -database "$(DATABASE_URI)" version
+
+# Scaffold a new migration: make migrate-new name=add_orders_index
+migrate-new:
+	@test -n "$(name)" || (echo "usage: make migrate-new name=<short_description>" && exit 1)
+	migrate create -ext sql -dir migrations -seq $(name)

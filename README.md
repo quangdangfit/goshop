@@ -105,7 +105,20 @@ smtp_port: 25
 email_from: no-reply@goshop.local
 ```
 
-**2. Run the backend**
+**2. Apply database migrations**
+
+The app no longer runs `AutoMigrate` — schema lives in versioned SQL files under
+`migrations/` and is applied with [golang-migrate](https://github.com/golang-migrate/migrate).
+
+```bash
+brew install golang-migrate   # or: go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+DATABASE_URI="postgres://username:password@localhost:5432/goshop?sslmode=disable" make migrate-up
+```
+
+See [`migrations/README.md`](migrations/README.md) for conventions and the
+production / Kubernetes init-container pattern.
+
+**3. Run the backend**
 
 ```bash
 go run cmd/api/main.go
@@ -116,7 +129,7 @@ INFO    HTTP server is listening on PORT: 8888
 INFO    GRPC server is listening on PORT: 8889
 ```
 
-**3. Run the web frontend**
+**4. Run the web frontend**
 
 ```bash
 cd web
@@ -128,7 +141,7 @@ Web UI: [http://localhost:3000](http://localhost:3000)
 
 > The frontend proxies all `/api` requests to the backend at `http://localhost:8888`, so both servers must be running.
 
-**4. Browse the API**
+**5. Browse the API**
 
 Swagger UI: [http://localhost:8888/swagger/index.html](http://localhost:8888/swagger/index.html)
 
@@ -249,6 +262,18 @@ Requirements: a running Docker daemon. The shared helpers (`StartPostgres`,
 `StartRedis`, `NewHTTPEnv`) live in `tests/testutil/`. CI runs the
 integration job in parallel with the unit job; both upload coverage to
 Codecov under the `unittest` / `integration` flags.
+
+**Database migrations**
+
+```bash
+make migrate-up                  # apply all pending migrations
+make migrate-down                # roll back the latest migration
+make migrate-status              # print current schema version
+make migrate-new name=add_index  # scaffold the next NNNN_*.{up,down}.sql pair
+```
+
+Set `DATABASE_URI` in your shell to override the default
+(`postgres://postgres:test@localhost:5432/goshop?sslmode=disable`).
 
 **Regenerate mocks**
 

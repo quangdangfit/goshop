@@ -24,6 +24,10 @@ make doc                         # swag fmt && swag init -g ./cmd/api/main.go
 # Proto
 cd proto && buf generate
 
+# Migrations (golang-migrate — app no longer AutoMigrates)
+make migrate-up                  # apply pending; reads DATABASE_URI from env
+make migrate-new name=add_index  # scaffold NNNN_*.{up,down}.sql
+
 # Verify before commit
 go vet ./... && golangci-lint run && go test ./... && go mod tidy
 ```
@@ -35,7 +39,7 @@ go vet ./... && golangci-lint run && go test ./... && go mod tidy
 | [architecture](/.claude/rules/architecture.md) | `cmd/**`, `internal/**` | Domain structure, dual server setup |
 | [go-conventions](/.claude/rules/go-conventions.md) | `**/*.go` | Error handling, naming, idioms |
 | [api-design](/.claude/rules/api-design.md) | `**/port/**`, `proto/**` | REST + gRPC standards |
-| [database](/.claude/rules/database.md) | `**/repository/**`, `**/model/**` | GORM, transactions, query patterns |
+| [database](/.claude/rules/database.md) | `**/repository/**`, `**/model/**`, `migrations/**` | GORM, transactions, query patterns, golang-migrate |
 | [security](/.claude/rules/security.md) | `**/*.go`, `pkg/middleware/**` | Input validation, auth, secrets |
 | [performance](/.claude/rules/performance.md) | `**/*.go` | Concurrency, caching, optimization |
 | [testing](/.claude/rules/testing.md) | `**/*_test.go`, `**/mocks/**` | Testify suites, mocks, handler tests |

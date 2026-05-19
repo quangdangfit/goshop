@@ -1,16 +1,19 @@
 # Migrations
 
-`AutoMigrate` in `cmd/api/main.go` handles development. **Production must apply the
-numbered SQL files in this directory in order**; each is forward-only and idempotent
-(`IF NOT EXISTS` / `IF EXISTS`).
+Schema is managed entirely by versioned SQL files in this directory and applied
+with [golang-migrate](https://github.com/golang-migrate/migrate). The app **does
+not** call `AutoMigrate` on startup — production deploys must run `migrate up`
+against the target database before (or as part of) rolling out a new image.
 
 ## Conventions
 
-- Filename: `NNNN_short_description.up.sql`. Optional `.down.sql` for emergency rollback.
-- One concern per file going forward (the consolidated `0001_init.up.sql` covers the
-  whole pre-prod batch — split future changes).
-- Never drop columns or rename — add new columns/tables and deprecate. Long-running
-  consumers may still read old shapes during a deploy.
+- Filename: `NNNN_short_description.up.sql` and matching `NNNN_short_description.down.sql`.
+- `NNNN` is a strictly increasing 4-digit sequence. Use `make migrate-new name=add_foo`
+  to scaffold a pair with the next number.
+- One concern per file. Don't bundle unrelated changes.
+- Forward-only and idempotent (`IF NOT EXISTS` / `IF EXISTS`) so re-runs are safe.
+- Never drop columns or rename in a single step — add new, deprecate old. Long-running
+  consumers may still read the old shape during a deploy.
 - Add indexes in a separate migration from the column they back; index creation can
   acquire heavy locks on large tables.
 
@@ -18,12 +21,61 @@ numbered SQL files in this directory in order**; each is forward-only and idempo
 
 | # | File | Purpose |
 |---|------|---------|
-| 0001 | `0001_init.up.sql` | Drop server-side cart, add Stripe `payments` + `provider_events`, add `stock_reservations` + `products.reserved_quantity` + CHECK guards, add `notification_preferences` and `dead_letter_notifications`, document new `orders.status` enum values. |
+| 0001 | `0001_init_schema.up.sql` | Full base schema: 14 tables (users/addresses/wishlists/categories/products/reviews/coupons/orders/order_lines/stock_reservations/payments/provider_events/preferences/dead_letter_notifications) plus PKs, indexes, FKs. Generated from GORM models — equivalent to the old `AutoMigrate` output. |
+| 0002 | `0002_post_init.up.sql` | Post-init cleanup: drops legacy `cart_lines`/`carts`, adds `chk_products_reserved_lte_stock` CHECK, adds partial index on `stock_reservations.expires_at` filtered by `status='active'`. Documents the `orders.status` enum values introduced by Stripe + reservations. |
 
-## Tooling
+## Local development
 
-This project does not bundle a migration runner. Use `golang-migrate`:
+Install the CLI once:
 
+```bash
+# macOS
+brew install golang-migrate
+# Go install
+go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 ```
-migrate -path migrations -database "$DATABASE_URI" up
+
+Then from the repo root:
+
+```bash
+# Apply everything
+make migrate-up
+
+# Roll back one step
+make migrate-down
+
+# Current version
+make migrate-status
+
+# Scaffold the next pair
+make migrate-new name=add_orders_warehouse_id
 ```
+
+The Makefile reads `DATABASE_URI` from the environment (defaults to
+`postgres://postgres:test@localhost:5432/goshop?sslmode=disable` — match your
+local Postgres).
+
+## Production / Kubernetes
+
+Run `migrate up` from a **separate job or init container**, not from the app
+process. The image bundles the migrations directory at `/app/migrations`, so a
+typical sidecar uses `migrate/migrate:v4` with that path:
+
+```yaml
+# k8s init container example
+- name: db-migrate
+  image: migrate/migrate:v4
+  args:
+    - "-path=/migrations"
+    - "-database=$(DATABASE_URI)"
+    - "up"
+  envFrom: [...]
+  volumeMounts:
+    - { name: migrations, mountPath: /migrations }
+```
+
+## Tests
+
+Integration tests (`tests/integration/...`) apply these migrations to a fresh
+testcontainers Postgres via `testutil.ApplyMigrations(db)` — giving CI parity
+with the schema production will see.

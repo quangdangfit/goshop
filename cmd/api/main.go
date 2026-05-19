@@ -10,15 +10,10 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
-	notificationModel "goshop/internal/notification/model"
-	orderModel "goshop/internal/order/model"
 	orderRepository "goshop/internal/order/repository"
 	orderService "goshop/internal/order/service"
-	paymentModel "goshop/internal/payment/model"
-	productModel "goshop/internal/product/model"
 	grpcServer "goshop/internal/server/grpc"
 	httpServer "goshop/internal/server/http"
-	userModel "goshop/internal/user/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/eventbus"
@@ -51,17 +46,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("Cannot connect to database", err)
 	}
-
-	err = db.AutoMigrate(
-		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
-		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
-		orderModel.Coupon{}, orderModel.Order{}, orderModel.OrderLine{}, orderModel.StockReservation{},
-		&paymentModel.Payment{}, &paymentModel.ProviderEvent{},
-		&notificationModel.Preference{}, &notificationModel.DeadLetterNotification{},
-	)
-	if err != nil {
-		logger.Fatal("Database migration fail", err)
-	}
+	// Schema is managed externally via golang-migrate; see migrations/ and `make migrate-up`.
 
 	validator := validation.New()
 

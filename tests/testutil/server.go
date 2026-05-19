@@ -8,12 +8,7 @@ import (
 	"github.com/quangdangfit/gocommon/logger"
 	"github.com/quangdangfit/gocommon/validation"
 
-	notificationModel "goshop/internal/notification/model"
-	orderModel "goshop/internal/order/model"
-	paymentModel "goshop/internal/payment/model"
-	productModel "goshop/internal/product/model"
 	httpServer "goshop/internal/server/http"
-	userModel "goshop/internal/user/model"
 	"goshop/pkg/config"
 	"goshop/pkg/dbs"
 	"goshop/pkg/redis"
@@ -45,16 +40,10 @@ func NewHTTPEnv(ctx context.Context) (*HTTPTestEnv, error) {
 		return nil, fmt.Errorf("start redis: %w", err)
 	}
 
-	if err := db.AutoMigrate(
-		&userModel.User{}, &userModel.Address{}, &userModel.Wishlist{},
-		&productModel.Category{}, &productModel.Product{}, &productModel.Review{},
-		&orderModel.Coupon{}, &orderModel.Order{}, &orderModel.OrderLine{}, &orderModel.StockReservation{},
-		&paymentModel.Payment{}, &paymentModel.ProviderEvent{},
-		&notificationModel.Preference{}, &notificationModel.DeadLetterNotification{},
-	); err != nil {
+	if err := ApplyMigrations(db); err != nil {
 		cacheCleanup()
 		dbCleanup()
-		return nil, fmt.Errorf("auto-migrate: %w", err)
+		return nil, fmt.Errorf("apply migrations: %w", err)
 	}
 
 	server := httpServer.NewServer(validation.New(), db, cache)

@@ -25,11 +25,7 @@ import (
 func TestSweepExpiredReservations_ReleasesAndCancels(t *testing.T) {
 	ctx := context.Background()
 	db := testutil.StartPostgres(ctx, t)
-	require.NoError(t, db.AutoMigrate(
-		&userModel.User{},
-		&productModel.Product{}, &productModel.Category{},
-		orderModel.Order{}, orderModel.OrderLine{}, orderModel.Coupon{}, orderModel.StockReservation{},
-	))
+	require.NoError(t, testutil.ApplyMigrations(db))
 
 	user := &userModel.User{Email: "buyer@test.com", Password: "x"}
 	require.NoError(t, db.Create(ctx, user))

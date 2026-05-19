@@ -34,10 +34,20 @@ alwaysApply: false
 
 ## Migrations
 
-- Use `AutoMigrate` for development only. For production, use versioned migration files.
-- Never drop columns or tables in migration — add new ones, deprecate old ones.
-- Add indexes in migrations, not in model struct tags (for production).
-- Test migrations against a copy of production data before deploying.
+- Schema is managed by versioned SQL files in `migrations/` and applied with
+  [golang-migrate](https://github.com/golang-migrate/migrate). **`AutoMigrate` is not
+  called by the app** — neither in `cmd/api/main.go` nor in tests. Tests apply the same
+  SQL files via `testutil.ApplyMigrations(db)`.
+- Filenames: `NNNN_short_description.up.sql` + matching `.down.sql`. Scaffold the next
+  pair with `make migrate-new name=<desc>`. One concern per file.
+- Forward-only and idempotent (`IF NOT EXISTS` / `IF EXISTS`). Never drop columns or
+  rename in a single step — add new, deprecate old. Long-running consumers may still
+  read the old shape during a deploy.
+- Add indexes in a separate migration from the column they back; index creation can
+  acquire heavy locks on large tables.
+- Local dev: `make migrate-up` / `migrate-down` / `migrate-status`. Production / k8s:
+  apply via a separate Job or init container — the image bundles `migrations/` at
+  `/app/migrations`.
 
 ## Query patterns
 
