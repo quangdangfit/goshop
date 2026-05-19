@@ -118,7 +118,8 @@ CREATE TABLE IF NOT EXISTS products (
     images text,
     category_id text,
     CONSTRAINT chk_products_reserved_quantity CHECK ((reserved_quantity >= 0)),
-    CONSTRAINT chk_products_stock_quantity CHECK ((stock_quantity >= 0))
+    CONSTRAINT chk_products_stock_quantity CHECK ((stock_quantity >= 0)),
+    CONSTRAINT chk_products_reserved_lte_stock CHECK ((reserved_quantity <= stock_quantity))
 );
 
 CREATE TABLE IF NOT EXISTS provider_events (
@@ -276,7 +277,9 @@ CREATE INDEX IF NOT EXISTS idx_reviews_id ON reviews USING btree (id);
 
 CREATE INDEX IF NOT EXISTS idx_stock_reservations_deleted_at ON stock_reservations USING btree (deleted_at);
 
-CREATE INDEX IF NOT EXISTS idx_stock_reservations_expires_at ON stock_reservations USING btree (expires_at);
+-- Partial index — sweeper only scans active reservations, so the index doesn't bloat
+-- with terminal-state rows.
+CREATE INDEX IF NOT EXISTS idx_stock_reservations_expires_at ON stock_reservations USING btree (expires_at) WHERE status = 'active';
 
 CREATE INDEX IF NOT EXISTS idx_stock_reservations_order_id ON stock_reservations USING btree (order_id);
 

@@ -21,8 +21,7 @@ against the target database before (or as part of) rolling out a new image.
 
 | # | File | Purpose |
 |---|------|---------|
-| 0001 | `0001_init_schema.up.sql` | Full base schema: 14 tables (users/addresses/wishlists/categories/products/reviews/coupons/orders/order_lines/stock_reservations/payments/provider_events/preferences/dead_letter_notifications) plus PKs, indexes, FKs. Generated from GORM models — equivalent to the old `AutoMigrate` output. |
-| 0002 | `0002_post_init.up.sql` | Post-init cleanup: drops legacy `cart_lines`/`carts`, adds `chk_products_reserved_lte_stock` CHECK, adds partial index on `stock_reservations.expires_at` filtered by `status='active'`. Documents the `orders.status` enum values introduced by Stripe + reservations. |
+| 0001 | `0001_init_schema.up.sql` | Full base schema: 14 tables (users/addresses/wishlists/categories/products/reviews/coupons/orders/order_lines/stock_reservations/payments/provider_events/preferences/dead_letter_notifications) plus PKs, indexes, FKs, the `chk_products_reserved_lte_stock` safety CHECK, and the partial `idx_stock_reservations_expires_at WHERE status='active'` for the sweeper. |
 
 ## Local development
 
