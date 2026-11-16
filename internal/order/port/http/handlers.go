@@ -136,6 +136,11 @@ func (a *OrderHandler) GetOrderByID(c *gin.Context) {
 		return
 	}
 
+	if order.UserID != userId {
+		apperror.ErrNotFound.HTTPError(c)
+		return
+	}
+
 	response.JSON(c, http.StatusOK, domain.OrderFromModel(order))
 }
 
